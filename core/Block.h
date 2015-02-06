@@ -1,0 +1,60 @@
+// Block.h
+
+#ifndef _TRIP_CLIENT_CORE_BLOCK_H_
+#define _TRIP_CLIENT_CORE_BLOCK_H_
+
+#include "trip/client/core/Piece.h"
+
+namespace trip
+{
+    namespace client
+    {
+
+        class Block
+        {
+        public:
+            Block(
+                boost::uint16_t npiece = 0);
+
+            Block(
+                void * map_addr,
+                boost::uint32_t size);
+
+        public:
+            boost::uint16_t next() const
+            {
+                return next_;
+            }
+
+            bool finished() const
+            {
+                return next_ == MAX_PIECE;
+            }
+
+            std::vector<Piece::pointer> const & pieces() const
+            {
+                return pieces_;
+            }
+
+            Piece::pointer get_piece(
+                boost::uint64_t id) const;
+
+            bool expired(
+                boost::uint16_t expire) const;
+
+        public:
+            boost::uint64_t set_piece(
+                boost::uint64_t id, 
+                Piece::pointer piece);
+
+        private:
+            boost::uint16_t next_;
+            mutable boost::uint16_t expire_;
+            std::vector<Piece::pointer> pieces_;
+        };
+
+    } // namespace client
+} // namespace trip
+
+#endif // _TRIP_CLIENT_CORE_BLOCK_H_
+
