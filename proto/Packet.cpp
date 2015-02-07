@@ -3,7 +3,7 @@
 #include "trip/client/Common.h"
 #include "trip/client/proto/Packet.h"
 #include "trip/client/proto/PacketBuffers.h"
-#include "trip/client/core/Piece.h"
+#include "trip/client/core/PoolPiece.h"
 
 namespace trip
 {
@@ -12,7 +12,7 @@ namespace trip
 
         Packet::Packet()
         {
-            body_ = Piece2::alloc();
+            body_ = PoolPiece::alloc(PIECE_SIZE);
         }
 
         Packet::~Packet()
@@ -28,9 +28,9 @@ namespace trip
                 p = pkt_->head_;
                 n = sizeof(pkt_->head_);
             } else if (p == pkt_->head_) {
-                p = pkt_->body_->data;
+                p = pkt_->body_->data();
                 n = PIECE_SIZE;
-            } else if (p == pkt_->body_->data) {
+            } else if (p == pkt_->body_->data()) {
                 p = pkt_->tail_;
                 n = sizeof(pkt_->tail_);
             } else {

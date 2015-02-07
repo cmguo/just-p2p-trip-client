@@ -3,10 +3,6 @@
 #ifndef _TRIP_CLIENT_CORE_PIECE_H_
 #define _TRIP_CLIENT_CORE_PIECE_H_
 
-#include <framework/memory/BigFixedPool.h>
-#include <framework/memory/SmallFixedPool.h>
-#include <framework/memory/MemoryPoolObject.h>
-
 namespace trip
 {
     namespace client
@@ -29,118 +25,65 @@ namespace trip
 
 #define MAKE_ID(s, b, p) ((s << 12) | (b << 6) | p)
 
-        struct DataStatus
+        class Piece
         {
-            enum {
-                memory = 1, 
-                disk = 2
-            };
-        };
-
-        struct Piece
-        {
+        public:
             typedef boost::intrusive_ptr<Piece> pointer;
 
-            boost::uint8_t nref;
-            boost::uint8_t status;
-            boost::uint16_t size;
-            boost::uint8_t * data;
+            boost::uint8_t * data() const
+            {
+                return data_;
+            }
 
-            static void set_capacity(
-                size_t capacity);
-
-            static Piece * alloc();
-
-            static void free(
-                Piece * p);
+            boost::uint16_t size() const
+            {
+                return size_;
+            }
 
         protected:
-            Piece()
-                : nref(1)
-                , status(0)
-                , size(0)
+            Piece(
+                boost::uint8_t * data, 
+                boost::uint16_t size)
+                : nref_(1)
+                , reserved_(0)
+                , size_(size)
+                , data_(data)
             {
             }
 
             ~Piece() {}
 
-        private:
-            static framework::memory::SmallFixedPool pool;
-        };
-
-        struct Piece2
-            : public Piece
-        {
-            boost::uint8_t buf[PIECE_SIZE];
-
-            static void set_capacity(
-                size_t capacity);
-
-            static Piece2 * alloc();
-
-            static void free(
-                Piece2 * p);
-
-        private:
-            Piece2()
+            void set_size(
+                boost::uint16_t size)
             {
-                data = buf;
+                assert(size < size_);
+                size_ = size;
             }
-
-            ~Piece2() {}
 
         private:
-            static framework::memory::BigFixedPool pool;
-        };
+            static void free(
+                Piece * p);
 
-        inline Piece * Piece::alloc()
-        {
-            void * ptr = pool.alloc(sizeof(Piece));
-            if (ptr)
-                return new (ptr) Piece;
-            else
-                return NULL;
-        }
-
-        inline void Piece::free(
-            Piece * p)
-        {
-            p->~Piece();
-            pool.free(p);
-        }
-
-        inline Piece2 * Piece2::alloc()
-        {
-            void * ptr = pool.alloc(sizeof(Piece2));
-            if (ptr)
-                return new (ptr) Piece2;
-            else
-                return NULL;
-        }
-
-        inline void Piece2::free(
-            Piece2 * p)
-        {
-            p->~Piece2();
-            pool.free(p);
-        }
-
-        inline void intrusive_ptr_add_ref(
-            Piece * p)
-        {
-            ++p->nref;
-        }
-
-        inline void intrusive_ptr_release(
-            Piece * p)
-        {
-            if (--p->nref) {
-                if (p->data == (boost::uint8_t *)(p + 1))
-                    Piece2::free((Piece2 *)p);
-                else
-                    Piece::free(p);
+            friend void intrusive_ptr_add_ref(
+                Piece * p)
+            {
+                ++p->nref_;
             }
-        }
+
+            friend void intrusive_ptr_release(
+                Piece * p)
+            {
+                if (--p->nref_) {
+                    Piece::free(p);
+                }
+            }
+
+        private:
+            boost::uint8_t nref_;
+            boost::uint8_t reserved_;
+            boost::uint16_t size_;
+            boost::uint8_t * data_;
+        };
 
     } // namespace client
 } // namespace trip

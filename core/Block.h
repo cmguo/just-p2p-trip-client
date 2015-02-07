@@ -10,6 +10,8 @@ namespace trip
     namespace client
     {
 
+        class BlockData;
+
         class Block
         {
         public:
@@ -17,8 +19,7 @@ namespace trip
                 boost::uint16_t npiece = 0);
 
             Block(
-                void * map_addr,
-                boost::uint32_t size);
+                BlockData * data);
 
         public:
             boost::uint16_t next() const
@@ -46,6 +47,10 @@ namespace trip
             boost::uint64_t set_piece(
                 boost::uint64_t id, 
                 Piece::pointer piece);
+
+            void release(
+                boost::uint64_t from, 
+                boost::uint64_t to);
 
         private:
             boost::uint16_t next_;

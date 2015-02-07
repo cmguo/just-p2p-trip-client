@@ -76,8 +76,9 @@ namespace trip
                 boost::uint64_t id, 
                 boost::filesystem::path const & path);
 
-            bool unmap_block(
-                boost::uint64_t id);
+            void release(
+                boost::uint64_t from, 
+                boost::uint64_t to);
 
         private:
             Block & modify_block(

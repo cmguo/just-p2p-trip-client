@@ -24,6 +24,64 @@ namespace trip
             return get_segment(id).piece_size(id);
         }
 
+        ResourceData::lock_t ResourceData::alloc_lock(
+            boost::uint64_t from, 
+            boost::uint64_t to)
+        {
+            Lock * l = new Lock;
+            l->from = from;
+            l->to = to;
+            locks_.insert(l);
+            return l;
+        }
+
+        void ResourceData::modify_lock(
+            lock_t lock, 
+            boost::uint64_t from, 
+            boost::uint64_t to)
+        {
+            Lock * l = (Lock * )lock;
+            locks_.erase(l);
+            Lock o;
+            o.from = l->from;
+            o.to = l->to;
+            l->from = from;
+            l->to = to;
+            locks_.insert(l);
+            release_lock(&o);
+        }
+
+        void ResourceData::release_lock(
+            lock_t lock)
+        {
+            Lock * l = (Lock * )lock;
+            locks_.erase(l);
+            release_lock(l);
+            delete l;
+        }
+
+        void ResourceData::release_lock(
+            Lock * l)
+        {
+            for (Lock * p = locks_.first(); p; p = locks_.next(p)) {
+                if (p->from <= l->from) {
+                    if (p->to <= l->from)
+                        continue;
+                    else if (p->to < l->to)
+                        l->from = p->to;
+                    else
+                        return;
+                } else {
+                    release(l->from, p->from);
+                    l->from = p->from;
+                    if (p->to < l->to)
+                        l->from = p->to;
+                    else
+                        return;
+                }
+            }
+        }
+
         bool ResourceData::save_segment(
             boost::uint64_t id, 
             boost::filesystem::path const & path)
@@ -88,12 +146,6 @@ namespace trip
             return modify_segment(id).map_block(id, path);
         }
 
-        bool ResourceData::unmap_block(
-            boost::uint64_t id)
-        {
-            return modify_segment(id).unmap_block(id);
-        }
-
         ResourceData::Segment2 const & ResourceData::get_segment2(
             boost::uint64_t id) const
         {
@@ -138,6 +190,30 @@ namespace trip
                 segment.seg = new Segment(segment.meta ? segment.meta->bytesize : 0);
             }
             return *segment.seg;
+        }
+
+        void ResourceData::release(
+            boost::uint64_t from,
+            boost::uint64_t to)
+        {
+            boost::uint64_t segf = SEGMENT(from);
+            boost::uint64_t segt = SEGMENT(to);
+            while (segf <= segt) {
+                std::map<boost::uint64_t, Segment2>::iterator iter = segments_.find(segf);
+                boost::uint64_t f = from;
+                ++segf;
+                from = MAKE_ID(segf, 0, 0);
+                if (iter == segments_.end() || iter->second.seg == NULL)
+                    continue;
+                if (segf == segt) {
+                    iter->second.seg->release(f, to);
+                } else if (BLOCK_PIECE(from) != 0) {
+                    iter->second.seg->release(f, from);
+                } else {
+                    delete iter->second.seg;
+                    iter->second.seg = NULL;
+                }
+            } 
         }
 
     } // namespace client

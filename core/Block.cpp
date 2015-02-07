@@ -2,6 +2,7 @@
 
 #include "trip/client/Common.h"
 #include "trip/client/core/Block.h"
+#include "trip/client/core/BlockData.h"
 
 namespace trip
 {
@@ -17,20 +18,21 @@ namespace trip
         }
 
         Block::Block(
-            void * map_addr, 
-            boost::uint32_t size)
+            BlockData * data)
         {
-            boost::uint16_t npiece = (size + PIECE_SIZE - 1) / PIECE_SIZE;
+            boost::uint16_t npiece = data->size_ / PIECE_SIZE;
+            boost::uint16_t last_size = data->size_ % PIECE_SIZE;
+            if (last_size)
+                ++npiece;
+            else
+                last_size = PIECE_SIZE;
             pieces_.resize(npiece);
-            boost::uint8_t * addr = (boost::uint8_t *)map_addr;
-            for (size_t i = 0; i < pieces_.size(); ++i) {
-                Piece * p = Piece::alloc();
-                p->data = addr;
-                p->size = PIECE_SIZE;
+            boost::uint8_t * addr = (boost::uint8_t *)data->map_addr_;
+            for (size_t i = 0; i < pieces_.size() - 1; ++i) {
+                pieces_[i] = BlockPiece::alloc(data, addr, PIECE_SIZE);
                 addr += PIECE_SIZE;
-                pieces_[i] = p;
             }
-            pieces_[npiece - 1]->size = size % PIECE_SIZE;
+            pieces_[npiece - 1] = BlockPiece::alloc(data, addr, last_size);
         }
 
         Piece::pointer Block::get_piece(
@@ -48,13 +50,7 @@ namespace trip
         bool Block::expired(
             boost::uint16_t expire) const
         {
-            if (expire_ < expire)
-                return false;
-            for (size_t i = 0; i < pieces_.size(); ++i) {
-                if (pieces_[i]->nref > 1)
-                    return false;
-            }
-            return true;
+            return (expire < expire_);
         }
 
         boost::uint64_t Block::set_piece(
@@ -78,6 +74,17 @@ namespace trip
             return next_;
         }
       
+        void Block::release(
+            boost::uint64_t from,
+            boost::uint64_t to)
+        {
+            boost::uint64_t picf = BLOCK(from);
+            boost::uint64_t pict = BLOCK(to);
+            while (picf < pict) {
+                pieces_[picf].reset();
+                ++picf;
+            } 
+        }
 
     } // namespace client
 } // namespace trip

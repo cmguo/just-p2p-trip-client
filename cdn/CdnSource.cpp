@@ -3,6 +3,7 @@
 #include "trip/client/Common.h"
 #include "trip/client/cdn/CdnSource.h"
 #include "trip/client/core/Resource.h"
+#include "trip/client/core/PoolPiece.h"
 
 #include <boost/bind.hpp>
 #include <boost/asio/read.hpp>
@@ -48,8 +49,8 @@ namespace trip
                 return;
 
             if (piece) {
-                assert(piece->size == (boost::uint16_t)bytes_read);
-                if (piece->size == (boost::uint16_t)bytes_read) {
+                assert(piece->size() == (boost::uint16_t)bytes_read);
+                if (piece->size() == (boost::uint16_t)bytes_read) {
                     on_data(pieces_[index_], piece);
                     ++index_;
                 } else {
@@ -57,11 +58,10 @@ namespace trip
                 }
             }
 
-            piece = Piece2::alloc();
-            piece->size = piece_size(pieces_[index_]);
+            piece = PoolPiece::alloc(piece_size(pieces_[index_]));
             boost::asio::async_read(
                 http_.response_stream(), 
-                boost::asio::buffer(piece->data, piece->size), 
+                boost::asio::buffer(piece->data(), piece->size()), 
                 boost::asio::transfer_all(), 
                 boost::bind(&CdnSource::handle_read, this, _1, _2, piece));
         }

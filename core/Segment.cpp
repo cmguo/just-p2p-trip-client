@@ -2,6 +2,7 @@
 
 #include "trip/client/Common.h"
 #include "trip/client/core/Segment.h"
+#include "trip/client/core/BlockData.h"
 
 #include <framework/filesystem/File.h>
 
@@ -54,7 +55,7 @@ namespace trip
             if (index < blocks_.size() && blocks_[index]) {
                 return *blocks_[index];
             }
-            static Block empty_block(0);
+            static Block empty_block;
             return empty_block;
         }
 
@@ -70,7 +71,7 @@ namespace trip
             for (size_t i = 0; i < blocks_.size(); ++i) {
                 std::vector<Piece::pointer> const & pieces(blocks_[i]->pieces());
                 for (size_t j = 0; i < pieces.size(); ++j) {
-                    md5.update(pieces[j]->data, pieces[j]->size);
+                    md5.update(pieces[j]->data(), pieces[j]->size());
                 }
             }
             md5.final();
@@ -102,7 +103,7 @@ namespace trip
             for (size_t i = 0; i < blocks_.size(); ++i) {
                 std::vector<Piece::pointer> const & pieces(blocks_[i]->pieces());
                 for (size_t j = 0; i < pieces.size(); ++j) {
-                    if (!file.write_some(boost::asio::buffer(pieces[j]->data, pieces[j]->size), ec))
+                    if (!file.write_some(boost::asio::buffer(pieces[j]->data(), pieces[j]->size()), ec))
                         return false;
                 }
             }
@@ -143,43 +144,14 @@ namespace trip
             if (index == blocks_.size() - 1) {
                 size = (last_block_piece_ - 1) * PIECE_SIZE + last_piece_size_;
             }
-            framework::filesystem::File file;
-            boost::system::error_code ec;
-            if (!file.open(path, file.f_read, ec))
-                return NULL;
-            void * addr = file.map(offset, size, file.fm_read, ec);
-            if (addr == NULL)
-                return NULL;
-            blocks_[index] = new Block(addr, size);
+            BlockData * data = BlockData::alloc(path, offset, size);
+            blocks_[index] = new Block(data);
             return blocks_[index];
-        }
-
-        bool Segment::unmap_block(
-            boost::uint64_t id)
-        {
-            boost::uint16_t index = BLOCK(id);
-            assert(index < blocks_.size() && blocks_[index]);
-            if (index >= blocks_.size() || blocks_[index] == NULL) {
-                return false;
-            }
-            boost::uint32_t offset = BLOCK_SIZE * index;
-            size_t size = BLOCK_SIZE;
-            if (index == blocks_.size() - 1) {
-                size = (last_block_piece_ - 1) * PIECE_SIZE + last_piece_size_;
-            }
-            framework::filesystem::File file;
-            boost::system::error_code ec;
-            if (!file.unmap(blocks_[index]->get_piece(0)->data, offset, size, ec))
-                return false;
-            delete blocks_[index];
-            blocks_[index] = NULL;
-            return true;
         }
 
         Block & Segment::modify_block(
             boost::uint64_t id)
         {
-            static Block empty_block(0);
             boost::uint16_t index = BLOCK(id);
             if (index < blocks_.size()) {
                 if (blocks_[index] == NULL) {
@@ -192,8 +164,33 @@ namespace trip
                 return *blocks_[index];
             } else {
                 assert(false);
+                static Block empty_block;
                 return empty_block;
             }
+        }
+
+        void Segment::release(
+            boost::uint64_t from,
+            boost::uint64_t to)
+        {
+            boost::uint64_t blkf = BLOCK(from);
+            boost::uint64_t blkt = BLOCK(to);
+            while (blkf <= blkt) {
+                Block *& blk = blocks_[blkf];
+                boost::uint64_t f = from;
+                ++blkf;
+                from = MAKE_ID(0, blkf, 0);
+                if (blk == NULL)
+                    continue;
+                if (blkf == blkt) {
+                    blk->release(f, to);
+                } else if (PIECE(from) != 0) {
+                    blk->release(f, from);
+                } else {
+                    delete blk;
+                    blk = NULL;
+                }
+            } 
         }
 
     } // namespace client
