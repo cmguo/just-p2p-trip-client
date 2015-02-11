@@ -21,6 +21,10 @@ namespace trip
             std::string file_extension;
         };
 
+        struct ResourceStat
+        {
+        };
+
         class Resource
             : public ResourceData
         {
@@ -61,6 +65,19 @@ namespace trip
 
             void set_urls(
                 std::vector<Url> const & urls);
+
+        public:
+            void add_source(
+                Source * source);
+
+            void del_source(
+                Source * source);
+
+            void add_sink(
+                Sink * sink);
+
+            void del_sink(
+                Sink * sink);
 
         private:
             Uuid id_;

@@ -61,13 +61,13 @@ namespace trip
             assert(index < pieces_.size());
             assert(pieces_[index] == NULL);
             if (index < pieces_.size() && pieces_[index] == NULL) {
-                pieces_[index] = piece;
+                pieces_[index].swap(piece);
                 if (next_ == index) {
                     ++next_;
                     while (next_ < pieces_.size() && pieces_[next_])
                         ++next_;
                     if (next_ == pieces_.size()) {
-                        next_ = 0xfff;
+                        next_ = MAX_PIECE;
                     }
                 }
             }

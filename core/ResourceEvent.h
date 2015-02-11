@@ -18,21 +18,17 @@ namespace trip
             ResourceMeta const * meta;
         };
 
-        class Segment;
-        class Block;
-
-        struct DataChangedEvent
+        struct DataEvent
             : util::event::Event
         {
-            enum {
-                t_segment_fetched,
-                t_block_loaded, 
-                t_block_released, 
-            };
-            boost::uint32_t type;
-            boost::uint64_t index;
-            Segment const * segment;
-            Block const * block;
+            boost::uint64_t id;
+        };
+
+        struct SegmentMetaEvent
+            : util::event::Event
+        {
+            boost::uint64_t id;
+            SegmentMeta const * meta;
         };
 
         struct Source;

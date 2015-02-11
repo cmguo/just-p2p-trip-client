@@ -46,6 +46,8 @@ namespace trip
             Resource & resource_;
             boost::filesystem::path directory_;
             WorkQueue & queue_;
+            struct Cache;
+            std::vector<Cache> cached_blocks_;
         };
 
     } // namespace client

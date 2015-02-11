@@ -12,7 +12,7 @@ namespace trip
 
         class Resource;
 
-        struct SinkType
+        struct SinkRequest
         {
             boost::uint32_t type;
             boost::uint64_t begin;
@@ -28,15 +28,27 @@ namespace trip
             virtual ~Sink();
 
         public:
-            virtual bool response(
-                boost::uint64_t index, 
-                Piece::pointer piece) = 0;
 
-        public:
+        protected:
+            void seek_to(
+                boost::uint64_t seg, 
+                boost::uint32_t begin, 
+                boost::uint32_t end);
+
+            Piece::pointer read();
+
+            bool bump();
+
+        private:
+            virtual size_t write(
+                Piece * p, 
+                boost::system::error_code & ec);
+
+        private:
 
         private:
             Resource & resource_;
-            SinkType type_;
+            SinkRequest type_;
         };
 
     } // namespace client

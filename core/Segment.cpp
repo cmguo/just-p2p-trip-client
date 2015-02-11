@@ -15,29 +15,19 @@ namespace trip
             boost::uint32_t size)
             : next_(0)
         {
-            piece_count_ = size / PIECE_SIZE;
-            last_piece_size_ = size % PIECE_SIZE;
-            if (last_piece_size_ == 0) {
-                last_piece_size_ = PIECE_SIZE;
-            } else {
-                ++piece_count_;
-            }
-            size_t block_count = piece_count_ + PIECE_PER_BLOCK;
-            last_block_piece_ = piece_count_ % PIECE_PER_BLOCK;
-            if (last_block_piece_ == 0) {
-                last_block_piece_ = PIECE_PER_BLOCK;
-            } else {
-                ++block_count;
-            }
-            assert(block_count < BLOCK_PER_SEGMENT);
-            blocks_.resize(block_count);
+            set_size(size);
+        }
+
+        boost::uint32_t Segment::size() const
+        {
+            return PIECE_SIZE * piece_count_ - PIECE_SIZE + last_piece_size_;
         }
 
         boost::uint16_t Segment::piece_size(
             boost::uint64_t id) const
         {
-            boost::uint32_t index = BLOCK_PIECE(id);
-            if (index < (boost::uint32_t(piece_count_ - 1))) {
+            boost::uint16_t index = BLOCK_PIECE(id);
+            if (boost::uint16_t(index + 1) < piece_count_) {
                 return PIECE_SIZE;
             } else if (index < piece_count_) {
                 return last_piece_size_;
@@ -110,6 +100,27 @@ namespace trip
             return file.close(ec);
         }
 
+        void Segment::set_size(
+            boost::uint32_t size)
+        {
+            piece_count_ = size / PIECE_SIZE;
+            last_piece_size_ = size % PIECE_SIZE;
+            if (last_piece_size_ == 0) {
+                last_piece_size_ = PIECE_SIZE;
+            } else {
+                ++piece_count_;
+            }
+            size_t block_count = piece_count_ + PIECE_PER_BLOCK;
+            last_block_piece_ = piece_count_ % PIECE_PER_BLOCK;
+            if (last_block_piece_ == 0) {
+                last_block_piece_ = PIECE_PER_BLOCK;
+            } else {
+                ++block_count;
+            }
+            assert(block_count < BLOCK_PER_SEGMENT);
+            blocks_.resize(block_count);
+        }
+
         boost::uint64_t Segment::set_piece(
             boost::uint64_t id, 
             Piece::pointer piece)
@@ -123,7 +134,7 @@ namespace trip
                         ++next_;
                     if (next_ == blocks_.size()) {
                         next_ = MAX_BLOCK;
-                        return MAKE_ID(0, next_, next_id);
+                        return MAKE_ID(0, next_, 0);
                     }
                 }
             }

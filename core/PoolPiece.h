@@ -17,17 +17,15 @@ namespace trip
             static void set_capacity(
                 size_t capacity);
 
-            static PoolPiece * alloc(
-                boost::uint16_t size);
-
             void set_size(
                 boost::uint16_t size)
             {
                 Piece::set_size(size);
             }
 
-        private:
-            friend class Piece;
+        public:
+            static PoolPiece * alloc(
+                boost::uint16_t size);
 
             static void free(
                 PoolPiece * p);
@@ -35,7 +33,7 @@ namespace trip
         private:
             PoolPiece(
                 boost::uint16_t size)
-                : Piece(buf, size)
+                : Piece(0, buf, size)
             {
             }
 

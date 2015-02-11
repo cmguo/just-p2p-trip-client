@@ -24,6 +24,57 @@ namespace trip
             return get_segment(id).piece_size(id);
         }
 
+        Piece::pointer ResourceData::get_piece(
+            boost::uint64_t id)
+        {
+            Piece::pointer p = get_segment(id).get_piece(id);
+            if (p == NULL) {
+                data_miss.id = id;
+                raise(data_miss);
+                p = get_segment(id).get_piece(id);
+            }
+            return p;
+        }
+
+        PieceIterator ResourceData::iterator_at(
+            boost::uint64_t id)
+        {
+            PieceIterator iterator(*this, id);
+            iterator.segment_ = &get_segment(id);
+            iterator.block_ = &iterator.segment_->get_block(id);
+            iterator.piece_ = iterator.block_->get_piece(id);
+            return iterator;
+        }
+
+        PieceIterator ResourceData::end()
+        {
+            PieceIterator iterator(*this, MAKE_ID(MAX_SEGMENT, MAX_BLOCK, MAX_PIECE));
+            return iterator;
+        }
+
+        void ResourceData::increment(
+            PieceIterator & iterator)
+        {
+            ++iterator.id_;
+            boost::uint16_t pid = PIECE(iterator.id_);
+            if (pid >= iterator.block_->pieces().size()) {
+                pid = 0;
+                boost::uint16_t bid = BLOCK(iterator.id_) + 1;
+                if (bid >= iterator.segment_->blocks().size()) {
+                    bid = 0;
+                    boost::uint64_t sid = SEGMENT(iterator.id_) + 1;
+                    if (sid >= end_) {
+                        sid = MAX_SEGMENT;
+                    }
+                    iterator.id_ = MAKE_ID(SEGMENT(sid), bid, 0);
+                    iterator.segment_ = &get_segment(iterator.id_);
+                }
+                iterator.block_ = iterator.segment_->blocks()[bid];
+                iterator.id_ = MAKE_ID(SEGMENT(iterator.id_), bid, 0);
+            }
+            iterator.piece_ = iterator.block_->pieces()[pid];
+        }
+
         ResourceData::lock_t ResourceData::alloc_lock(
             boost::uint64_t from, 
             boost::uint64_t to)
@@ -71,13 +122,16 @@ namespace trip
                         l->from = p->to;
                     else
                         return;
-                } else {
+                } else if (p->from < l->to) {
                     release(l->from, p->from);
                     l->from = p->from;
                     if (p->to < l->to)
                         l->from = p->to;
                     else
                         return;
+                } else {
+                    release(l->from, l->to);
+                    return;
                 }
             }
         }
@@ -112,31 +166,52 @@ namespace trip
             return true;
         }
 
-        boost::uint64_t ResourceData::set_piece(
+        void ResourceData::set_segment_meta(
+            boost::uint64_t id, 
+            SegmentMeta const & meta)
+        {
+            Segment2 & segment(modify_segment2(id));
+            if (segment.meta == NULL) {
+                segment.meta = new SegmentMeta(meta);
+                if (segment.seg)
+                    segment.seg->set_size(meta.bytesize);
+                meta_ready.id = id;
+                meta_ready.meta = segment.meta;
+                raise(meta_ready);
+            }
+        }
+
+        bool ResourceData::set_piece(
             boost::uint64_t id, 
             Piece::pointer piece)
         {
             boost::uint64_t nextid = modify_segment(id).set_piece(id, piece);
-            if (nextid == MAKE_ID(0, MAX_BLOCK, MAX_PIECE)) {
+            if (nextid == MAKE_ID(0, MAX_BLOCK, 0)) {
                 boost::uint64_t index = SEGMENT(id);
                 if (next_ == index) {
                     while (true) {
                         ++next_;
                         if (next_ == end_) {
                             next_ = MAX_SEGMENT;
-                            return MAKE_ID(next_, 0, nextid);
+                            nextid = MAKE_ID(next_, 0, 0);
+                            break;
                         }
                         Segment & segment(modify_segment(MAKE_ID(next_, 0, 0)));
                         if (!segment.finished()) {
-                            return MAKE_ID(next_, 0, segment.next());
+                            nextid = MAKE_ID(next_, 0, segment.next());
+                            break;
                         }
                     }
                 }
             } else {
                 Segment & segment(modify_segment(MAKE_ID(next_, 0, 0)));
-                return MAKE_ID(next_, 0, segment.next());
+                nextid = MAKE_ID(next_, 0, segment.next());
             }
-            return 0;
+            if (id <= nextid) {
+                data_ready.id = nextid;
+                raise(data_ready);
+            }
+            return !piece;
         }
 
         Block const * ResourceData::map_block(

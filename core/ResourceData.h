@@ -5,6 +5,7 @@
 
 #include "trip/client/core/Segment.h"
 #include "trip/client/core/ResourceEvent.h"
+#include "trip/client/core/PieceIterator.h"
 
 #include <util/event/Observable.h>
 
@@ -24,7 +25,11 @@ namespace trip
             ~ResourceData();
 
         public:
-            DataChangedEvent data_changed;
+            SegmentMetaEvent meta_ready;
+
+            DataEvent data_ready;
+
+            DataEvent data_miss;
 
         public:
             Segment const & get_segment(
@@ -35,6 +40,15 @@ namespace trip
 
             Piece::pointer get_piece(
                 boost::uint64_t id);
+
+        public:
+            PieceIterator iterator_at(
+                boost::uint64_t id);
+
+            PieceIterator end();
+
+            void increment(
+                PieceIterator & iterator);
 
         public:
             typedef void const * lock_t;
@@ -60,7 +74,12 @@ namespace trip
                 boost::uint64_t id,
                 boost::filesystem::path const & path);
 
-            boost::uint64_t set_piece(
+        public:
+            void set_segment_meta(
+                boost::uint64_t id, 
+                SegmentMeta const & meta);
+
+            bool set_piece(
                 boost::uint64_t id, 
                 Piece::pointer piece);
 

@@ -48,10 +48,17 @@ namespace trip
 
             md5_bytes cache_md5sum() const;
 
-            Block const & get_block(
-                boost::uint64_t id) const;
+            boost::uint32_t size() const;
 
             boost::uint16_t piece_size(
+                boost::uint64_t id) const;
+
+            std::vector<Block *> const & blocks() const
+            {
+                return blocks_;
+            }
+
+            Block const & get_block(
                 boost::uint64_t id) const;
 
             Piece::pointer get_piece(
@@ -68,6 +75,9 @@ namespace trip
                 boost::filesystem::path const & path);
 
         public:
+            void set_size(
+                boost::uint32_t size);
+
             boost::uint64_t set_piece(
                 boost::uint64_t id, 
                 Piece::pointer piece);
@@ -85,9 +95,8 @@ namespace trip
                 boost::uint64_t id);
 
         private:
-            SegmentMeta const * meta_;
             boost::uint16_t next_;
-            boost::uint32_t piece_count_;
+            boost::uint16_t piece_count_;
             boost::uint16_t last_piece_size_;
             boost::uint16_t last_block_piece_;
             boost::uint32_t last_block_size_;
