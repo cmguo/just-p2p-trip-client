@@ -44,18 +44,6 @@ namespace trip
                 HttpServer * request,
                 response_t const & resp);
 
-            bool get_meta(
-                ResourceMeta & meta,
-                boost::system::error_code & ec);
-
-            bool get_segment_meta(
-                SegmentMeta & meta, 
-                boost::system::error_code & ec);
-
-            bool get_stat(
-                ResourceStat & stat, 
-                boost::system::error_code & ec);
-
             bool close_request(
                 HttpServer * request, 
                 boost::system::error_code & ec);

@@ -32,14 +32,17 @@ namespace trip
             DataEvent data_miss;
 
         public:
-            Segment const & get_segment(
-                boost::uint64_t segid) const;
+            SegmentMeta const * get_segment_meta(
+                boost::uint64_t id) const;
 
-            boost::uint16_t piece_size(
-                boost::uint64_t index) const;
+            Segment const * get_segment(
+                boost::uint64_t id) const;
 
             Piece::pointer get_piece(
                 boost::uint64_t id);
+
+            void get_stat(
+                boost::dynamic_bitset<boost::uint32_t> & map) const;
 
         public:
             PieceIterator iterator_at(
@@ -79,6 +82,10 @@ namespace trip
                 boost::uint64_t id, 
                 SegmentMeta const & meta);
 
+            bool load_block_stat(
+                boost::uint64_t id, 
+                boost::dynamic_bitset<boost::uint32_t> & map);
+
             bool set_piece(
                 boost::uint64_t id, 
                 Piece::pointer piece);
@@ -109,7 +116,7 @@ namespace trip
             Segment2 & modify_segment2(
                 boost::uint64_t id);
 
-            Segment2 const & get_segment2(
+            Segment2 const * get_segment2(
                 boost::uint64_t segid) const;
 
             void release(

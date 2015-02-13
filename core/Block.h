@@ -5,6 +5,8 @@
 
 #include "trip/client/core/Piece.h"
 
+#include <boost/dynamic_bitset/dynamic_bitset.hpp>
+
 namespace trip
 {
     namespace client
@@ -16,7 +18,7 @@ namespace trip
         {
         public:
             Block(
-                boost::uint16_t npiece = 0);
+                boost::uint32_t size = 0);
 
             Block(
                 BlockData * data);
@@ -43,6 +45,9 @@ namespace trip
             bool expired(
                 boost::uint16_t expire) const;
 
+            void get_stat(
+                boost::dynamic_bitset<boost::uint32_t> & map) const;
+
         public:
             boost::uint64_t set_piece(
                 boost::uint64_t id, 
@@ -55,6 +60,8 @@ namespace trip
         private:
             boost::uint16_t next_;
             mutable boost::uint16_t expire_;
+            boost::uint16_t piece_count_;
+            boost::uint16_t last_piece_size_;
             std::vector<Piece::pointer> pieces_;
         };
 

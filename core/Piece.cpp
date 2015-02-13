@@ -5,6 +5,7 @@
 #include "trip/client/core/PieceIterator.h"
 #include "trip/client/core/PoolPiece.h"
 #include "trip/client/core/BlockData.h"
+#include "trip/client/core/PartPiece.h"
 #include "trip/client/core/ResourceData.h"
 
 namespace trip
@@ -22,7 +23,7 @@ namespace trip
         static free_piece_t free_piece[] = {
             (free_piece_t)PoolPiece::free, 
             (free_piece_t)BlockPiece::free, 
-        //    (free_piece_t)OffsetPiece::free, 
+            (free_piece_t)PartPiece::free, 
         };
 
         void Piece::free(

@@ -18,30 +18,37 @@ namespace trip
         {
         }
 
-        boost::uint16_t ResourceData::piece_size(
-            boost::uint64_t id) const
-        {
-            return get_segment(id).piece_size(id);
-        }
-
         Piece::pointer ResourceData::get_piece(
             boost::uint64_t id)
         {
-            Piece::pointer p = get_segment(id).get_piece(id);
-            if (p == NULL) {
+            Segment2 const * segment2 = get_segment2(id);
+            if (segment2 == NULL)
+                return NULL;
+            Piece::pointer p;
+            if (segment2->seg) {
+                p = segment2->seg->get_piece(id);
+            }
+            if (p == NULL && segment2->saved) {
                 data_miss.id = id;
                 raise(data_miss);
-                p = get_segment(id).get_piece(id);
+                if (segment2->seg) {
+                    p = segment2->seg->get_piece(id);
+                }
             }
             return p;
+        }
+
+        void ResourceData::get_stat(
+            boost::dynamic_bitset<boost::uint32_t> & map) const
+        {
         }
 
         PieceIterator ResourceData::iterator_at(
             boost::uint64_t id)
         {
             PieceIterator iterator(*this, id);
-            iterator.segment_ = &get_segment(id);
-            iterator.block_ = &iterator.segment_->get_block(id);
+            iterator.segment_ = get_segment(id);
+            iterator.block_ = iterator.segment_->get_block(id);
             iterator.piece_ = iterator.block_->get_piece(id);
             return iterator;
         }
@@ -67,7 +74,7 @@ namespace trip
                         sid = MAX_SEGMENT;
                     }
                     iterator.id_ = MAKE_ID(SEGMENT(sid), bid, 0);
-                    iterator.segment_ = &get_segment(iterator.id_);
+                    iterator.segment_ = get_segment(iterator.id_);
                 }
                 iterator.block_ = iterator.segment_->blocks()[bid];
                 iterator.id_ = MAKE_ID(SEGMENT(iterator.id_), bid, 0);
@@ -181,6 +188,14 @@ namespace trip
             }
         }
 
+        bool ResourceData::load_block_stat(
+            boost::uint64_t id, 
+            boost::dynamic_bitset<boost::uint32_t> & map)
+        {
+            modify_segment(id).load_block_stat(id, map);
+            return true;
+        }
+
         bool ResourceData::set_piece(
             boost::uint64_t id, 
             Piece::pointer piece)
@@ -221,17 +236,16 @@ namespace trip
             return modify_segment(id).map_block(id, path);
         }
 
-        ResourceData::Segment2 const & ResourceData::get_segment2(
+        ResourceData::Segment2 const * ResourceData::get_segment2(
             boost::uint64_t id) const
         {
             boost::uint64_t index = SEGMENT(id);
             std::map<boost::uint64_t, Segment2>::const_iterator iter = 
                 segments_.find(index);
             if (iter == segments_.end()) {
-                static Segment2 empty_segment;
-                return empty_segment;
+                return NULL;
             }
-            return iter->second;
+            return &iter->second;
         }
 
         ResourceData::Segment2 & ResourceData::modify_segment2(
@@ -246,15 +260,24 @@ namespace trip
             return iter->second;
         }
 
-        Segment const & ResourceData::get_segment(
+        Segment const * ResourceData::get_segment(
             boost::uint64_t id) const
         {
-            Segment2 const & segment(get_segment2(id));
-            if (segment.seg == NULL) {
-                static Segment empty_segment;
-                return empty_segment;
+            Segment2 const * segment(get_segment2(id));
+            if (segment == NULL) {
+                return NULL;
             }
-            return *segment.seg;
+            return segment->seg;
+        }
+
+        SegmentMeta const * ResourceData::get_segment_meta(
+            boost::uint64_t id) const
+        {
+            Segment2 const * segment(get_segment2(id));
+            if (segment == NULL) {
+                return NULL;
+            }
+            return segment->meta;
         }
 
         Segment & ResourceData::modify_segment(

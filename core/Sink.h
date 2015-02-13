@@ -28,6 +28,23 @@ namespace trip
             virtual ~Sink();
 
         public:
+            SinkRequest const & get_request() const
+            {
+                return request_;
+            }
+
+        public:
+            bool get_meta(
+                ResourceMeta & meta,
+                boost::system::error_code & ec);
+
+            bool get_segment_meta(
+                SegmentMeta & meta, 
+                boost::system::error_code & ec);
+
+            bool get_stat(
+                ResourceStat & stat, 
+                boost::system::error_code & ec);
 
         protected:
             void seek_to(
@@ -42,13 +59,17 @@ namespace trip
         private:
             virtual size_t write(
                 Piece * p, 
-                boost::system::error_code & ec);
+                boost::system::error_code & ec) = 0;
 
         private:
 
         private:
             Resource & resource_;
-            SinkRequest type_;
+            SinkRequest request_;
+            PieceIterator iter_;
+            PieceIterator end_;
+            boost::uint32_t off_;
+            boost::uint32_t size_; // left
         };
 
     } // namespace client

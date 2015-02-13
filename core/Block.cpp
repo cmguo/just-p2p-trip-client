@@ -53,6 +53,14 @@ namespace trip
             return (expire < expire_);
         }
 
+        void Block::get_stat(
+            boost::dynamic_bitset<boost::uint32_t> & map) const
+        {
+            for (size_t i = 0; i < pieces_.size() - 1; ++i) {
+                map.push_back(pieces_[i]);
+            }
+        }
+
         boost::uint64_t Block::set_piece(
             boost::uint64_t id, 
             Piece::pointer piece)

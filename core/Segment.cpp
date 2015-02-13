@@ -20,39 +20,35 @@ namespace trip
 
         boost::uint32_t Segment::size() const
         {
-            return PIECE_SIZE * piece_count_ - PIECE_SIZE + last_piece_size_;
+            return BLOCK_SIZE * block_count_ - BLOCK_SIZE + last_block_size_;
         }
 
-        boost::uint16_t Segment::piece_size(
-            boost::uint64_t id) const
-        {
-            boost::uint16_t index = BLOCK_PIECE(id);
-            if (boost::uint16_t(index + 1) < piece_count_) {
-                return PIECE_SIZE;
-            } else if (index < piece_count_) {
-                return last_piece_size_;
-            } else {
-                assert(false);
-                return 0;
-            }
-        }
-
-        Block const & Segment::get_block(
+        Block const * Segment::get_block(
             boost::uint64_t id) const
         {
             boost::uint16_t index = BLOCK(id);
             assert(index < blocks_.size());
-            if (index < blocks_.size() && blocks_[index]) {
-                return *blocks_[index];
+            if (index < blocks_.size()) {
+                return blocks_[index];
             }
-            static Block empty_block;
-            return empty_block;
+            return NULL;
         }
 
         Piece::pointer Segment::get_piece(
             boost::uint64_t id) const
         {
-            return get_block(id).get_piece(id);
+            Block const * block = get_block(id);
+            if (block == NULL)
+                return NULL;
+            return block->get_piece(id);
+        }
+
+        void Segment::get_stat(
+            boost::dynamic_bitset<boost::uint32_t> & map) const
+        {
+            for (size_t i = 0; i < pieces_.size() - 1; ++i) {
+                map.push_back(blocks_[i] && blocks_[i]->finished());
+            }
         }
 
         md5_bytes Segment::cache_md5sum() const
@@ -103,22 +99,23 @@ namespace trip
         void Segment::set_size(
             boost::uint32_t size)
         {
-            piece_count_ = size / PIECE_SIZE;
-            last_piece_size_ = size % PIECE_SIZE;
-            if (last_piece_size_ == 0) {
-                last_piece_size_ = PIECE_SIZE;
+            block_count_ = size / BLOCK_SIZE;
+            last_block_size_ = size % BLOCK_SIZE;
+            if (last_block_size_ == 0) {
+                last_block_size_ = BLOCK_SIZE;
             } else {
-                ++piece_count_;
+                ++block_count_;
             }
-            size_t block_count = piece_count_ + PIECE_PER_BLOCK;
-            last_block_piece_ = piece_count_ % PIECE_PER_BLOCK;
-            if (last_block_piece_ == 0) {
-                last_block_piece_ = PIECE_PER_BLOCK;
-            } else {
-                ++block_count;
-            }
-            assert(block_count < BLOCK_PER_SEGMENT);
-            blocks_.resize(block_count);
+            assert(block_count <= BLOCK_PER_SEGMENT);
+            blocks_.resize(block_count_);
+        }
+
+        bool Segment::load_block_stat(
+            boost::uint64_t id, 
+            boost::dynamic_bitset<boost::uint32_t> & map)
+        {
+            modify_block(id).get_stat(map);
+            return true;
         }
 
         boost::uint64_t Segment::set_piece(
@@ -167,9 +164,9 @@ namespace trip
             if (index < blocks_.size()) {
                 if (blocks_[index] == NULL) {
                     if (index < blocks_.size() - 1) {
-                        blocks_[index] = new Block(PIECE_PER_BLOCK);
+                        blocks_[index] = new Block(BLOCK_SIZE);
                     } else {
-                        blocks_[index] = new Block(last_block_piece_);
+                        blocks_[index] = new Block(last_block_size_);
                     }
                 }
                 return *blocks_[index];

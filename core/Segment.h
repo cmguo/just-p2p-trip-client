@@ -50,19 +50,19 @@ namespace trip
 
             boost::uint32_t size() const;
 
-            boost::uint16_t piece_size(
-                boost::uint64_t id) const;
-
             std::vector<Block *> const & blocks() const
             {
                 return blocks_;
             }
 
-            Block const & get_block(
+            Block const * get_block(
                 boost::uint64_t id) const;
 
             Piece::pointer get_piece(
                 boost::uint64_t id) const;
+
+            void get_stat(
+                boost::dynamic_bitset<boost::uint32_t> & map) const;
 
         public:
             static md5_bytes file_md5sum(
@@ -77,6 +77,10 @@ namespace trip
         public:
             void set_size(
                 boost::uint32_t size);
+
+            bool load_block_stat(
+                boost::uint64_t id, 
+                boost::dynamic_bitset<boost::uint32_t> & map);
 
             boost::uint64_t set_piece(
                 boost::uint64_t id, 
@@ -96,9 +100,7 @@ namespace trip
 
         private:
             boost::uint16_t next_;
-            boost::uint16_t piece_count_;
-            boost::uint16_t last_piece_size_;
-            boost::uint16_t last_block_piece_;
+            boost::uint16_t block_count_;
             boost::uint32_t last_block_size_;
             std::vector<Block *> blocks_;
         };
