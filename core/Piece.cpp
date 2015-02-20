@@ -15,7 +15,7 @@ namespace trip
 
         void PieceIterator::increment()
         {
-            resource_.increment(*this);
+            resource_->increment(*this);
         }
 
         typedef void (*free_piece_t)(Piece *);

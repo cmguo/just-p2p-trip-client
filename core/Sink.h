@@ -4,6 +4,9 @@
 #define _TRIP_CLIENT_CORE_SINK_H_
 
 #include "trip/client/core/Piece.h"
+#include "trip/client/core/PieceIterator.h"
+
+#include <util/event/Event.h>
 
 namespace trip
 {
@@ -33,18 +36,10 @@ namespace trip
                 return request_;
             }
 
-        public:
-            bool get_meta(
-                ResourceMeta & meta,
-                boost::system::error_code & ec);
-
-            bool get_segment_meta(
-                SegmentMeta & meta, 
-                boost::system::error_code & ec);
-
-            bool get_stat(
-                ResourceStat & stat, 
-                boost::system::error_code & ec);
+            Resource const & resource() const
+            {
+                return resource_;
+            }
 
         protected:
             void seek_to(
@@ -52,19 +47,21 @@ namespace trip
                 boost::uint32_t begin, 
                 boost::uint32_t end);
 
+            bool at_end() const;
+
             Piece::pointer read();
 
-            bool bump();
+        private:
+            virtual void on_data() = 0;
 
         private:
-            virtual size_t write(
-                Piece * p, 
-                boost::system::error_code & ec) = 0;
+            void on_event(
+                util::event::Event const & event);
 
-        private:
-
-        private:
+        protected:
             Resource & resource_;
+
+        private:
             SinkRequest request_;
             PieceIterator iter_;
             PieceIterator end_;

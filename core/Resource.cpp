@@ -3,6 +3,8 @@
 #include "trip/client/Common.h"
 #include "trip/client/core/Resource.h"
 
+#include <algorithm>
+
 namespace trip
 {
     namespace client
@@ -33,7 +35,7 @@ namespace trip
         void Resource::set_meta(
             ResourceMeta const & meta)
         {
-            meta_ = meta;
+            meta_ = new ResourceMeta(meta);
             raise(meta_changed);
         }
 
@@ -42,6 +44,24 @@ namespace trip
         {
             urls_ = urls;
             raise(meta_changed);
+        }
+
+        void Resource::add_sink(
+            Sink * sink)
+        {
+            sinks_.push_back(sink);
+            sink_changed.type = 0;
+            sink_changed.sink = sink;
+            raise(sink_changed);
+        }
+
+        void Resource::del_sink(
+            Sink * sink)
+        {
+            sinks_.erase(std::remove(sinks_.begin(), sinks_.end(), sink));
+            sink_changed.type = 1;
+            sink_changed.sink = sink;
+            raise(sink_changed);
         }
 
     } // namespace client

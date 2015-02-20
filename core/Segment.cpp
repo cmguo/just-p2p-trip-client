@@ -46,7 +46,7 @@ namespace trip
         void Segment::get_stat(
             boost::dynamic_bitset<boost::uint32_t> & map) const
         {
-            for (size_t i = 0; i < pieces_.size() - 1; ++i) {
+            for (size_t i = 0; i < blocks_.size() - 1; ++i) {
                 map.push_back(blocks_[i] && blocks_[i]->finished());
             }
         }
@@ -106,7 +106,7 @@ namespace trip
             } else {
                 ++block_count_;
             }
-            assert(block_count <= BLOCK_PER_SEGMENT);
+            assert(block_count_ <= BLOCK_PER_SEGMENT);
             blocks_.resize(block_count_);
         }
 
@@ -150,7 +150,7 @@ namespace trip
             boost::uint32_t offset = BLOCK_SIZE * index;
             size_t size = BLOCK_SIZE;
             if (index == blocks_.size() - 1) {
-                size = (last_block_piece_ - 1) * PIECE_SIZE + last_piece_size_;
+                size = last_block_size_;
             }
             BlockData * data = BlockData::alloc(path, offset, size);
             blocks_[index] = new Block(data);

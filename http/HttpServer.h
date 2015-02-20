@@ -15,6 +15,8 @@ namespace trip
         class HttpManager;
         class HttpSession;
 
+        using util::protocol::http_field::Range;
+
         class HttpServer
             : public util::protocol::HttpServer
         {
@@ -36,7 +38,7 @@ namespace trip
             virtual void local_process(response_type const & resp);
 
         private:
-            void handle_prepare(
+            void handle_open(
                 response_type const & resp,
                 boost::system::error_code ec);
 
@@ -56,6 +58,8 @@ namespace trip
         private:
             HttpManager & mgr_;
             framework::string::Url url_;
+            std::string option_;
+            boost::uint64_t segment_;
             HttpSession * session_;
         };
 

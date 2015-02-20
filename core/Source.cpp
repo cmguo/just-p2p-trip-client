@@ -26,11 +26,5 @@ namespace trip
             resource_.set_piece(id, piece);
         }
 
-        boost::uint16_t Source::piece_size(
-            boost::uint64_t id) const
-        {
-            return resource_.piece_size(id);
-        }
-
     } // namespace client
 } // namespace trip

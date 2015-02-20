@@ -27,11 +27,17 @@ namespace trip
             PieceIterator(
                 ResourceData & resource, 
                 boost::uint64_t id)
-                : resource_(resource)
+                : resource_(&resource)
                 , id_(id)
                 , segment_(NULL)
                 , block_(NULL)
             {
+            }
+
+        public:
+            boost::uint64_t id() const
+            {
+                return id_;
             }
 
         private:
@@ -42,7 +48,7 @@ namespace trip
             bool equal(
                 PieceIterator const & r) const
             {
-                assert(&r.resource_ == &resource_);
+                assert(r.resource_ == resource_);
                 return id_ == r.id_;
             }
 
@@ -54,7 +60,7 @@ namespace trip
         private:
             friend class ResourceData;
 
-            ResourceData & resource_;
+            ResourceData * resource_;
             boost::uint64_t id_;
             Segment const * segment_;
             Block const * block_;

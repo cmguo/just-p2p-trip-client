@@ -1,0 +1,12 @@
+{
+	global: 
+		TRIP_StartEngine;
+		TRIP_StopEngine;
+		TRIP_GetPort;
+		TRIP_GetVersion;
+		TRIP_GetLastError;
+		TRIP_GetLastErrorMsg;
+		TRIP_SetConfig;
+
+	local: *;
+};

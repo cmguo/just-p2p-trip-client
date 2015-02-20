@@ -49,7 +49,10 @@ namespace trip
                 boost::dynamic_bitset<boost::uint32_t> & map) const;
 
         public:
-            boost::uint64_t set_piece(
+          void set_size(
+            boost::uint32_t size);
+
+          boost::uint64_t set_piece(
                 boost::uint64_t id, 
                 Piece::pointer piece);
 

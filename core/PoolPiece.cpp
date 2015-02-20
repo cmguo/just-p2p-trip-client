@@ -13,7 +13,7 @@ namespace trip
 
         static framework::memory::BigFixedPool pool(framework::memory::PrivateMemory(), -1, sizeof(PoolPiece));
 
-        inline PoolPiece * PoolPiece::alloc(
+        PoolPiece * PoolPiece::alloc(
             boost::uint16_t size)
         {
             void * ptr = pool.alloc(sizeof(PoolPiece));

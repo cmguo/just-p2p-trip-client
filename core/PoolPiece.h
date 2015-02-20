@@ -25,7 +25,7 @@ namespace trip
 
         public:
             static PoolPiece * alloc(
-                boost::uint16_t size);
+                boost::uint16_t size = PIECE_SIZE);
 
             static void free(
                 PoolPiece * p);

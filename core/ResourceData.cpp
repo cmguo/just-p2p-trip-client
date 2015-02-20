@@ -48,8 +48,12 @@ namespace trip
         {
             PieceIterator iterator(*this, id);
             iterator.segment_ = get_segment(id);
-            iterator.block_ = iterator.segment_->get_block(id);
-            iterator.piece_ = iterator.block_->get_piece(id);
+            if (iterator.segment_) {
+                iterator.block_ = iterator.segment_->get_block(id);
+            }
+            if (iterator.block_) {
+                iterator.piece_ = iterator.block_->get_piece(id);
+            }
             return iterator;
         }
 
@@ -66,18 +70,24 @@ namespace trip
             boost::uint16_t pid = PIECE(iterator.id_);
             if (pid >= iterator.block_->pieces().size()) {
                 pid = 0;
+                iterator.piece_.reset();
                 boost::uint16_t bid = BLOCK(iterator.id_) + 1;
                 if (bid >= iterator.segment_->blocks().size()) {
                     bid = 0;
+                    iterator.block_ = NULL;
                     boost::uint64_t sid = SEGMENT(iterator.id_) + 1;
                     if (sid >= end_) {
                         sid = MAX_SEGMENT;
                     }
-                    iterator.id_ = MAKE_ID(SEGMENT(sid), bid, 0);
+                    iterator.id_ = MAKE_ID(sid, bid, 0);
                     iterator.segment_ = get_segment(iterator.id_);
+                    if (iterator.segment_ == NULL)
+                        return;
                 }
-                iterator.block_ = iterator.segment_->blocks()[bid];
                 iterator.id_ = MAKE_ID(SEGMENT(iterator.id_), bid, 0);
+                iterator.block_ = iterator.segment_->blocks()[bid];
+                if (iterator.block_ == NULL)
+                    return;
             }
             iterator.piece_ = iterator.block_->pieces()[pid];
         }
@@ -182,9 +192,9 @@ namespace trip
                 segment.meta = new SegmentMeta(meta);
                 if (segment.seg)
                     segment.seg->set_size(meta.bytesize);
-                meta_ready.id = id;
-                meta_ready.meta = segment.meta;
-                raise(meta_ready);
+                seg_meta_ready.id = id;
+                seg_meta_ready.meta = segment.meta;
+                raise(seg_meta_ready);
             }
         }
 

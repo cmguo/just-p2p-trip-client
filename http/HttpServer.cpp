@@ -10,6 +10,7 @@
 #include <util/archive/XmlOArchive.h>
 using namespace util::protocol;
 
+#include <framework/string/Parse.h>
 #include <framework/logger/Logger.h>
 #include <framework/logger/StreamRecord.h>
 
@@ -26,6 +27,7 @@ namespace trip
             HttpManager & mgr)
             : util::protocol::HttpServer(mgr.io_svc())
             , mgr_(mgr)
+            , segment_(MAX_SEGMENT)
             , session_(NULL)
         {
         }
@@ -49,12 +51,23 @@ namespace trip
             boost::system::error_code ec;
             session_ = mgr_.alloc_session(url_, ec);
 
+            option_ = url_.path();
+
+            if (option_.compare(0, 7, "/fetch/") == 0) {
+                segment_ = framework::string::parse<boost::uint64_t>(option_.substr(7));
+                option_ = "/fetch";
+            }
+
             if (!ec) {
-                std::string option = url_.path();
-                if (option != "/meta"
-                    && option != "/stat"
-                    && option != "/fetch") {
+                if (option_ != "/meta"
+                    && option_ != "/stat"
+                    && option_ != "/fetch") {
                         ec = framework::system::logic_error::invalid_argument;
+                } else {
+                    Range range(request_head().range.get_value_or(Range()));
+                    if (range.count() > 1) {
+                        ec = util::protocol::http_error::requested_range_not_satisfiable;
+                    }
                 }
             }
 
@@ -64,8 +77,76 @@ namespace trip
                 return;
             }
 
-            session_->async_prepare(this, 
-                boost::bind(&HttpServer::handle_prepare, this, resp, _1));
+            if (option_ == "/fetch") {
+                session_->async_open(this, segment_, 
+                    boost::bind(&HttpServer::handle_open, this, resp, _1));
+            } else {
+                session_->async_open(this, 
+                    boost::bind(&HttpServer::handle_open, this, resp, _1));
+            }
+        }
+
+        static char const * format_mine[][2] = {
+            {"flv", "video/x-flv"}, 
+            {"ts", "video/MP2T"}, 
+            {"mp4", "video/mp4"}, 
+            {"asf", "video/x-ms-asf"}, 
+            {"m3u8", "application/x-mpegURL"},
+        };
+
+        static char const * content_type(
+            std::string const & format)
+        {
+            for (size_t i = 0; i < sizeof(format_mine) / sizeof(format_mine[0]); ++i) {
+                if (format == format_mine[i][0]) {
+                    return format_mine[i][1];
+                }
+            }
+            return "video";
+        }
+
+        void HttpServer::handle_open(
+            response_type const & resp,
+            boost::system::error_code ec)
+        {
+            LOG_INFO( "[handle_open] session:" << session_ << " ec:" << ec.message());
+
+            if (!ec) {
+                if (option_ == "/fetch") {
+                    ResourceMeta const * meta = session_->resource().meta();
+                    SegmentMeta const * smeta = session_->resource().get_segment_meta(0);
+                    Range range(request_head().range.get_value_or(Range()));
+                    RangeUnit const & unit(range[0]);
+                    if (unit.has_end() && unit.end() > smeta->bytesize) {
+                        ec = util::protocol::http_error::requested_range_not_satisfiable;
+                    } else {
+                        util::protocol::http_field::ContentRange content_range(smeta->bytesize, range[0]);
+                        if (unit.begin() > 0 || (unit.has_end() && unit.end() < smeta->bytesize)) {
+                            response_head().err_code = util::protocol::http_error::partial_content;
+                            response_head().content_range = content_range;
+                        }
+                        response_head()["Content-Type"] = content_type(meta->file_extension);
+                        if (url_.param("chunked") == "true") {
+                            response_head().transfer_encoding = "chunked";
+                        }
+                        resp(ec, (size_t)content_range.size());
+                        return;
+                    }
+                } else {
+                    response_head()["Content-Type"] = "application/xml";
+                    if (option_ == "/meta") {
+                        make_meta(ec);
+                    } else if (option_ == "/stat") {
+                        make_stat(ec);
+                    }
+                }
+            }
+
+            if (ec) {
+                make_error(ec);
+            }
+
+            resp(ec, response_data().size());
         }
 
         void HttpServer::transfer_response_data(
@@ -76,12 +157,21 @@ namespace trip
             if (response_data().size()) {
                 util::protocol::HttpServer::transfer_response_data(resp);
             } else {
-                assert(url_.path() == "/fetch");
+                assert(option_ == "/fetch");
                 boost::system::error_code ec;
                 set_non_block(true, ec);
-                session_->async_fetch(this, 
+                Range range(request_head().range.get_value_or(Range()));
+                session_->async_fetch(this, range[0], &response_stream(), 
                     boost::bind(&HttpServer::handle_fetch, this, resp, _1));
             }
+        }
+
+        void HttpServer::handle_fetch(
+            response_type const & resp,
+            boost::system::error_code const & ec)
+        {
+            LOG_INFO( "[handle_fetch] ec:" << ec.message());
+            resp(ec, Size());
         }
 
         void HttpServer::on_finish()
@@ -105,90 +195,6 @@ namespace trip
             }
         }
 
-        char const * format_mine[][2] = {
-            {"flv", "video/x-flv"}, 
-            {"ts", "video/MP2T"}, 
-            {"mp4", "video/mp4"}, 
-            {"asf", "video/x-ms-asf"}, 
-            {"m3u8", "application/x-mpegURL"},
-        };
-
-        char const * content_type(
-            std::string const & format)
-        {
-            for (size_t i = 0; i < sizeof(format_mine) / sizeof(format_mine[0]); ++i) {
-                if (format == format_mine[i][0]) {
-                    return format_mine[i][1];
-                }
-            }
-            return "video";
-        }
-
-        void HttpServer::handle_prepare(
-            response_type const & resp,
-            boost::system::error_code ec)
-        {
-            LOG_INFO( "[handle_prepare] session:" << session_ << " ec:" << ec.message());
-
-            std::string option = url_.path();
-
-            if (!ec) {
-                if (option == "/fetch") {
-                }
-            }
-
-            if (ec) {
-                make_error(ec);
-                resp(ec, response_data().size());
-                return;
-            }
-
-            if (option == "/fetch") {
-                ResourceMeta meta;
-                SegmentMeta smeta;
-                session_->get_meta(meta, ec)
-                    && session_->get_segment_meta(smeta, ec);
-                response_head()["Content-Type"] = std::string("{") + content_type(meta.file_extension) + "}";
-                if (url_.param("chunked") == "true") {
-                    response_head().transfer_encoding = "chunked";
-                }
-                if (smeta.bytesize == 0) {
-                    resp(ec, Size());
-                } else if (!request_head().range.is_initialized()) {
-                    resp(ec, (size_t)smeta.bytesize);
-                } else {
-                    util::protocol::http_field::Range & range(request_head().range.get());
-                    if (range.count() > 1) {
-                        resp(util::protocol::http_error::requested_range_not_satisfiable, Size());
-                    } else {
-                        util::protocol::http_field::ContentRange content_range(smeta.bytesize, range[0]);
-                        response_head().err_code = util::protocol::http_error::partial_content;
-                        response_head().content_range = content_range;
-                        resp(ec, (size_t)content_range.size());
-                    }
-                }
-            } else {
-                response_head()["Content-Type"]="{application/xml}";
-                if (option == "/meta") {
-                    make_meta(ec);
-                } else if (option == "/stat") {
-                    make_stat(ec);
-                }
-                if (ec) {
-                    make_error(ec);
-                }
-                resp(ec, response_data().size());
-            }
-        }
-
-        void HttpServer::handle_fetch(
-            response_type const & resp,
-            boost::system::error_code const & ec)
-        {
-            LOG_INFO( "[handle_fetch] ec:"<<ec.message());
-            resp(ec, 0);
-        }
-
         void HttpServer::make_error(
             boost::system::error_code const & ec)
         {
@@ -204,11 +210,11 @@ namespace trip
         void HttpServer::make_meta(
             boost::system::error_code & ec)
         {
-            ResourceMeta meta;
-            session_->get_meta(meta, ec);
-            if (!ec) {
+            ResourceMeta const * meta = 
+                session_->resource().meta();
+            if (meta) {
                 util::archive::XmlOArchive<> oa(response_data());
-                oa << meta;
+                oa << *meta;
             }
         }
 
@@ -216,7 +222,7 @@ namespace trip
             boost::system::error_code& ec)
         {
             ResourceStat stat;
-            session_->get_stat(stat, ec);
+            //session_->resource().stat();
             if (!ec) {
                 util::archive::XmlOArchive<> oa(response_data());
                 oa << stat;

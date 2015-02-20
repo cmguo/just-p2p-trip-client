@@ -9,7 +9,7 @@ namespace trip
     {
 
 #define PIECE_SIZE 1400
-#define BIT_COUNT 64
+#define BIT_COUNT 63
 #define PICE_BIT 6
 #define BLOCK_BIT 6
 #define SEGMENT_BIT (BIT_COUNT - PICE_BIT - BLOCK_BIT)
@@ -19,17 +19,17 @@ namespace trip
 #define BLOCK_PER_SEGMENT (1 << BLOCK_BIT)
 #define SEGMENT_SIZE (BLOCK_SIZE * BLOCK_PER_SEGMENT)
 
-#define SEGMENT(id) (id >> (PICE_BIT + BLOCK_BIT))
-#define BLOCK(id) boost::uint16_t((id >> PICE_BIT) & ((1 << BLOCK_BIT) - 1))
-#define PIECE(id) boost::uint16_t(id & ((1 << PICE_BIT) - 1))
-#define BLOCK_PIECE(id) boost::uint16_t(id & ((1 << (PICE_BIT + BLOCK_BIT)) - 1))
-#define SEGMENT_BLOCK(id) boost::uint64_t(id >> PICE_BIT)
+#define SEGMENT(id) ((id) >> (PICE_BIT + BLOCK_BIT))
+#define BLOCK(id) boost::uint16_t(((id) >> PICE_BIT) & ((1 << BLOCK_BIT) - 1))
+#define PIECE(id) boost::uint16_t((id) & ((1 << PICE_BIT) - 1))
+#define BLOCK_PIECE(id) boost::uint16_t((id) & ((1 << (PICE_BIT + BLOCK_BIT)) - 1))
+#define SEGMENT_BLOCK(id) boost::uint64_t((id) >> PICE_BIT)
 
 #define MAX_PIECE boost::uint16_t((1 << PICE_BIT))
 #define MAX_BLOCK boost::uint16_t((1 << BLOCK_BIT))
 #define MAX_SEGMENT boost::uint64_t((1ULL << SEGMENT_BIT))
 
-#define MAKE_ID(s, b, p) ((s << (PICE_BIT + BLOCK_BIT)) | (b << PICE_BIT) | p)
+#define MAKE_ID(s, b, p) (((s) << (PICE_BIT + BLOCK_BIT)) | ((b) << PICE_BIT) | (p))
 
         class Piece
         {

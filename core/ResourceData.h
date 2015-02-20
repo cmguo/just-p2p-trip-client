@@ -9,7 +9,7 @@
 
 #include <util/event/Observable.h>
 
-#include <framework/container/OrderedList.h>
+#include <framework/container/Ordered.h>
 
 namespace trip
 {
@@ -25,7 +25,7 @@ namespace trip
             ~ResourceData();
 
         public:
-            SegmentMetaEvent meta_ready;
+            SegmentMetaEvent seg_meta_ready;
 
             DataEvent data_ready;
 
@@ -125,7 +125,7 @@ namespace trip
 
         private:
             struct Lock
-                : framework::container::OrderedListHook<Lock>::type
+                : framework::container::OrderedHook<Lock>::type
             {
                 boost::uint64_t from;
                 boost::uint64_t to;
@@ -144,7 +144,7 @@ namespace trip
             boost::uint64_t next_;
             boost::uint64_t end_;
             std::map<boost::uint64_t, Segment2> segments_;
-            framework::container::OrderedList<Lock> locks_;
+            framework::container::Ordered<Lock> locks_;
         };
 
     } // namespace client

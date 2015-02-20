@@ -8,7 +8,7 @@ namespace trip
     namespace client
     {
 
-        inline PartPiece * PartPiece::alloc(
+        PartPiece * PartPiece::alloc(
             Piece::pointer piece, 
             boost::uint16_t offset, 
             boost::uint16_t size)

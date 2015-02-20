@@ -25,6 +25,12 @@ namespace trip
             virtual ~Source();
 
         public:
+            Resource const & resource() const
+            {
+                return resource_;
+            }
+
+        public:
             virtual bool request(
                 std::vector<boost::uint64_t> & pieces) = 0;
 
@@ -32,9 +38,6 @@ namespace trip
             void on_data(
                 boost::uint64_t id, 
                 Piece::pointer piece);
-
-            boost::uint16_t piece_size(
-                boost::uint64_t id) const;
 
         private:
             Resource & resource_;

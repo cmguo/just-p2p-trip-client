@@ -46,7 +46,7 @@ namespace trip
                 return id_;
             }
 
-            ResourceMeta const & meta() const
+            ResourceMeta const * meta() const
             {
                 return meta_;
             }
@@ -81,7 +81,7 @@ namespace trip
 
         private:
             Uuid id_;
-            ResourceMeta meta_;
+            ResourceMeta * meta_;
             std::vector<Url> urls_;
             std::vector<Source *> sources_;
             std::vector<Sink *> sinks_;

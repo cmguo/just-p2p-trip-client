@@ -68,7 +68,7 @@ namespace trip
             boost::filesystem::directory_iterator iter(directory_);
             boost::filesystem::directory_iterator end;
             for (; iter != end; ++iter) {
-                if (iter->path().extension() == resource_.meta().file_extension) {
+                if (iter->path().extension() == resource_.meta()->file_extension) {
                     boost::uint64_t segid = strid(iter->path().stem());
                     boost::uint64_t id = MAKE_ID(segid, 0, 0);
                     if (!resource_.load_segment(id, iter->path())) {
@@ -87,7 +87,7 @@ namespace trip
                 DataEvent const & e(resource_.data_miss);
                 std::string segname = idstr(SEGMENT(e.id));
                 segname.append(1, '.');
-                segname.append(resource_.meta().file_extension);
+                segname.append(resource_.meta()->file_extension);
                 Block const * block = resource_.map_block(e.id, directory_ / segname);
                 if (block) {
                     boost::uint64_t f = SEGMENT_BLOCK(e.id);

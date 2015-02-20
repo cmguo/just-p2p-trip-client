@@ -45,20 +45,18 @@ namespace trip
             size_t bytes_read, 
             Piece::pointer piece)
         {
-            if (ec)
+            if (ec && ec != boost::asio::error::eof)
                 return;
 
             if (piece) {
-                assert(piece->size() == (boost::uint16_t)bytes_read);
-                if (piece->size() == (boost::uint16_t)bytes_read) {
-                    on_data(pieces_[index_], piece);
-                    ++index_;
-                } else {
+                ((PoolPiece &)*piece).set_size((boost::uint16_t)bytes_read);
+                on_data(pieces_[index_], piece);
+                ++index_;
+                if (index_ >= pieces_.size())
                     return;
-                }
             }
 
-            piece = PoolPiece::alloc(piece_size(pieces_[index_]));
+            piece = PoolPiece::alloc();
             boost::asio::async_read(
                 http_.response_stream(), 
                 boost::asio::buffer(piece->data(), piece->size()), 

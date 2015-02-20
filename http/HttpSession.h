@@ -5,6 +5,9 @@
 
 #include "trip/client/core/Sink.h"
 
+#include <util/protocol/http/HttpFieldRange.h>
+#include <util/stream/Sink.h>
+
 #include <boost/function.hpp>
 
 namespace trip
@@ -17,6 +20,8 @@ namespace trip
         struct ResourceMeta;
         struct ResourceStat;
         struct SegmentMeta;
+
+        using util::protocol::http_field::RangeUnit;
 
         class HttpSession
             : public Sink
@@ -36,25 +41,45 @@ namespace trip
             bool empty() const;
 
         public:
-            void async_prepare(
-                HttpServer * request,
+            void async_open(
+                HttpServer * server,
+                response_t const & resp);
+
+            void async_open(
+                HttpServer * server,
+                boost::uint64_t segm, 
                 response_t const & resp);
 
             void async_fetch(
-                HttpServer * request,
+                HttpServer * server,
+                RangeUnit const & range, 
+                util::stream::Sink * sink,
                 response_t const & resp);
 
             bool close_request(
-                HttpServer * request, 
+                HttpServer * server, 
                 boost::system::error_code & ec);
 
         private:
-            void on_event();
+            virtual void on_data();
+
+        private:
+            void on_event(
+                util::event::Event const & event);
+
+            void fetch_next();
+
+            void on_write(
+                boost::system::error_code const & ec, 
+                size_t bytes_write);
 
         private:
             boost::asio::io_service & io_svc_;
-            Resource * resource_;
-            std::map<HttpServer *, response_t> requests_;
+            struct Request;
+            struct find_request;
+            std::list<Request> open_requests_;
+            std::list<Request> fetch_requests_;
+            Piece::pointer piece_;
         };
 
     } // namespace dispatch

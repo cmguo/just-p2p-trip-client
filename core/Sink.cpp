@@ -3,6 +3,9 @@
 #include "trip/client/Common.h"
 #include "trip/client/core/Sink.h"
 #include "trip/client/core/Resource.h"
+#include "trip/client/core/PartPiece.h"
+
+#include <boost/bind.hpp>
 
 namespace trip
 {
@@ -23,26 +26,6 @@ namespace trip
         {
         }
 
-        bool Sink::get_meta(
-            ResourceMeta & meta,
-            boost::system::error_code & ec)
-        {
-            meta = resource_.meta();
-            return true;
-        }
-
-        bool Sink::get_segment_meta(
-            SegmentMeta & meta, 
-            boost::system::error_code & ec)
-        {
-        }
-
-        bool Sink::get_stat(
-            ResourceStat & stat, 
-            boost::system::error_code & ec)
-        {
-        }
-
         void Sink::seek_to(
             boost::uint64_t seg, 
             boost::uint32_t begin, 
@@ -53,7 +36,7 @@ namespace trip
             if (end) {
                 request_.end = MAKE_ID(seg, 0, (end + PIECE_SIZE - 1) / PIECE_SIZE);
             } else {
-                request_.end = MAKE_ID(seg + 1, 0, 0);
+                request_.end = MAKE_ID((seg + 1), 0, 0);
             }
             off_ = begin % PIECE_SIZE;
             size_ = end - begin;
@@ -61,22 +44,44 @@ namespace trip
 
         Piece::pointer Sink::read()
         {
-            if (iter_ == end_)
+            if (iter_ == end_) {
+                resource_.data_ready.un(
+                    boost::bind(&Sink::on_event, this, _2));
                 return NULL;
-            Piece::pointer p = *iter;
-            if (!p) {
-                iter = resource_.iterator_at(request_.begin);
-                p = *iter;
             }
-            ++iter;
-            if (off_ || size_ < piece.size())
+            Piece::pointer p = *iter_;
+            if (!p) {
+                iter_ = resource_.iterator_at(request_.begin);
+                p = *iter_;
+            }
+            ++iter_;
+            if (off_ || size_ < p->size())
                 p = PartPiece::alloc(p, off_, size_);
             off_ = 0;
             size_ -= p->size();
             return p;
         }
 
-        bool Sink::bump();
+        bool Sink::at_end() const
+        {
+            return iter_.id() == request_.end;
+        }
+
+        void Sink::on_event(
+            util::event::Event const & event)
+        {
+            if (event == resource_.data_ready) {
+                bool notify = iter_ == end_;
+                end_ = PieceIterator(resource_, resource_.data_ready.id);
+                if (notify) {
+                    on_data();
+                }
+                if (end_.id() - iter_.id() > PIECE_PER_BLOCK) {
+                    resource_.data_ready.un(
+                        boost::bind(&Sink::on_event, this, _2));
+                }
+            }
+        }
 
     } // namespace client
 } // namespace trip

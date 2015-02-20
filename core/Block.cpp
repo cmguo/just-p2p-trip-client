@@ -10,29 +10,23 @@ namespace trip
     {
 
         Block::Block(
-            boost::uint16_t npiece)
+            boost::uint32_t size)
             : next_(0)
             , expire_(0)
         {
-            pieces_.resize(npiece);
+            set_size(size);
         }
 
         Block::Block(
             BlockData * data)
         {
-            boost::uint16_t npiece = data->size_ / PIECE_SIZE;
-            boost::uint16_t last_size = data->size_ % PIECE_SIZE;
-            if (last_size)
-                ++npiece;
-            else
-                last_size = PIECE_SIZE;
-            pieces_.resize(npiece);
+            set_size(data->size_);
             boost::uint8_t * addr = (boost::uint8_t *)data->map_addr_;
             for (size_t i = 0; i < pieces_.size() - 1; ++i) {
                 pieces_[i] = BlockPiece::alloc(data, addr, PIECE_SIZE);
                 addr += PIECE_SIZE;
             }
-            pieces_[npiece - 1] = BlockPiece::alloc(data, addr, last_size);
+            pieces_[piece_count_ - 1] = BlockPiece::alloc(data, addr, last_piece_size_);
         }
 
         Piece::pointer Block::get_piece(
@@ -59,6 +53,19 @@ namespace trip
             for (size_t i = 0; i < pieces_.size() - 1; ++i) {
                 map.push_back(pieces_[i]);
             }
+        }
+
+        void Block::set_size(
+            boost::uint32_t size)
+        {
+            piece_count_ = boost::uint16_t(size / PIECE_SIZE);
+            last_piece_size_ = boost::uint16_t(size % PIECE_SIZE);
+            if (last_piece_size_) {
+                ++piece_count_;
+            } else {
+                last_piece_size_ = PIECE_SIZE;
+            }
+            pieces_.resize(piece_count_);
         }
 
         boost::uint64_t Block::set_piece(

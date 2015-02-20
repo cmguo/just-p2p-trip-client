@@ -36,7 +36,7 @@ namespace trip
         struct SourceChangedEvent
             : util::event::Event
         {
-            boost::uint32_t type;
+            boost::uint32_t type; // 0 - add, 1 - del, 2 - modify
             Source const * source;
         };
 
