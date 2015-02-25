@@ -12,7 +12,7 @@ namespace trip
 
         ResourceManager::ResourceManager(
             util::daemon::Daemon & daemon)
-            : util::daemon::ModuleBase<ResourceManager>(daemon)
+            : util::daemon::ModuleBase<ResourceManager>(daemon, "ResourceManager")
         {
             config().register_module("ResourceManager")
                 << CONFIG_PARAM_NAME_NOACC("path", path_);
@@ -40,9 +40,11 @@ namespace trip
             std::map<Uuid, Resource *>::iterator iter = 
                 resources_.find(rid);
             if (iter == resources_.end()) {
-                iter = resources_.insert(std::make_pair(rid, new Resource)).first;
-                Resource & r = *iter->second;
-                r.set_id(rid);
+                Resource * r = new Resource;
+                iter = resources_.insert(std::make_pair(rid, r)).first;
+                resource_added.resource = r;
+                raise(resource_added);
+                r->set_id(rid);
             }
             return *iter->second;
         }
@@ -50,11 +52,12 @@ namespace trip
         Resource & ResourceManager::get(
             std::vector<Url> const & urls)
         {
-            Uuid rid;
-            rid.generate();
-            Resource & r = get(rid);
-            r.set_urls(urls);
-            return r;
+            Resource * r = new Resource;
+            r->set_urls(urls);
+            resource_added.resource = r;
+            other_resources_.push_back(r);
+            raise(resource_added);
+            return *r;
         }
 
     } // namespace client

@@ -13,12 +13,12 @@ namespace trip
 
         UdpManager::UdpManager(
             util::daemon::Daemon & daemon)
-            : util::daemon::ModuleBase<UdpManager>(daemon)
+            : util::daemon::ModuleBase<UdpManager>(daemon, "UdpManager")
             , addr_(":6666")
             , parallel_(10)
             , socket_(new UdpSocket(io_svc()))
         {
-            config().register_module("CacheManager")
+            config().register_module("UdpManager")
                 << CONFIG_PARAM_NAME_NOACC("addr", addr_)
                 << CONFIG_PARAM_NAME_NOACC("parallel", parallel_);
             UdpTunnel * main_tunnel = new UdpTunnel(*socket_);

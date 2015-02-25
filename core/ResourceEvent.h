@@ -10,6 +10,14 @@ namespace trip
     namespace client
     {
 
+        class Resource;
+
+        struct ResourceChangedEvent
+            : util::event::Event
+        {
+            Resource * resource;
+        };
+
         struct ResourceMeta;
 
         struct MetaChangedEvent
@@ -23,6 +31,8 @@ namespace trip
         {
             boost::uint64_t id;
         };
+
+        struct SegmentMeta;
 
         struct SegmentMetaEvent
             : util::event::Event

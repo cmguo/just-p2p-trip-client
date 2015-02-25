@@ -3,7 +3,10 @@
 #ifndef _TRIP_CLIENT_MAIN_RESOURCE_MANAGER_H_
 #define _TRIP_CLIENT_MAIN_RESOURCE_MANAGER_H_
 
+#include "trip/client/core/ResourceEvent.h"
+
 #include <util/daemon/Module.h>
+#include <util/event/Observable.h>
 
 #include <boost/filesystem/path.hpp>
 
@@ -16,12 +19,18 @@ namespace trip
 
         class ResourceManager
             : public util::daemon::ModuleBase<ResourceManager>
+            , public util::event::Observable
         {
         public:
             ResourceManager(
                 util::daemon::Daemon & daemon);
 
             ~ResourceManager();
+
+        public:
+            ResourceChangedEvent resource_added;
+
+            ResourceChangedEvent resource_deleting;
 
         public:
             Resource & get(
@@ -40,6 +49,7 @@ namespace trip
         private:
             boost::filesystem::path path_;
             std::map<Uuid, Resource *> resources_;
+            std::vector<Resource *> other_resources_;
         };
 
     } // namespace client

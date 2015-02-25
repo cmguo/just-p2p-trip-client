@@ -79,6 +79,11 @@ namespace trip
             if (session == NULL) {
                 ResourceManager & mgr(util::daemon::use_module<ResourceManager>(io_svc()));
                 std::vector<Url> urls;
+                for (Url::param_iterator i = url.param_begin(); i != url.param_end(); ++i) {
+                    if (i->key() == "url") {
+                        urls.push_back(Url(i->value()));
+                    }
+                }
                 session = new HttpSession(io_svc(), mgr.get(urls));
                 if (session_id.empty()) {
                     session_id = framework::string::format((long)session);

@@ -2,8 +2,10 @@
 
 #include "trip/client/Common.h"
 
+#include "trip/client/main/ResourceManager.h"
 #include "trip/client/cache/CacheManager.h"
 #include "trip/client/udp/UdpManager.h"
+#include "trip/client/http/HttpManager.h"
 
 #include <framework/logger/Logger.h>
 #include <framework/logger/StreamRecord.h>
@@ -34,8 +36,10 @@ namespace trip
     
                 framework::logger::load_config(config());
     
+                util::daemon::use_module<ResourceManager>(*this);
                 util::daemon::use_module<CacheManager>(*this);
                 util::daemon::use_module<UdpManager>(*this);
+                util::daemon::use_module<HttpManager>(*this);
 
                 LOG_INFO("Client ready.");
             }

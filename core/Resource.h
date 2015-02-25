@@ -67,21 +67,18 @@ namespace trip
                 std::vector<Url> const & urls);
 
         public:
-            void add_source(
-                Source * source);
-
-            void del_source(
-                Source * source);
-
             void add_sink(
                 Sink * sink);
 
             void del_sink(
                 Sink * sink);
 
+            void update_sink(
+                Sink * sink);
+
         private:
             Uuid id_;
-            ResourceMeta * meta_;
+            ResourceMeta const * meta_;
             std::vector<Url> urls_;
             std::vector<Source *> sources_;
             std::vector<Sink *> sinks_;

@@ -8,6 +8,7 @@
 
 #include <util/serialization/ErrorCode.h>
 #include <util/archive/XmlOArchive.h>
+#include <util/protocol/http/HttpError.h>
 using namespace util::protocol;
 
 #include <framework/string/Parse.h>
@@ -43,7 +44,7 @@ namespace trip
 
             request_head().get_content(std::cout);
 
-            response_head().connection = util::protocol::http_field::Connection::close;
+            response_head().connection = http_field::Connection::close;
 
             std::string peer_addr = framework::network::Endpoint(local_endpoint()).to_string().substr(5);
             url_.from_string("http://" + request_head().host.get_value_or(peer_addr) + request_head().path);
@@ -62,11 +63,11 @@ namespace trip
                 if (option_ != "/meta"
                     && option_ != "/stat"
                     && option_ != "/fetch") {
-                        ec = framework::system::logic_error::invalid_argument;
+                        ec = http_error::not_found;
                 } else {
                     Range range(request_head().range.get_value_or(Range()));
                     if (range.count() > 1) {
-                        ec = util::protocol::http_error::requested_range_not_satisfiable;
+                        ec = http_error::requested_range_not_satisfiable;
                     }
                 }
             }
@@ -118,11 +119,11 @@ namespace trip
                     Range range(request_head().range.get_value_or(Range()));
                     RangeUnit const & unit(range[0]);
                     if (unit.has_end() && unit.end() > smeta->bytesize) {
-                        ec = util::protocol::http_error::requested_range_not_satisfiable;
+                        ec = http_error::requested_range_not_satisfiable;
                     } else {
-                        util::protocol::http_field::ContentRange content_range(smeta->bytesize, range[0]);
+                        http_field::ContentRange content_range(smeta->bytesize, range[0]);
                         if (unit.begin() > 0 || (unit.has_end() && unit.end() < smeta->bytesize)) {
-                            response_head().err_code = util::protocol::http_error::partial_content;
+                            response_head().err_code = http_error::partial_content;
                             response_head().content_range = content_range;
                         }
                         response_head()["Content-Type"] = content_type(meta->file_extension);

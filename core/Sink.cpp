@@ -40,6 +40,10 @@ namespace trip
             }
             off_ = begin % PIECE_SIZE;
             size_ = end - begin;
+            if (iter_.id() != request_.begin) {
+                resource_.update_sink(this);
+            }
+            iter_ = resource_.iterator_at(request_.begin);
         }
 
         Piece::pointer Sink::read()

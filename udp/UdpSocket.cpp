@@ -7,7 +7,12 @@
 #include "trip/client/proto/PacketBuffers.h"
 #include "trip/client/proto/TunnelHeader.h"
 
+#include <framework/logger/Logger.h>
+#include <framework/logger/StreamRecord.h>
+
 #include <boost/bind.hpp>
+
+FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("trip.client.UdpSocket", framework::logger::Debug);
 
 namespace trip
 {
@@ -35,8 +40,10 @@ namespace trip
             if (ec)
                 return false;
             socket_.bind(ep, ec);
-            if (ec)
+            if (ec) {
+                LOG_ERROR("[start] bind failed, ec:" << ec.message());
                 return false;
+            }
             for (size_t i = 0; i < parallel; ++i) {
                 UdpPacket * pkt = new UdpPacket;
                 socket_.async_receive(*pkt, 

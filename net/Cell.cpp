@@ -17,12 +17,14 @@ namespace trip
             , bus_(bus)
             , queue_(queue)
         {
-            bus_->add(this);
+            if (bus_)
+                bus_->add(this);
         }
 
         Cell::~Cell()
         {
-            bus_->del(this);
+            if (bus_)
+                bus_->del(this);
             if (queue_)
                 delete queue_;
         }
@@ -45,17 +47,20 @@ namespace trip
 
         void Cell::active()
         {
-            bus_->active(this);
+            if (bus_)
+                bus_->active(this);
         }
  
         void Cell::inactive()
         {
-            bus_->inactive(this);
+            if (bus_)
+                bus_->inactive(this);
         }
  
         void Cell::signal()
         {
-            bus_->signal(this);
+            if (bus_)
+                bus_->signal(this);
         }
  
         bool Cell::push(

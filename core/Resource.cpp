@@ -64,5 +64,13 @@ namespace trip
             raise(sink_changed);
         }
 
+        void Resource::update_sink(
+            Sink * sink)
+        {
+            sink_changed.type = 2;
+            sink_changed.sink = sink;
+            raise(sink_changed);
+        }
+
     } // namespace client
 } // namespace trip

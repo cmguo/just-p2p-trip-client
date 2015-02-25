@@ -12,7 +12,7 @@ namespace trip
 
         CacheManager::CacheManager(
             util::daemon::Daemon & daemon)
-            : util::daemon::ModuleBase<CacheManager>(daemon)
+            : util::daemon::ModuleBase<CacheManager>(daemon, "CacheManager")
             , queue_(io_svc())
         {
             config().register_module("CacheManager")
