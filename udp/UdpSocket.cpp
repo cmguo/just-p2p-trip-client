@@ -4,8 +4,11 @@
 #include "trip/client/udp/UdpSocket.h"
 #include "trip/client/udp/UdpPacket.h"
 #include "trip/client/udp/UdpTunnel.h"
+#include "trip/client/udp/Error.h"
 #include "trip/client/proto/PacketBuffers.h"
 #include "trip/client/proto/TunnelHeader.h"
+
+#include <util/buffers/RefBuffers.h>
 
 #include <framework/logger/Logger.h>
 #include <framework/logger/StreamRecord.h>
@@ -46,7 +49,7 @@ namespace trip
             }
             for (size_t i = 0; i < parallel; ++i) {
                 UdpPacket * pkt = new UdpPacket;
-                socket_.async_receive(*pkt, 
+                socket_.async_receive_from(util::buffers::ref_buffers(*pkt), pkt->endp, 
                     boost::bind(&UdpSocket::handle_recv, this, pkt, _1, _2));
             }
             return true;
@@ -65,17 +68,13 @@ namespace trip
             boost::system::error_code ec, 
             size_t bytes_recved)
         {
-            if (ec) {
-                if (stopped_) {
-                    delete pkt;
-                    return;
-                }
-                socket_.async_receive(*pkt, 
-                    boost::bind(&UdpSocket::handle_recv, this, pkt, _1, _2));
+            if (stopped_) {
+                LOG_DEBUG("[handle_recv] stopped");
+                delete pkt;
                 return;
             }
 
-            if (pkt->decode()) {
+            if (!ec && pkt->decode()) {
                 PacketBufferIterator beg(pkt);
                 PacketBuffers buf(beg, bytes_recved);
                 Bus::on_recv(pkt, buf);
@@ -85,12 +84,16 @@ namespace trip
                 ar >> ver >> tid;
                 ar.seekg(0, std::ios::beg);
                 Bus::on_recv(tid, pkt, buf);
+            } else if (!ec) {
+                ec = udp_error::chksum_error;
+                LOG_ERROR("[handle_recv] failed, ec:" << ec.message());
             } else {
+                LOG_ERROR("[handle_recv] failed, ec:" << ec.message());
             }
 
             send();
 
-            socket_.async_receive(*pkt, 
+            socket_.async_receive_from(util::buffers::ref_buffers(*pkt), pkt->endp, 
                 boost::bind(&UdpSocket::handle_recv, this, pkt, _1, _2));
         }
 

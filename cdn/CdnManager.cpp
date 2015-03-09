@@ -43,7 +43,7 @@ namespace trip
             util::event::Event const & event)
         {
             if (event == res_mgr_.resource_added) {
-                if (res_mgr_.resource_added.resource->mata() == NULL) {
+                if (res_mgr_.resource_added.resource->meta() == NULL) {
                     resources_.push_back(res_mgr_.resource_added.resource);
                 }
             } else {

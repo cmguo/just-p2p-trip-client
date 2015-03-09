@@ -51,7 +51,7 @@ namespace trip
                 boost::uint8_t type,
                 boost::uint8_t * data, 
                 boost::uint16_t size)
-                : nref_(1)
+                : nref_(0)
                 , type_(type)
                 , size_(size)
                 , data_(data)
@@ -80,7 +80,7 @@ namespace trip
             friend void intrusive_ptr_release(
                 Piece * p)
             {
-                if (--p->nref_) {
+                if (--p->nref_ == 0) {
                     Piece::free(p);
                 }
             }
