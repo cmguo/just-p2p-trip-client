@@ -39,11 +39,19 @@ namespace trip
             raise(meta_changed);
         }
 
+        void Resource::merge(
+            Resource & other)
+        {
+            other.urls_.insert(other.urls_.end(),
+                urls_.begin(), urls_.end());
+            merged.resource = &other;
+            raise(merged);
+        }
+
         void Resource::set_urls(
             std::vector<Url> const & urls)
         {
             urls_ = urls;
-            raise(meta_changed);
         }
 
         void Resource::add_sink(

@@ -12,8 +12,6 @@ namespace trip
     namespace client
     {
 
-        class Source;
-
         struct ResourceMeta
         {
             boost::uint64_t duration;
@@ -25,6 +23,8 @@ namespace trip
         {
         };
 
+        class DownloadInfo;
+
         class Resource
             : public ResourceData
         {
@@ -34,6 +34,8 @@ namespace trip
             ~Resource();
 
         public:
+            ResourceChangedEvent merged;
+
             MetaChangedEvent meta_changed;
 
             SourceChangedEvent source_changed;
@@ -63,6 +65,9 @@ namespace trip
             void set_meta(
                 ResourceMeta const & meta);
 
+            void merge(
+                Resource & other);
+
             void set_urls(
                 std::vector<Url> const & urls);
 
@@ -76,11 +81,15 @@ namespace trip
             void update_sink(
                 Sink * sink);
 
+            std::vector<Sink *> & get_sinks()
+            {
+                return sinks_;
+            }
+
         private:
             Uuid id_;
             ResourceMeta const * meta_;
             std::vector<Url> urls_;
-            std::vector<Source *> sources_;
             std::vector<Sink *> sinks_;
         };
 

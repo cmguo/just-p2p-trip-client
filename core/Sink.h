@@ -14,6 +14,8 @@ namespace trip
     {
 
         class Resource;
+        class ResourceMeta;
+        class SegmentMeta;
 
         struct SinkRequest
         {
@@ -31,14 +33,11 @@ namespace trip
             virtual ~Sink();
 
         public:
-            SinkRequest const & get_request() const
-            {
-                return request_;
-            }
+            SinkRequest get_request() const;
 
             Resource const & resource() const
             {
-                return resource_;
+                return *resource_;
             }
 
         protected:
@@ -52,16 +51,21 @@ namespace trip
             Piece::pointer read();
 
         private:
+            virtual void on_meta(
+                ResourceMeta const & meta) = 0;
+
+            virtual void on_meta(
+                boost::uint64_t id, 
+                SegmentMeta const & meta) = 0;
+
             virtual void on_data() = 0;
 
         private:
             void on_event(
                 util::event::Event const & event);
 
-        protected:
-            Resource & resource_;
-
         private:
+            Resource * resource_;
             SinkRequest request_;
             PieceIterator iter_;
             PieceIterator end_;

@@ -97,6 +97,10 @@ namespace trip
 
         void Bus::on_timer()
         {
+            for (size_t i = 0; i < slots_.size(); ++i) {
+                if (slots_[i].cell)
+                    slots_[i].cell->on_timer();
+            }
         }
 
         Bus::Slot & Bus::slot_at(

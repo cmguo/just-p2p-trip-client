@@ -6,6 +6,7 @@
 #include "trip/client/udp/UdpTunnel.h"
 #include "trip/client/proto/MessageSession.h"
 #include "trip/client/proto/Message.hpp"
+#include "trip/client/core/Scheduler.h"
 #include "trip/client/core/Resource.h"
 
 namespace trip
@@ -14,13 +15,13 @@ namespace trip
     {
 
         P2pSource::P2pSource(
-            Resource & resource, 
+            Scheduler & scheduler, 
             UdpTunnel & tunnel)
-            : Source(resource)
+            : Source(scheduler)
             , UdpSession(tunnel)
         {
             MessageRequestBind req;
-            req.rid = resource.id();
+            req.rid = resource().id();
             req.sid = id();
             push(new Message(req));
         }

@@ -2,7 +2,7 @@
 
 #include "trip/client/Common.h"
 #include "trip/client/cdn/CdnSource.h"
-#include "trip/client/core/Resource.h"
+#include "trip/client/core/Scheduler.h"
 #include "trip/client/core/PoolPiece.h"
 
 #include <boost/bind.hpp>
@@ -15,8 +15,8 @@ namespace trip
 
         CdnSource::CdnSource(
             boost::asio::io_service & io_svc, 
-            Resource & resource)
-            : Source(resource)
+            Scheduler & scheduler)
+            : Source(scheduler)
             , http_(io_svc)
         {
         }

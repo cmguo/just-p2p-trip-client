@@ -14,12 +14,16 @@ namespace trip
 
         Sink::Sink(
             Resource & resource)
-            : resource_(resource)
+            : resource_(&resource)
             , iter_(resource, 0)
             , end_(iter_)
             , off_(0)
             , size_(0)
         {
+            resource_->merged.on(
+                boost::bind(&Sink::on_event, this, _2));
+            resource_->meta_changed.on(
+                boost::bind(&Sink::on_event, this, _2));
         }
 
         Sink::~Sink()
@@ -41,21 +45,21 @@ namespace trip
             off_ = begin % PIECE_SIZE;
             size_ = end - begin;
             if (iter_.id() != request_.begin) {
-                resource_.update_sink(this);
+                resource_->update_sink(this);
             }
-            iter_ = resource_.iterator_at(request_.begin);
+            iter_ = resource_->iterator_at(request_.begin);
         }
 
         Piece::pointer Sink::read()
         {
             if (iter_ == end_) {
-                resource_.data_ready.un(
+                resource_->data_ready.un(
                     boost::bind(&Sink::on_event, this, _2));
                 return NULL;
             }
             Piece::pointer p = *iter_;
             if (!p) {
-                iter_ = resource_.iterator_at(request_.begin);
+                iter_ = resource_->iterator_at(request_.begin);
                 p = *iter_;
             }
             ++iter_;
@@ -74,16 +78,32 @@ namespace trip
         void Sink::on_event(
             util::event::Event const & event)
         {
-            if (event == resource_.data_ready) {
+            if (event == resource_->data_ready) {
                 bool notify = iter_ == end_;
-                end_ = PieceIterator(resource_, resource_.data_ready.id);
+                end_ = PieceIterator(*resource_, resource_->data_ready.id);
                 if (notify) {
                     on_data();
                 }
                 if (end_.id() - iter_.id() > PIECE_PER_BLOCK) {
-                    resource_.data_ready.un(
+                    resource_->data_ready.un(
                         boost::bind(&Sink::on_event, this, _2));
                 }
+            } else if (event == resource_->seg_meta_ready) {
+                on_meta(resource_->seg_meta_ready.id, *resource_->seg_meta_ready.meta);
+            } else if (event == resource_->merged) {
+                resource_->merged.un(
+                    boost::bind(&Sink::on_event, this, _2));
+                resource_->seg_meta_ready.un(
+                    boost::bind(&Sink::on_event, this, _2));
+                resource_ = resource_->merged.resource;
+                resource_->seg_meta_ready.on(
+                    boost::bind(&Sink::on_event, this, _2));
+            } else {
+                on_meta(*resource_->meta_changed.meta);
+                resource_->meta_changed.un(
+                    boost::bind(&Sink::on_event, this, _2));
+                resource_->seg_meta_ready.on(
+                    boost::bind(&Sink::on_event, this, _2));
             }
         }
 

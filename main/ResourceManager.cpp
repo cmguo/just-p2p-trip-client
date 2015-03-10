@@ -5,6 +5,8 @@
 #include "trip/client/utils/Format.h"
 #include "trip/client/core/Resource.h"
 
+#include <boost/bind.hpp>
+
 namespace trip
 {
     namespace client
@@ -57,7 +59,39 @@ namespace trip
             resource_added.resource = r;
             other_resources_.push_back(r);
             raise(resource_added);
+            r->meta_changed.on(
+                boost::bind(&ResourceManager::on_event, this, _1, _2));
             return *r;
+        }
+
+        static void delete_r(
+            Resource * r)
+        {
+            delete r;
+        }
+
+        void ResourceManager::on_event(
+            util::event::Observable const & observable, 
+            util::event::Event const & event)
+        {
+            Resource & r = (Resource &)observable;
+            assert(r.meta_changed == event);
+            r.meta_changed.un(
+                boost::bind(&ResourceManager::on_event, this, _1, _2));
+            std::map<Uuid,  Resource*>::iterator iter = 
+                resources_.find(r.id());
+            if (iter == resources_.end()) {
+                resources_[r.id()] = &r;
+                resource_added.resource = &r;
+                raise(resource_added);
+            } else {
+                r.merge(*iter->second);
+                io_svc().post(
+                    boost::bind(delete_r, &r));
+            }
+            other_resources_.erase(
+                std::remove(other_resources_.begin(), other_resources_.end(), &r), 
+                other_resources_.end());
         }
 
     } // namespace client

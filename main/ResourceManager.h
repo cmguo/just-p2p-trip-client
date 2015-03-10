@@ -47,6 +47,11 @@ namespace trip
                 boost::system::error_code & ec);
 
         private:
+            void on_event(
+                util::event::Observable const & observable, 
+                util::event::Event const & event);
+
+        private:
             boost::filesystem::path path_;
             std::map<Uuid, Resource *> resources_;
             std::vector<Resource *> other_resources_;

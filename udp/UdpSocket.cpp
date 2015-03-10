@@ -7,8 +7,10 @@
 #include "trip/client/udp/Error.h"
 #include "trip/client/proto/PacketBuffers.h"
 #include "trip/client/proto/TunnelHeader.h"
+#include "trip/client/timer/TimerManager.h"
 
 #include <util/buffers/RefBuffers.h>
+#include <util/daemon/Daemon.h>
 
 #include <framework/logger/Logger.h>
 #include <framework/logger/StreamRecord.h>
@@ -25,6 +27,7 @@ namespace trip
         UdpSocket::UdpSocket(
             boost::asio::io_service & io_svc)
             : socket_(io_svc)
+            , tmgr_(util::daemon::use_module<TimerManager>(io_svc))
             , stopped_(false)
         {
         }
@@ -52,6 +55,7 @@ namespace trip
                 socket_.async_receive_from(util::buffers::ref_buffers(*pkt), pkt->endp, 
                     boost::bind(&UdpSocket::handle_recv, this, pkt, _1, _2));
             }
+            tmgr_.t_10_ms.on(boost::bind(&UdpSocket::handle_timer, this));
             return true;
         }
 
@@ -59,6 +63,7 @@ namespace trip
             boost::system::error_code & ec)
         {
             stopped_ = true;
+            tmgr_.t_10_ms.un(boost::bind(&UdpSocket::handle_timer, this));
             socket_.close(ec);
             return !ec;
         }
@@ -104,6 +109,11 @@ namespace trip
             while (true) {
 
             }
+        }
+
+        void UdpSocket::handle_timer()
+        {
+            on_timer(); // tmgr_.t_10_ms.now
         }
 
     } // namespace client

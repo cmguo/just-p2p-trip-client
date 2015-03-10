@@ -3,6 +3,7 @@
 #include "trip/client/Common.h"
 #include "trip/client/core/Source.h"
 #include "trip/client/core/Resource.h"
+#include "trip/client/core/Scheduler.h"
 
 namespace trip
 {
@@ -10,8 +11,8 @@ namespace trip
     {
 
         Source::Source(
-            Resource & resource)
-            : resource_(resource)
+            Scheduler & scheduler)
+            : scheduler_(scheduler)
         {
         }
 
@@ -19,11 +20,19 @@ namespace trip
         {
         }
 
+        Resource const & Source::resource() const
+        {
+            return scheduler_.resource();
+        }
+
         void Source::on_data(
             boost::uint64_t id, 
             Piece::pointer piece)
         {
-            resource_.set_piece(id, piece);
+            scheduler_.resource().set_piece(id, piece);
+            std::vector<boost::uint64_t> pieces;
+            if (scheduler_.get_task(*this, pieces))
+                request(pieces);
         }
 
     } // namespace client

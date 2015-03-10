@@ -14,21 +14,19 @@ namespace trip
     namespace client
     {
 
+        class Scheduler;
         class Resource;
 
         class Source
         {
         public:
             Source(
-                Resource & resource);
+                Scheduler & scheduler);
 
             virtual ~Source();
 
         public:
-            Resource const & resource() const
-            {
-                return resource_;
-            }
+            Resource const & resource() const;
 
         public:
             virtual bool request(
@@ -40,7 +38,7 @@ namespace trip
                 Piece::pointer piece);
 
         private:
-            Resource & resource_;
+            Scheduler & scheduler_;
             boost::dynamic_bitset<> map_;
         };
 

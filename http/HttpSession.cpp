@@ -41,12 +41,10 @@ namespace trip
             : Sink(resource)
             , io_svc_(io_svc)
         {
-            resource_.add_sink(this);
         }
 
         HttpSession::~HttpSession()
         {
-            resource_.del_sink(this);
         }
 
         bool HttpSession::empty() const
@@ -61,7 +59,7 @@ namespace trip
             Request r;
             r.server = server;
             r.segm = MAX_SEGMENT;
-            if (resource_.meta()) {
+            if (resource().meta()) {
                 io_svc_.post(
                         boost::bind(resp, boost::system::error_code()));
             } else {
@@ -78,7 +76,7 @@ namespace trip
             Request r;
             r.server = server;
             r.segm = segm;
-            if (resource_.get_segment_meta(MAKE_ID(segm, 0, 0))) {
+            if (resource().get_segment_meta(MAKE_ID(segm, 0, 0))) {
                 io_svc_.post(
                         boost::bind(resp, boost::system::error_code()));
             } else {
@@ -148,29 +146,34 @@ namespace trip
             return true;
         }
 
-        void HttpSession::on_event(
-            util::event::Event const & event)
+        void HttpSession::on_meta(
+            ResourceMeta const & meta)
         {
             boost::system::error_code ec;
             std::list<Request>::iterator iter = open_requests_.begin();
-            if (event == resource_.meta_changed) {
-                for (; iter != open_requests_.end(); ++iter) {
-                    if (iter->segm != MAX_SEGMENT) {
-                        continue;
-                    }
-                    response_t resp;
-                    resp.swap(iter->resp);
-                    resp(ec);
+            for (; iter != open_requests_.end(); ++iter) {
+                if (iter->segm != MAX_SEGMENT) {
+                    continue;
                 }
-            } else if (event == resource_.seg_meta_ready) {
-                for (; iter != open_requests_.end(); ++iter) {
-                    if (iter->segm != SEGMENT(resource_.seg_meta_ready.id)) {
-                        continue;
-                    }
-                    response_t resp;
-                    resp.swap(iter->resp);
-                    resp(ec);
+                response_t resp;
+                resp.swap(iter->resp);
+                resp(ec);
+            }
+        }
+
+        void HttpSession::on_meta(
+            boost::uint64_t id, 
+            SegmentMeta const & meta)
+        {
+            boost::system::error_code ec;
+            std::list<Request>::iterator iter = open_requests_.begin();
+            for (; iter != open_requests_.end(); ++iter) {
+                if (iter->segm != SEGMENT(id)) {
+                    continue;
                 }
+                response_t resp;
+                resp.swap(iter->resp);
+                resp(ec);
             }
         }
 

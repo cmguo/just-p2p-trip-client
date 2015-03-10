@@ -32,7 +32,7 @@ namespace trip
 
         public:
             HttpSession(
-                boost::asio::io_service & io_svc,
+                boost::asio::io_service & io_svc, 
                 Resource & resource);
 
             virtual ~HttpSession();
@@ -61,12 +61,16 @@ namespace trip
                 boost::system::error_code & ec);
 
         private:
+            virtual void on_meta(
+                ResourceMeta const & meta);
+
+            virtual void on_meta(
+                boost::uint64_t id, 
+                SegmentMeta const & meta);
+
             virtual void on_data();
 
         private:
-            void on_event(
-                util::event::Event const & event);
-
             void fetch_next();
 
             void on_write(

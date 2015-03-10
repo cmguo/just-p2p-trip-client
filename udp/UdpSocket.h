@@ -16,6 +16,7 @@ namespace trip
 
         class UdpTunnel;
         class UdpPacket;
+        class TimerManager;
 
         class UdpSocket
             : public Bus
@@ -43,8 +44,11 @@ namespace trip
 
             void send();
 
+            void handle_timer();
+
         private:
             boost::asio::ip::udp::socket socket_;
+            TimerManager & tmgr_;
             UdpTunnel * main_tul_;
             bool stopped_;
         };

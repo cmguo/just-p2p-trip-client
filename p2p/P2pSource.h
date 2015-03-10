@@ -17,7 +17,7 @@ namespace trip
         {
         public:
             P2pSource(
-                Resource & resource,
+                Scheduler & scheduler,
                 UdpTunnel & tunnel);
 
             virtual ~P2pSource();

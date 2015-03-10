@@ -25,9 +25,9 @@ namespace trip
         void CdnFinder::find_more(
             Resource & resource)
         {
-            Url url("http://index.trip.com/map.htm");
+            Url url("http://index.trip.com/test.xml");
             if (!resource.id().is_empty())
-                url.param("rid", "resource.id().to_string()");
+                url.param("rid", resource.id().to_string());
             
             http_.async_fetch(url, 
                 boost::bind(&CdnFinder::handle_fetch, this, _1));
