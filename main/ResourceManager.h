@@ -3,6 +3,7 @@
 #ifndef _TRIP_CLIENT_MAIN_RESOURCE_MANAGER_H_
 #define _TRIP_CLIENT_MAIN_RESOURCE_MANAGER_H_
 
+#include "trip/client/main/ResourceMapping.h"
 #include "trip/client/core/ResourceEvent.h"
 
 #include <util/daemon/Module.h>
@@ -37,7 +38,7 @@ namespace trip
                 Uuid const & rid);
 
             Resource & get(
-                std::vector<Url> const & urls);
+                std::vector<Url> & urls);
 
         private:
             virtual bool startup(
@@ -55,6 +56,7 @@ namespace trip
             boost::filesystem::path path_;
             std::map<Uuid, Resource *> resources_;
             std::vector<Resource *> other_resources_;
+            ResourceMapping mapping_;
         };
 
     } // namespace client

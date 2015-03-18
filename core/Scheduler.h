@@ -28,12 +28,16 @@ namespace trip
             }
 
         public:
+            virtual void add_source(
+                Source * source);
+
             virtual bool get_task(
                 Source & source, 
                 std::vector<boost::uint64_t> & pieces) = 0;
 
         private:
             Resource & resource_;
+            std::vector<Source *> sources_;
         };
 
     } // namespace client

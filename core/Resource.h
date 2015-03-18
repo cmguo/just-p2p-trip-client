@@ -53,6 +53,11 @@ namespace trip
                 return meta_;
             }
 
+            std::vector<Url> const & urls() const
+            {
+                return urls_;
+            }
+
         public:
             bool load(
                 boost::filesystem::path const & path, 
@@ -69,7 +74,7 @@ namespace trip
                 Resource & other);
 
             void set_urls(
-                std::vector<Url> const & urls);
+                std::vector<Url> & urls);
 
         public:
             void add_sink(

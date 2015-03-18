@@ -21,16 +21,18 @@ namespace trip
 
             virtual ~CdnFinder();
 
-        public:
-            static CdnFinder * create(
-                boost::asio::io_service & io_svc);
-
-        public:
+        private:
             virtual void find_more(
-                Resource & resource);
+                Resource & resource, 
+                size_t count);
             
+            virtual Source * create(
+                Scheduler & scheduler, 
+                Url const & url);
+
         private:
             void handle_fetch(
+                Resource & resource, 
                 boost::system::error_code ec);
 
         private:

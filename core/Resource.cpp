@@ -29,13 +29,13 @@ namespace trip
             Uuid const & id)
         {
             id_ = id;
-            raise(meta_changed);
         }
 
         void Resource::set_meta(
             ResourceMeta const & meta)
         {
             meta_ = new ResourceMeta(meta);
+            meta_changed.meta = meta_;
             raise(meta_changed);
         }
 
@@ -49,9 +49,15 @@ namespace trip
         }
 
         void Resource::set_urls(
-            std::vector<Url> const & urls)
+            std::vector<Url> & urls)
         {
-            urls_ = urls;
+            std::vector<Url> urls2;
+            for (size_t i = 0; i < urls.size(); ++i) {
+                if (std::find(urls_.begin(), urls_.end(), urls[i]) == urls_.end())
+                    urls2.push_back(urls[i]);
+            }
+            urls_.insert(urls_.end(), urls2.begin(), urls2.end());
+            urls.swap(urls2);
         }
 
         void Resource::add_sink(

@@ -33,6 +33,8 @@ namespace trip
                 std::vector<boost::uint64_t> & pieces) = 0;
 
         protected:
+            void on_ready();
+
             void on_data(
                 boost::uint64_t id, 
                 Piece::pointer piece);

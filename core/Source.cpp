@@ -25,14 +25,19 @@ namespace trip
             return scheduler_.resource();
         }
 
+        void Source::on_ready()
+        {
+            std::vector<boost::uint64_t> pieces;
+            if (scheduler_.get_task(*this, pieces))
+                request(pieces);
+        }
+
         void Source::on_data(
             boost::uint64_t id, 
             Piece::pointer piece)
         {
             scheduler_.resource().set_piece(id, piece);
-            std::vector<boost::uint64_t> pieces;
-            if (scheduler_.get_task(*this, pieces))
-                request(pieces);
+            on_ready();
         }
 
     } // namespace client

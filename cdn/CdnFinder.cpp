@@ -23,25 +23,31 @@ namespace trip
         }
 
         void CdnFinder::find_more(
-            Resource & resource)
+            Resource & resource, 
+            size_t count)
         {
-            Url url("http://index.trip.com/test.xml");
-            if (!resource.id().is_empty())
-                url.param("rid", resource.id().to_string());
-            
+            Url url("http://jump.trip.com/jump.xml");
+            url.param("rid", resource.id().to_string());
+            std::vector<Url> const & urls = resource.urls();
+            for (size_t i = 0; i < urls.size(); ++i) {
+                url.param_add("url", urls[i].to_string());
+            }
+            url.param("count", framework::string::format(count));
             http_.async_fetch(url, 
-                boost::bind(&CdnFinder::handle_fetch, this, _1));
+                boost::bind(&CdnFinder::handle_fetch, this, boost::ref(resource), _1));
         }
 
         void CdnFinder::handle_fetch(
+            Resource & resource, 
             boost::system::error_code ec)
         {
             if (ec)
                 return;
 
             util::archive::XmlIArchive<> ia(http_.response_data());
-            ResourceInfo info;
-            ia >> info;
+            std::vector<Url> urls;
+            ia >> urls;
+            found(resource, urls);
         }
 
     } // namespace client

@@ -19,6 +19,8 @@ namespace trip
             : Source(scheduler)
             , http_(io_svc)
         {
+            //io_svc.post(
+            //    boost::bind(&Source::on_ready, this));
         }
 
         CdnSource::~CdnSource()

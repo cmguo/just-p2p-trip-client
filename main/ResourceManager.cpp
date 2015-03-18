@@ -15,6 +15,7 @@ namespace trip
         ResourceManager::ResourceManager(
             util::daemon::Daemon & daemon)
             : util::daemon::ModuleBase<ResourceManager>(daemon, "ResourceManager")
+            , mapping_(io_svc())
         {
             config().register_module("ResourceManager")
                 << CONFIG_PARAM_NAME_NOACC("path", path_);
@@ -33,6 +34,7 @@ namespace trip
         bool ResourceManager::shutdown(
             boost::system::error_code & ec)
         {
+            mapping_.close();
             return true;
         }
 
@@ -52,7 +54,7 @@ namespace trip
         }
 
         Resource & ResourceManager::get(
-            std::vector<Url> const & urls)
+            std::vector<Url> & urls)
         {
             Resource * r = new Resource;
             r->set_urls(urls);
@@ -61,6 +63,7 @@ namespace trip
             raise(resource_added);
             r->meta_changed.on(
                 boost::bind(&ResourceManager::on_event, this, _1, _2));
+            mapping_.find(*r);
             return *r;
         }
 
