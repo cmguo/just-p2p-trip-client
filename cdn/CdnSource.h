@@ -13,19 +13,15 @@ namespace trip
     {
 
         class CdnSource
-            : Source
+            : public Source
         {
         public:
             CdnSource(
                 boost::asio::io_service & io_svc,
-                Scheduler & scheduler);
+                Scheduler & scheduler, 
+                Url const & url);
 
             virtual ~CdnSource();
-
-        public:
-            static CdnSource * create(
-                boost::asio::io_service & io_svc,
-                framework::string::Url const & url);
 
         public:
             virtual bool request(
@@ -41,6 +37,7 @@ namespace trip
                 Piece::pointer piece);
 
         private:
+            Url const url_;
             util::protocol::HttpClient http_;
             size_t index_;
             std::vector<boost::uint64_t> pieces_;

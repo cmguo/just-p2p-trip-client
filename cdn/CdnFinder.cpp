@@ -2,6 +2,8 @@
 
 #include "trip/client/Common.h"
 #include "trip/client/cdn/CdnFinder.h"
+#include "trip/client/cdn/CdnSource.h"
+#include "trip/client/cdn/Error.h"
 #include "trip/client/proto/MessageIndex.h"
 #include "trip/client/core/Resource.h"
 
@@ -22,9 +24,15 @@ namespace trip
         {
         }
 
-        void CdnFinder::find_more(
+        std::string CdnFinder::proto() const
+        {
+            return "http";
+        }
+
+        void CdnFinder::find(
             Resource & resource, 
-            size_t count)
+            size_t count, 
+            resp_t const & resp)
         {
             Url url("http://jump.trip.com/jump.xml");
             url.param("rid", resource.id().to_string());
@@ -34,20 +42,34 @@ namespace trip
             }
             url.param("count", framework::string::format(count));
             http_.async_fetch(url, 
-                boost::bind(&CdnFinder::handle_fetch, this, boost::ref(resource), _1));
+                boost::bind(&CdnFinder::handle_fetch, this, _1, resp));
+        }
+
+        void CdnFinder::cancel(
+            Resource & resource)
+        {
+        }
+
+        Source * CdnFinder::create(
+            Scheduler & scheduler, 
+            Url const & url)
+        {
+            return new CdnSource(http_.get_io_service(), scheduler, url);
         }
 
         void CdnFinder::handle_fetch(
-            Resource & resource, 
-            boost::system::error_code ec)
+            boost::system::error_code ec, 
+            resp_t const & resp)
         {
-            if (ec)
-                return;
-
-            util::archive::XmlIArchive<> ia(http_.response_data());
             std::vector<Url> urls;
-            ia >> urls;
-            found(resource, urls);
+            if (!ec) {
+                util::archive::XmlIArchive<> ia(http_.response_data());
+                ia >> urls;
+                if (!ia) {
+                    ec = cdn_error::xml_format_error;
+                }
+            }
+            resp(ec, urls);
         }
 
     } // namespace client

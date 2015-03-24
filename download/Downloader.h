@@ -28,10 +28,16 @@ namespace trip
         public:
             bool close();
 
-        public:
-            virtual bool get_task(
-                Source & source, 
-                std::vector<boost::uint64_t> & pieces);
+            void add_source(
+                Source * source);
+
+            void active_sources(
+                std::vector<Url> & urls);
+
+        protected:
+            void find_sources(
+                std::string const & proto, 
+                size_t count);
 
         private:
             friend class DownloadManager;
@@ -40,6 +46,7 @@ namespace trip
 
         private:
             DownloadManager & mgr_;
+            std::vector<Source *> sources_;
         };
 
     } // namespace client

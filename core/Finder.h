@@ -1,52 +1,45 @@
-// Finder.h
 
 #ifndef _TRIP_CLIENT_CORE_FINDER_H_
 #define _TRIP_CLIENT_CORE_FINDER_H_
 
+#include <boost/function.hpp>
 
 namespace trip
 {
     namespace client
     {
 
-        class Scheduler;
         class Resource;
         class Source;
+        class Scheduler;
 
         class Finder
         {
+        public:
+            typedef boost::function<
+                void (boost::system::error_code const &, 
+                    std::vector<Url> &)
+            > resp_t;
+
         public:
             Finder();
 
             virtual ~Finder();
 
         public:
-            void find(
-                Scheduler & scheduler, 
-                size_t count);
+            virtual std::string proto() const = 0;
 
-            void cancel(
-                Scheduler & scheduler);
-
-            void create_source(
-                Scheduler & scheduler);
-
-        protected:
-            void found(
+            virtual void find(
                 Resource & resource, 
-                std::vector<Url> & urls);
+                size_t count, 
+                resp_t const & resp) = 0;
 
-        private:
-            virtual void find_more(
-                Resource & resource, 
-                size_t count) = 0;
+            virtual void cancel(
+                Resource & resource) = 0;
 
             virtual Source * create(
                 Scheduler & scheduler, 
                 Url const & url) = 0;
-
-        private:
-            std::set<Scheduler *> requests_;
         };
 
     } // namespace client

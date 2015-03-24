@@ -13,7 +13,7 @@ namespace trip
     {
 
         class CdnFinder
-            : Finder
+            : public Finder
         {
         public:
             CdnFinder(
@@ -22,18 +22,24 @@ namespace trip
             virtual ~CdnFinder();
 
         private:
-            virtual void find_more(
+            virtual std::string proto() const;
+
+            virtual void find(
                 Resource & resource, 
-                size_t count);
+                size_t count, 
+                resp_t const & resp);
             
+            virtual void cancel(
+                Resource & resource);
+
             virtual Source * create(
                 Scheduler & scheduler, 
                 Url const & url);
 
         private:
             void handle_fetch(
-                Resource & resource, 
-                boost::system::error_code ec);
+                boost::system::error_code ec, 
+                resp_t const & resp);
 
         private:
             util::protocol::HttpClient http_;

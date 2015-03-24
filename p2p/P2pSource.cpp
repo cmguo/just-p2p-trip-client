@@ -15,10 +15,11 @@ namespace trip
     {
 
         P2pSource::P2pSource(
+            boost::asio::io_service & io_svc,
             Scheduler & scheduler, 
-            UdpTunnel & tunnel)
+            Url const & url)
             : Source(scheduler)
-            , UdpSession(tunnel)
+            , UdpSession(get_tunnel(io_svc, url))
         {
             MessageRequestBind req;
             req.rid = resource().id();
@@ -35,6 +36,13 @@ namespace trip
         {
             return false;
         }
+
+        //UdpTunnel & P2pSource::get_tunnel(
+        //    boost::asio::io_service & io_svc,
+        //    Url const & url)
+        //{
+        //    Tunnel * t = new UdpTunnel(io_svc);
+        //}
 
         void P2pSource::on_msg(
             Message * msg)

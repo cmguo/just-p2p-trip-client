@@ -12,7 +12,7 @@ namespace trip
     {
 
         class P2pFinder
-            : Finder
+            : public Finder
             , UdpSession
         {
         public:
@@ -22,16 +22,26 @@ namespace trip
             virtual ~P2pFinder();
 
         public:
-            static P2pFinder * create(
-                boost::asio::io_service & io_svc);
+            virtual std::string proto() const;
 
-        public:
-            virtual void find_more(
-                Resource & resource);
+            virtual void find(
+                Resource & resource, 
+                size_t count, 
+                resp_t const & resp);
             
+            virtual void cancel(
+                Resource & resource);
+
+            virtual Source * create(
+                Scheduler & scheduler, 
+                Url const & url);
+
         private:
             virtual void on_msg(
                 Message * msg);
+
+        private:
+            std::map<Uuid, std::pair<size_t, resp_t> > requests_;
         };
 
     } // namespace client

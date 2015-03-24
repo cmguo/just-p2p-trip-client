@@ -5,6 +5,8 @@
 #include "trip/client/core/Scheduler.h"
 #include "trip/client/core/PoolPiece.h"
 
+#include <framework/string/Format.h>
+
 #include <boost/bind.hpp>
 #include <boost/asio/read.hpp>
 
@@ -15,8 +17,10 @@ namespace trip
 
         CdnSource::CdnSource(
             boost::asio::io_service & io_svc, 
-            Scheduler & scheduler)
+            Scheduler & scheduler, 
+            Url const & url)
             : Source(scheduler)
+            , url_(url)
             , http_(io_svc)
         {
             //io_svc.post(
@@ -30,7 +34,35 @@ namespace trip
         bool CdnSource::request(
             std::vector<boost::uint64_t> & pieces)
         {
-            return false;
+            if (pieces.empty())
+                return true;
+            boost::uint64_t seg = SEGMENT(pieces[0]);
+            util::protocol::http_field::Range range;
+            boost::uint64_t b = 0;
+            boost::uint64_t e = 0;
+            for (size_t i = 0; i < pieces.size(); ++i) {
+                boost::uint64_t pic = BLOCK_PIECE(pieces[0]);
+                if (pic == e) {
+                    ++e;
+                } else {
+                    assert(pic > e);
+                    if (e > b)
+                        range.add_range(b * PIECE_SIZE, e * PIECE_SIZE);
+                    b = pic;
+                    e = pic + 1;
+                }
+            }
+            if (e > b)
+                range.add_range(b * PIECE_SIZE, e * PIECE_SIZE);
+
+            Url url(url_);
+            url.param("seg", framework::string::format(seg));
+            util::protocol::HttpRequestHead head;
+            head.host = url.host_svc();
+            head.path = url.path_all();
+            http_.async_open(head, boost::bind(
+                    &CdnSource::handle_open, this, _1));
+            return true;
         }
 
         void CdnSource::handle_open(

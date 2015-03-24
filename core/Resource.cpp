@@ -51,13 +51,7 @@ namespace trip
         void Resource::set_urls(
             std::vector<Url> & urls)
         {
-            std::vector<Url> urls2;
-            for (size_t i = 0; i < urls.size(); ++i) {
-                if (std::find(urls_.begin(), urls_.end(), urls[i]) == urls_.end())
-                    urls2.push_back(urls[i]);
-            }
-            urls_.insert(urls_.end(), urls2.begin(), urls2.end());
-            urls.swap(urls2);
+            urls_.swap(urls);
         }
 
         void Resource::add_sink(

@@ -11,26 +11,29 @@ namespace trip
     namespace client
     {
 
+        class UdpTunnel;
+
         class P2pSource
-            : Source
+            : public Source
             , UdpSession
         {
         public:
             P2pSource(
+                boost::asio::io_service & io_svc,
                 Scheduler & scheduler,
-                UdpTunnel & tunnel);
+                Url const & url);
 
             virtual ~P2pSource();
-
-        public:
-            static P2pSource * create(
-                boost::asio::io_service & io_svc,
-                framework::string::Url const & url);
 
         public:
             virtual bool request(
                 std::vector<boost::uint64_t> & pieces);
             
+        private:
+            static UdpTunnel & get_tunnel(
+                boost::asio::io_service & io_svc,
+                Url const & url);
+
         private:
             virtual void on_msg(
                 Message * msg);
