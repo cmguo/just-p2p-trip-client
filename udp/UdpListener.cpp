@@ -2,6 +2,9 @@
 
 #include "trip/client/Common.h"
 #include "trip/client/udp/UdpListener.h"
+#include "trip/client/udp/UdpManager.h"
+#include "trip/client/udp/UdpPeer.h"
+#include "trip/client/udp/UdpTunnel.h"
 #include "trip/client/proto/MessageTunnel.h"
 #include "trip/client/proto/Message.hpp"
 
@@ -11,8 +14,9 @@ namespace trip
     {
 
         UdpListener::UdpListener(
-            UdpTunnel & tunnel)
-            : UdpSession(tunnel)
+            UdpManager & manager)
+            : UdpSession(manager.get_tunnel(Uuid()))
+            , mgr_(manager)
         {
         }
 
@@ -28,10 +32,14 @@ namespace trip
                 {
                     MessageRequestConnect & req
                         = msg->as<MessageRequestConnect>();
-//                    UdpSession *  tunnel = new UdpSession((UdpSession &)*bus_, req);
+                    UdpPeer peer;
+                    peer.id = req.pid;
+                    recent_ = &mgr_.get_tunnel(peer);
                 }
                 break;
             default:
+                if (recent_)
+                    pass_msg_to(msg, recent_->main_session());
                 assert(false);
             }
         }

@@ -17,9 +17,9 @@ namespace trip
 
         CdnSource::CdnSource(
             boost::asio::io_service & io_svc, 
-            Scheduler & scheduler, 
+            Resource & resource, 
             Url const & url)
-            : Source(scheduler)
+            : Source(resource)
             , url_(url)
             , http_(io_svc)
         {

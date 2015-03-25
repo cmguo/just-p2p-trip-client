@@ -35,11 +35,15 @@ namespace trip
             bool send_msg(
                 Message * msg);
 
-            virtual void on_msg(
-                Message * msg) = 0;
+            void pass_msg_to(
+                Message * msg, 
+                UdpSession * to);
 
-        protected:
-            boost::uint16_t peer_id_;
+            virtual void on_msg(
+                Message * msg);
+
+        private:
+            boost::uint16_t sid_; // id of remote seesion
         };
 
     } // namespace client

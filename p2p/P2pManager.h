@@ -1,7 +1,7 @@
-// CdnManager.h
+// P2pManager.h
 
-#ifndef _TRIP_CDN_CDN_MANAGER_H_
-#define _TRIP_CDN_CDN_MANAGER_H_
+#ifndef _TRIP_P2P_P2P_MANAGER_H_
+#define _TRIP_P2P_P2P_MANAGER_H_
 
 #include <util/daemon/Module.h>
 
@@ -12,14 +12,14 @@ namespace trip
 
         class Finder;
 
-        class CdnManager
-            : public util::daemon::ModuleBase<CdnManager>
+        class P2pManager
+            : public util::daemon::ModuleBase<P2pManager>
         {
         public:
-            CdnManager(
+            P2pManager(
                 util::daemon::Daemon & daemon);
 
-            ~CdnManager();
+            ~P2pManager();
 
         public:
             Finder * finder()
@@ -41,4 +41,4 @@ namespace trip
     } // namespace client
 } // namespace trip
 
-#endif // _TRIP_CDN_CDN_MANAGER_H_
+#endif // _TRIP_P2P_P2P_MANAGER_H_

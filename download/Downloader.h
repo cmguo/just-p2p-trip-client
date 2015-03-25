@@ -32,7 +32,7 @@ namespace trip
                 Source * source);
 
             void active_sources(
-                std::vector<Url> & urls);
+                std::vector<Source *> const & sources);
 
         protected:
             void find_sources(

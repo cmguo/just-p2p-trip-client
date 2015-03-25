@@ -11,37 +11,38 @@ namespace trip
     namespace client
     {
 
+        class UdpManager;
+
+        struct UdpPeer;
+
         class P2pFinder
             : public Finder
             , UdpSession
         {
         public:
             P2pFinder(
-                UdpTunnel & tunnel);
+                UdpManager & manager);
 
             virtual ~P2pFinder();
 
         public:
             virtual std::string proto() const;
 
+        private:
             virtual void find(
                 Resource & resource, 
-                size_t count, 
-                resp_t const & resp);
-            
-            virtual void cancel(
-                Resource & resource);
+                size_t count);
 
             virtual Source * create(
-                Scheduler & scheduler, 
+                Resource & resource, 
                 Url const & url);
-
+            
         private:
             virtual void on_msg(
                 Message * msg);
 
         private:
-            std::map<Uuid, std::pair<size_t, resp_t> > requests_;
+            UdpManager & umgr_;
         };
 
     } // namespace client

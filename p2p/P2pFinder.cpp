@@ -4,6 +4,8 @@
 #include "trip/client/p2p/P2pFinder.h"
 #include "trip/client/p2p/P2pSource.h"
 #include "trip/client/udp/UdpTunnel.h"
+#include "trip/client/udp/UdpManager.h"
+#include "trip/client/udp/UdpPeer.h"
 #include "trip/client/proto/MessageTracker.h"
 #include "trip/client/core/Resource.h"
 
@@ -13,8 +15,9 @@ namespace trip
     {
 
         P2pFinder::P2pFinder(
-            UdpTunnel & tunnel)
-            : UdpSession(tunnel)
+            UdpManager & manager)
+            : UdpSession(manager.get_tunnel(Uuid()))
+            , umgr_(manager)
         {
         }
 
@@ -29,24 +32,17 @@ namespace trip
 
         void P2pFinder::find(
             Resource & resource, 
-            size_t count, 
-            resp_t const & resp)
+            size_t count)
         {
-            requests_[resource.id()] = std::make_pair(count, resp);
-        }
-
-        void P2pFinder::cancel(
-            Resource & resource)
-        {
-            //requests_.erase(resource.id());
         }
 
         Source * P2pFinder::create(
-            Scheduler & scheduler, 
+            Resource & resource, 
             Url const & url)
         {
-            //return new P2pSource(get_io_service(), scheduler, url);
-            return NULL;
+            UdpPeer peer;
+            Uuid rid;
+            return new P2pSource(resource, umgr_.get_tunnel(peer));
         }
 
         void P2pFinder::on_msg(

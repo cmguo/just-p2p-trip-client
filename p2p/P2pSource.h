@@ -11,6 +11,7 @@ namespace trip
     namespace client
     {
 
+        class Resource;
         class UdpTunnel;
 
         class P2pSource
@@ -19,9 +20,8 @@ namespace trip
         {
         public:
             P2pSource(
-                boost::asio::io_service & io_svc,
-                Scheduler & scheduler,
-                Url const & url);
+                Resource & resource,
+                UdpTunnel & tunnel);
 
             virtual ~P2pSource();
 

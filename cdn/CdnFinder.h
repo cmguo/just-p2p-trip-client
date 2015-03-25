@@ -26,20 +26,16 @@ namespace trip
 
             virtual void find(
                 Resource & resource, 
-                size_t count, 
-                resp_t const & resp);
+                size_t count);
             
-            virtual void cancel(
-                Resource & resource);
-
             virtual Source * create(
-                Scheduler & scheduler, 
+                Resource & resource, 
                 Url const & url);
 
         private:
             void handle_fetch(
                 boost::system::error_code ec, 
-                resp_t const & resp);
+                Resource & resource);
 
         private:
             util::protocol::HttpClient http_;

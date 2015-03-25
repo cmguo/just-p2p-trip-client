@@ -64,7 +64,7 @@ namespace trip
             void pop();
             
         protected:
-            boost::uint8_t id_;
+            boost::uint16_t id_;
             Bus * bus_;
             Queue * queue_;
         };

@@ -18,7 +18,7 @@ namespace trip
         public:
             CdnSource(
                 boost::asio::io_service & io_svc,
-                Scheduler & scheduler, 
+                Resource & resource, 
                 Url const & url);
 
             virtual ~CdnSource();

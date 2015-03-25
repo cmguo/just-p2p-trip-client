@@ -10,6 +10,7 @@ namespace trip
     namespace client
     {
 
+        class UdpManager;
         struct MessageRequestConnect;
 
         class UdpListener
@@ -17,13 +18,17 @@ namespace trip
         {
         public:
             UdpListener(
-                UdpTunnel & tunnel);
+                UdpManager & manager);
 
             virtual ~UdpListener();
 
         public:
             virtual void on_msg(
                 Message * msg);
+
+        private:
+            UdpManager & mgr_;
+            UdpTunnel * recent_;
         };
 
     } // namespace client

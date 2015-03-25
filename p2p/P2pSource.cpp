@@ -2,7 +2,6 @@
 
 #include "trip/client/Common.h"
 #include "trip/client/p2p/P2pSource.h"
-#include "trip/client/p2p/P2pListener.h"
 #include "trip/client/udp/UdpTunnel.h"
 #include "trip/client/proto/MessageSession.h"
 #include "trip/client/proto/Message.hpp"
@@ -15,14 +14,13 @@ namespace trip
     {
 
         P2pSource::P2pSource(
-            boost::asio::io_service & io_svc,
-            Scheduler & scheduler, 
-            Url const & url)
-            : Source(scheduler)
-            , UdpSession(get_tunnel(io_svc, url))
+            Resource & resource,
+            UdpTunnel & tunnel)
+            : Source(resource)
+            , UdpSession(tunnel)
         {
             MessageRequestBind req;
-            req.rid = resource().id();
+            req.rid = resource.id();
             req.sid = id();
             push(new Message(req));
         }
@@ -36,13 +34,6 @@ namespace trip
         {
             return false;
         }
-
-        //UdpTunnel & P2pSource::get_tunnel(
-        //    boost::asio::io_service & io_svc,
-        //    Url const & url)
-        //{
-        //    Tunnel * t = new UdpTunnel(io_svc);
-        //}
 
         void P2pSource::on_msg(
             Message * msg)

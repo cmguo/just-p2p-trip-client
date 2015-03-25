@@ -4,9 +4,10 @@
 #include "trip/client/download/DownloadManager.h"
 #include "trip/client/download/Downloader.h"
 #include "trip/client/main/ResourceManager.h"
-#include "trip/client/cdn/CdnFinder.h"
-#include "trip/client/p2p/P2pFinder.h"
+#include "trip/client/cdn/CdnManager.h"
+#include "trip/client/p2p/P2pManager.h"
 #include "trip/client/core/Resource.h"
+#include "trip/client/core/Finder.h"
 
 #include <boost/bind.hpp>
 
@@ -22,9 +23,10 @@ namespace trip
         {
             //config().register_module("DownloadManager")
             //    << CONFIG_PARAM_NAME_NOACC("path", path_);
-            Finder * f = new CdnFinder(io_svc());
+            Finder * f = NULL;
+            f = util::daemon::use_module<CdnManager>(daemon).finder();
             finders_[f->proto()] = f;
-            //f = new P2pFinder(io_svc());
+            f = util::daemon::use_module<P2pManager>(daemon).finder();
             finders_[f->proto()] = f;
         }
 
@@ -60,7 +62,7 @@ namespace trip
             if (iter == finders_.end())
                 return;
             iter->second->find(downloader.resource(), count, boost::bind(
-                    &DownloadManager::handle_find, this, _1, _2, boost::ref(*iter->second), downloader.resource().id()));
+                    &DownloadManager::handle_find, this, _1, downloader.resource().id(), _2));
         }
 
         void DownloadManager::on_event(
@@ -96,20 +98,13 @@ namespace trip
 
         void DownloadManager::handle_find(
             boost::system::error_code const & ec, 
-            std::vector<Url> & urls, 
-            Finder & finder, 
-            Uuid const & rid)
+            Uuid const & rid, 
+            std::vector<Source *> const & sources)
         {
             std::map<Uuid, Downloader *>::iterator iter = downloaders_.begin();
             if (iter == downloaders_.end())
                 return;
-            Downloader & downloader = *iter->second;
-            downloader.active_sources(urls);
-            for (size_t i = 0; i < urls.size(); ++i) {
-                Source * s = finder.create(downloader, urls[i]);
-                if (s)
-                    downloader.add_source(s);
-            }
+            iter->second->active_sources(sources);
         }
 
     } // namespace client

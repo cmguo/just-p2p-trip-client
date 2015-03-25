@@ -12,8 +12,10 @@ namespace trip
     {
 
         UdpMainSession::UdpMainSession(
-            UdpTunnel & tunnel)
+            UdpTunnel & tunnel, 
+            UdpPeer const & peer)
             : UdpSession(tunnel)
+            , peer_(peer)
         {
         }
 

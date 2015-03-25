@@ -4,8 +4,7 @@
 #include "trip/client/download/Downloader.h"
 #include "trip/client/download/DownloadManager.h"
 #include "trip/client/core/Resource.h"
-
-#include <boost/bind.hpp>
+#include "trip/client/core/Source.h"
 
 namespace trip
 {
@@ -22,8 +21,6 @@ namespace trip
 
         Downloader::~Downloader()
         {
-            for (size_t i = 0; i < sources_.size(); ++i)
-                delete sources_[i];
         }
 
         void Downloader::find_sources(
@@ -39,7 +36,7 @@ namespace trip
         }
 
         void Downloader::active_sources(
-            std::vector<Url> & urls)
+            std::vector<Source *> const & sources)
         {
         }
 

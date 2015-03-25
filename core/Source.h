@@ -5,8 +5,6 @@
 
 #include "trip/client/core/Piece.h"
 
-#include <framework/string/Url.h>
-
 #include <boost/dynamic_bitset/dynamic_bitset.hpp>
 
 namespace trip
@@ -21,14 +19,14 @@ namespace trip
         {
         public:
             Source(
-                Scheduler & scheduler);
+                Resource & resource);
 
             virtual ~Source();
 
         public:
-            Resource const & resource() const;
+            void attach(
+                Scheduler & scheduler);
 
-        public:
             virtual bool request(
                 std::vector<boost::uint64_t> & pieces) = 0;
 
@@ -39,8 +37,11 @@ namespace trip
                 boost::uint64_t id, 
                 Piece::pointer piece);
 
+        protected:
+            Resource & resource_;
+
         private:
-            Scheduler & scheduler_;
+            Scheduler * scheduler_;
             boost::dynamic_bitset<> map_;
         };
 

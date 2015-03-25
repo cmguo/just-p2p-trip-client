@@ -11,8 +11,8 @@ namespace trip
     {
 
         Source::Source(
-            Scheduler & scheduler)
-            : scheduler_(scheduler)
+            Resource & resource)
+            : resource_(resource)
         {
         }
 
@@ -20,15 +20,16 @@ namespace trip
         {
         }
 
-        Resource const & Source::resource() const
+        void Source::attach(
+            Scheduler & scheduler)
         {
-            return scheduler_.resource();
+            scheduler_ = &scheduler;
         }
 
         void Source::on_ready()
         {
             std::vector<boost::uint64_t> pieces;
-            if (scheduler_.get_task(*this, pieces))
+            if (scheduler_->get_task(*this, pieces))
                 request(pieces);
         }
 
@@ -36,7 +37,7 @@ namespace trip
             boost::uint64_t id, 
             Piece::pointer piece)
         {
-            scheduler_.resource().set_piece(id, piece);
+            resource_.set_piece(id, piece);
             on_ready();
         }
 

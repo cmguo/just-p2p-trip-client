@@ -37,7 +37,7 @@ namespace trip
             virtual void on_timer();
 
         protected:
-            boost::uint16_t peer_id_;
+            boost::uint16_t tid_; // id of remote tunnel point
             boost::uint16_t seq_;
         };
 

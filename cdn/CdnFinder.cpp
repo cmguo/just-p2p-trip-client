@@ -31,8 +31,7 @@ namespace trip
 
         void CdnFinder::find(
             Resource & resource, 
-            size_t count, 
-            resp_t const & resp)
+            size_t count)
         {
             Url url("http://jump.trip.com/jump.xml");
             url.param("rid", resource.id().to_string());
@@ -42,24 +41,19 @@ namespace trip
             }
             url.param("count", framework::string::format(count));
             http_.async_fetch(url, 
-                boost::bind(&CdnFinder::handle_fetch, this, _1, resp));
-        }
-
-        void CdnFinder::cancel(
-            Resource & resource)
-        {
+                boost::bind(&CdnFinder::handle_fetch, this, _1, boost::ref(resource)));
         }
 
         Source * CdnFinder::create(
-            Scheduler & scheduler, 
+            Resource & resource, 
             Url const & url)
         {
-            return new CdnSource(http_.get_io_service(), scheduler, url);
+            return new CdnSource(http_.get_io_service(), resource, url);
         }
 
         void CdnFinder::handle_fetch(
             boost::system::error_code ec, 
-            resp_t const & resp)
+            Resource & resource)
         {
             std::vector<Url> urls;
             if (!ec) {
@@ -69,7 +63,7 @@ namespace trip
                     ec = cdn_error::xml_format_error;
                 }
             }
-            resp(ec, urls);
+            found(resource, urls);
         }
 
     } // namespace client

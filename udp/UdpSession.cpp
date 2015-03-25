@@ -3,6 +3,7 @@
 #include "trip/client/Common.h"
 #include "trip/client/udp/UdpSession.h"
 #include "trip/client/udp/UdpTunnel.h"
+#include "trip/client/proto/MessageTunnel.h"
 #include "trip/client/proto/Message.hpp"
 
 namespace trip
@@ -13,7 +14,7 @@ namespace trip
         UdpSession::UdpSession(
             UdpTunnel & tunnel)
             : Cell(&tunnel)
-            , peer_id_(0)
+            , sid_(0)
         {
         }
 
@@ -51,8 +52,20 @@ namespace trip
         bool UdpSession::send_msg(
             Message * msg)
         {
-            msg->sid = peer_id_;
+            msg->sid = sid_;
             return push(msg);
+        }
+
+        void UdpSession::pass_msg_to(
+            Message * msg, 
+            UdpSession * to)
+        {
+            to->on_msg(msg);
+        }
+
+        void UdpSession::on_msg(
+            Message * msg)
+        {
         }
 
     } // namespace client

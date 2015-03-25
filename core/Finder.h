@@ -17,8 +17,9 @@ namespace trip
         {
         public:
             typedef boost::function<
-                void (boost::system::error_code const &, 
-                    std::vector<Url> &)
+                void (
+                    boost::system::error_code const &, 
+                    std::vector<Source *> const &)
             > resp_t;
 
         public:
@@ -32,14 +33,28 @@ namespace trip
             virtual void find(
                 Resource & resource, 
                 size_t count, 
-                resp_t const & resp) = 0;
+                resp_t const & resp);
 
             virtual void cancel(
-                Resource & resource) = 0;
+                Resource & resource);
+            
+        protected:
+            void found(
+                Resource & resource, 
+                std::vector<Url> const & urls);
+
+        private:
+            virtual void find(
+                Resource & resource, 
+                size_t count) = 0;
 
             virtual Source * create(
-                Scheduler & scheduler, 
+                Resource & resource, 
                 Url const & url) = 0;
+
+        private:
+            std::map<Uuid, std::pair<size_t, resp_t> > requests_;
+            std::map<Url, Source *> sources_;
         };
 
     } // namespace client

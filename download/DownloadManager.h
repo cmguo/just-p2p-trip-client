@@ -14,6 +14,7 @@ namespace trip
         class Downloader;
         class ResourceManager;
         class Finder;
+        class Source;
 
         class DownloadManager
             : public util::daemon::ModuleBase<DownloadManager>
@@ -44,9 +45,8 @@ namespace trip
 
             void handle_find(
                 boost::system::error_code const & ec, 
-                std::vector<Url> & urls, 
-                Finder & finder, 
-                Uuid const & rid);
+                Uuid const & rid, 
+                std::vector<Source *> const & sources);
 
         private:
             ResourceManager & rmgr_;

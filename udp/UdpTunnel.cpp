@@ -16,7 +16,7 @@ namespace trip
         UdpTunnel::UdpTunnel(
             UdpSocket & socket)
             : Tunnel(&socket)
-            , peer_id_(0)
+            , tid_(0)
             , seq_(0)
         {
         }
@@ -32,7 +32,7 @@ namespace trip
             TunnelOArchive ar(buf);
             size_t pos = ar.tellp();
             TunnelHeader th;
-            th.tid = peer_id_;
+            th.tid = tid_;
             th.seq = seq_++;
             ar.seekp(sizeof(TunnelHeader), std::ios::cur);
             size_t pos2 = ar.tellp();
