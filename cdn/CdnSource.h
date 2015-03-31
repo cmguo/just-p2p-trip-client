@@ -23,9 +23,12 @@ namespace trip
 
             virtual ~CdnSource();
 
-        public:
-            virtual bool request(
-                std::vector<boost::uint64_t> & pieces);
+        private:
+            virtual bool open();
+
+            virtual bool close();
+
+            virtual bool do_request();
             
         private:
             void handle_open(
@@ -37,10 +40,9 @@ namespace trip
                 Piece::pointer piece);
 
         private:
-            Url const url_;
             util::protocol::HttpClient http_;
             size_t index_;
-            std::vector<boost::uint64_t> pieces_;
+            Piece::pointer piece_;
         };
 
     } // namespace client

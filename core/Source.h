@@ -19,7 +19,8 @@ namespace trip
         {
         public:
             Source(
-                Resource & resource);
+                Resource & resource,
+                Url const & url);
 
             virtual ~Source();
 
@@ -27,8 +28,14 @@ namespace trip
             void attach(
                 Scheduler & scheduler);
 
-            virtual bool request(
-                std::vector<boost::uint64_t> & pieces) = 0;
+            void detach();
+
+            bool attached() const;
+
+            Url const & url() const;
+
+            bool request(
+                std::vector<boost::uint64_t> & pieces);
 
         protected:
             void on_ready();
@@ -37,8 +44,17 @@ namespace trip
                 boost::uint64_t id, 
                 Piece::pointer piece);
 
+        private:
+            virtual bool open() = 0;
+
+            virtual bool close() = 0;
+
+            virtual bool do_request() = 0;
+
         protected:
             Resource & resource_;
+            Url const url_;
+            std::vector<boost::uint64_t> requests_;
 
         private:
             Scheduler * scheduler_;

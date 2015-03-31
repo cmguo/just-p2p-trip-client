@@ -14,6 +14,7 @@ namespace trip
     {
 
         class DownloadManager;
+        class Finder;
 
         class Downloader
             : public Scheduler
@@ -26,18 +27,22 @@ namespace trip
             ~Downloader();
 
         public:
+            void active_sources(
+                Finder & finder, 
+                std::vector<Url> const & urls);
+
             bool close();
 
-            void add_source(
+        protected:
+            virtual void add_source(
                 Source * source);
 
-            void active_sources(
-                std::vector<Source *> const & sources);
-
-        protected:
             void find_sources(
                 std::string const & proto, 
                 size_t count);
+
+            void del_source(
+                Source * source);
 
         private:
             friend class DownloadManager;

@@ -62,7 +62,7 @@ namespace trip
             if (iter == finders_.end())
                 return;
             iter->second->find(downloader.resource(), count, boost::bind(
-                    &DownloadManager::handle_find, this, _1, downloader.resource().id(), _2));
+                    &DownloadManager::handle_find, this, _1, downloader.resource().id(), boost::ref(*iter->second), _2));
         }
 
         void DownloadManager::on_event(
@@ -99,12 +99,13 @@ namespace trip
         void DownloadManager::handle_find(
             boost::system::error_code const & ec, 
             Uuid const & rid, 
-            std::vector<Source *> const & sources)
+            Finder & finder, 
+            std::vector<Url> const & urls)
         {
             std::map<Uuid, Downloader *>::iterator iter = downloaders_.begin();
             if (iter == downloaders_.end())
                 return;
-            iter->second->active_sources(sources);
+            iter->second->active_sources(finder, urls);
         }
 
     } // namespace client

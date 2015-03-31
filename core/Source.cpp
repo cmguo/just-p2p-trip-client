@@ -11,8 +11,10 @@ namespace trip
     {
 
         Source::Source(
-            Resource & resource)
+            Resource & resource, 
+            Url const & url)
             : resource_(resource)
+            , url_(url)
         {
         }
 
@@ -24,6 +26,22 @@ namespace trip
             Scheduler & scheduler)
         {
             scheduler_ = &scheduler;
+            open();
+        }
+
+        void Source::detach()
+        {
+            close();
+        }
+
+        Url const & Source::url() const
+        {
+            return url_;
+        }
+
+        bool Source::attached() const
+        {
+            return scheduler_ != NULL;
         }
 
         void Source::on_ready()

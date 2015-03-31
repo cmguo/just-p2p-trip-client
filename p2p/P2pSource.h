@@ -21,13 +21,17 @@ namespace trip
         public:
             P2pSource(
                 Resource & resource,
-                UdpTunnel & tunnel);
+                UdpTunnel & tunnel, 
+                Url const & url);
 
             virtual ~P2pSource();
 
         public:
-            virtual bool request(
-                std::vector<boost::uint64_t> & pieces);
+            virtual bool open();
+            
+            virtual bool close();
+            
+            virtual bool do_request();
             
         private:
             static UdpTunnel & get_tunnel(

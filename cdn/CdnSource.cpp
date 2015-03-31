@@ -19,8 +19,7 @@ namespace trip
             boost::asio::io_service & io_svc, 
             Resource & resource, 
             Url const & url)
-            : Source(resource)
-            , url_(url)
+            : Source(resource, url)
             , http_(io_svc)
         {
             //io_svc.post(
@@ -31,17 +30,25 @@ namespace trip
         {
         }
 
-        bool CdnSource::request(
-            std::vector<boost::uint64_t> & pieces)
+        bool CdnSource::open()
         {
-            if (pieces.empty())
+        }
+
+        bool CdnSource::close()
+        {
+            on_ready();
+        }
+
+        bool CdnSource::do_request()
+        {
+            if (requests_.empty())
                 return true;
-            boost::uint64_t seg = SEGMENT(pieces[0]);
+            boost::uint64_t seg = SEGMENT(requests_[0]);
             util::protocol::http_field::Range range;
             boost::uint64_t b = 0;
             boost::uint64_t e = 0;
-            for (size_t i = 0; i < pieces.size(); ++i) {
-                boost::uint64_t pic = BLOCK_PIECE(pieces[0]);
+            for (size_t i = 0; i < requests_.size(); ++i) {
+                boost::uint64_t pic = BLOCK_PIECE(requests_[0]);
                 if (pic == e) {
                     ++e;
                 } else {
@@ -79,23 +86,29 @@ namespace trip
             size_t bytes_read, 
             Piece::pointer piece)
         {
-            if (ec && ec != boost::asio::error::eof)
+            if (piece && piece->nref() == 1) // canceled
                 return;
+
+            piece_.reset();
+
+            if (ec && ec != boost::asio::error::eof) {
+                return;
+            }
 
             if (piece) {
                 ((PoolPiece &)*piece).set_size((boost::uint16_t)bytes_read);
-                on_data(pieces_[index_], piece);
+                on_data(requests_[index_], piece);
                 ++index_;
-                if (index_ >= pieces_.size())
+                if (index_ >= requests_.size())
                     return;
             }
 
-            piece = PoolPiece::alloc();
+            piece_ = PoolPiece::alloc();
             boost::asio::async_read(
                 http_.response_stream(), 
                 boost::asio::buffer(piece->data(), piece->size()), 
                 boost::asio::transfer_all(), 
-                boost::bind(&CdnSource::handle_read, this, _1, _2, piece));
+                boost::bind(&CdnSource::handle_read, this, _1, _2, piece_));
         }
 
     } // namespace client

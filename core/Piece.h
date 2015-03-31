@@ -36,6 +36,11 @@ namespace trip
         public:
             typedef boost::intrusive_ptr<Piece> pointer;
 
+            boost::uint8_t nref() const
+            {
+                return nref_;
+            }
+
             boost::uint8_t * data() const
             {
                 return data_;

@@ -42,7 +42,7 @@ namespace trip
         {
             UdpPeer peer;
             Uuid rid;
-            return new P2pSource(resource, umgr_.get_tunnel(peer));
+            return new P2pSource(resource, umgr_.get_tunnel(peer), url);
         }
 
         void P2pFinder::on_msg(

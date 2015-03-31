@@ -63,7 +63,7 @@ namespace trip
                     ec = cdn_error::xml_format_error;
                 }
             }
-            found(resource, urls);
+            found(ec, resource, urls);
         }
 
     } // namespace client

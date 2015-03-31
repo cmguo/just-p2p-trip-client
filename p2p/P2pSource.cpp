@@ -15,8 +15,9 @@ namespace trip
 
         P2pSource::P2pSource(
             Resource & resource,
-            UdpTunnel & tunnel)
-            : Source(resource)
+            UdpTunnel & tunnel, 
+            Url const & url)
+            : Source(resource, url)
             , UdpSession(tunnel)
         {
             MessageRequestBind req;
@@ -29,8 +30,17 @@ namespace trip
         {
         }
 
-        bool P2pSource::request(
-            std::vector<boost::uint64_t> & pieces)
+        bool P2pSource::open()
+        {
+            return false;
+        }
+
+        bool P2pSource::close()
+        {
+            return false;
+        }
+
+        bool P2pSource::do_request()
         {
             return false;
         }

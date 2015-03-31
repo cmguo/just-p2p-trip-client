@@ -5,6 +5,7 @@
 #include "trip/client/download/DownloadManager.h"
 #include "trip/client/core/Resource.h"
 #include "trip/client/core/Source.h"
+#include "trip/client/core/Finder.h"
 
 namespace trip
 {
@@ -36,8 +37,28 @@ namespace trip
         }
 
         void Downloader::active_sources(
-            std::vector<Source *> const & sources)
+            Finder & finder, 
+            std::vector<Url> const & urls)
         {
+            for (size_t i = 0; i < urls.size(); ++i) {
+                Url const & url(urls[i]);
+                bool found = false;
+                for (size_t j = 0; j < sources_.size(); ++j) {
+                    if (url == sources_[j]->url()) {
+                        if (!sources_[j]->attached()) {
+                            sources_[j]->attach(*this);
+                            add_source(sources_[j]);
+                            found = true;
+                        }
+                    }
+                }
+                if (!found) {
+                    Source * s = finder.create(resource(), url);
+                    sources_.push_back(s);
+                    s->attach(*this);
+                    add_source(s);
+                }
+            }
         }
 
     } // namespace client

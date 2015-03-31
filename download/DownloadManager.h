@@ -46,7 +46,8 @@ namespace trip
             void handle_find(
                 boost::system::error_code const & ec, 
                 Uuid const & rid, 
-                std::vector<Source *> const & sources);
+                Finder & finder, 
+                std::vector<Url> const & urls);
 
         private:
             ResourceManager & rmgr_;
