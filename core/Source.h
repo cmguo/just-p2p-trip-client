@@ -32,16 +32,28 @@ namespace trip
 
             bool attached() const;
 
+        public:
             Url const & url() const;
 
+            bool has_segment(
+                DataId sid) const;
+
+            bool has_block(
+                DataId bid) const;
+
+        public:
             bool request(
-                std::vector<boost::uint64_t> & pieces);
+                std::vector<DataId> & pieces);
 
         protected:
             void on_ready();
 
+            void on_map(
+                DataId id, 
+                boost::dynamic_bitset<> & map);
+
             void on_data(
-                boost::uint64_t id, 
+                DataId id, 
                 Piece::pointer piece);
 
         private:
@@ -54,10 +66,11 @@ namespace trip
         protected:
             Resource & resource_;
             Url const url_;
-            std::vector<boost::uint64_t> requests_;
+            std::vector<DataId> requests_;
 
         private:
             Scheduler * scheduler_;
+            DataId map_id_;
             boost::dynamic_bitset<> map_;
         };
 

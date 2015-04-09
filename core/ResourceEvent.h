@@ -3,6 +3,8 @@
 #ifndef _TRIP_CLIENT_CORE_RESOURCE_EVENT_H_
 #define _TRIP_CLIENT_CORE_RESOURCE_EVENT_H_
 
+#include "trip/client/core/DataId.h"
+
 #include <util/event/Event.h>
 
 namespace trip
@@ -29,7 +31,7 @@ namespace trip
         struct DataEvent
             : util::event::Event
         {
-            boost::uint64_t id;
+            DataId id;
         };
 
         struct SegmentMeta;
@@ -37,7 +39,7 @@ namespace trip
         struct SegmentMetaEvent
             : util::event::Event
         {
-            boost::uint64_t id;
+            DataId id;
             SegmentMeta const * meta;
         };
 

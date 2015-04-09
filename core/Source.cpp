@@ -46,13 +46,21 @@ namespace trip
 
         void Source::on_ready()
         {
-            std::vector<boost::uint64_t> pieces;
+            std::vector<DataId> pieces;
             if (scheduler_->get_task(*this, pieces))
                 request(pieces);
         }
 
+        void Source::on_map(
+            DataId id, 
+            boost::dynamic_bitset<> & map)
+        {
+            map_id_ = id;
+            map_.swap(map);
+        }
+
         void Source::on_data(
-            boost::uint64_t id, 
+            DataId id, 
             Piece::pointer piece)
         {
             resource_.set_piece(id, piece);

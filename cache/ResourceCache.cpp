@@ -44,7 +44,7 @@ namespace trip
         }
 
         static std::string idstr(
-            boost::uint64_t id)
+            DataId id)
         {
             id = framework::system::BytesOrder::host_to_big_endian(id);
             std::string sid((char const *)&id, sizeof(id));
@@ -70,7 +70,7 @@ namespace trip
             for (; iter != end; ++iter) {
                 if (iter->path().extension() == resource_.meta()->file_extension) {
                     boost::uint64_t segid = strid(iter->path().stem());
-                    boost::uint64_t id = MAKE_ID(segid, 0, 0);
+                    DataId id(segid, 0, 0);
                     if (!resource_.load_segment(id, iter->path())) {
                         boost::filesystem::remove(iter->path());
                     }
@@ -85,15 +85,15 @@ namespace trip
             if (event == resource_.data_ready) {
             } else if (event == resource_.data_miss) {
                 DataEvent const & e(resource_.data_miss);
-                std::string segname = idstr(SEGMENT(e.id));
+                std::string segname = idstr(e.id.segment);
                 segname.append(1, '.');
                 segname.append(resource_.meta()->file_extension);
                 Block const * block = resource_.map_block(e.id, directory_ / segname);
                 if (block) {
-                    boost::uint64_t f = SEGMENT_BLOCK(e.id);
-                    boost::uint64_t t = f + 1;
-                    f = MAKE_ID(0, f, 0);
-                    t = MAKE_ID(0, t, 0);
+                    DataId f = e.id;
+                    f.piece = 0;
+                    DataId t = f;
+                    t.top_segment_block++;
                     Cache c = {resource_.alloc_lock(f, t), block};
                     cached_blocks_.push_back(c);
                 }

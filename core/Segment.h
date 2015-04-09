@@ -36,14 +36,9 @@ namespace trip
                 boost::uint32_t size = 0);
 
         public:
-            boost::uint64_t next() const
+            bool full() const
             {
-                return MAKE_ID(0, next_, blocks_[next_]->next());
-            }
-
-            bool finished() const
-            {
-                return next_ == MAX_BLOCK;
+                return left_ == 0;
             }
 
             md5_bytes cache_md5sum() const;
@@ -56,10 +51,10 @@ namespace trip
             }
 
             Block const * get_block(
-                boost::uint64_t id) const;
+                DataId id) const;
 
             Piece::pointer get_piece(
-                boost::uint64_t id) const;
+                DataId id) const;
 
             void get_stat(
                 boost::dynamic_bitset<boost::uint32_t> & map) const;
@@ -79,27 +74,30 @@ namespace trip
                 boost::uint32_t size);
 
             bool load_block_stat(
-                boost::uint64_t id, 
+                DataId id, 
                 boost::dynamic_bitset<boost::uint32_t> & map);
 
-            boost::uint64_t set_piece(
-                boost::uint64_t id, 
+            bool seek(
+                DataId & id);
+
+            bool set_piece(
+                DataId id, 
                 Piece::pointer piece);
 
             Block const * map_block(
-                boost::uint64_t id, 
+                DataId id, 
                 boost::filesystem::path const & path);
 
             void release(
-                boost::uint64_t from, 
-                boost::uint64_t to);
+                DataId from, 
+                DataId to);
 
         private:
             Block & modify_block(
-                boost::uint64_t id);
+                DataId id);
 
         private:
-            boost::uint16_t next_;
+            boost::uint16_t left_;
             boost::uint16_t block_count_;
             boost::uint32_t last_block_size_;
             std::vector<Block *> blocks_;

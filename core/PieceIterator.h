@@ -26,7 +26,7 @@ namespace trip
         public:
             PieceIterator(
                 ResourceData & resource, 
-                boost::uint64_t id)
+                DataId id)
                 : resource_(&resource)
                 , id_(id)
                 , segment_(NULL)
@@ -35,7 +35,7 @@ namespace trip
             }
 
         public:
-            boost::uint64_t id() const
+            DataId id() const
             {
                 return id_;
             }
@@ -61,7 +61,7 @@ namespace trip
             friend class ResourceData;
 
             ResourceData * resource_;
-            boost::uint64_t id_;
+            DataId id_;
             Segment const * segment_;
             Block const * block_;
             Piece::pointer piece_;

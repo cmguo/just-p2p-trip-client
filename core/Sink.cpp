@@ -15,8 +15,10 @@ namespace trip
         Sink::Sink(
             Resource & resource)
             : resource_(&resource)
-            , iter_(resource, 0)
-            , end_(iter_)
+            , beg_(resource, 0)
+            , pos_(beg_)
+            , avl_(beg_)
+            , end_(beg_)
             , off_(0)
             , size_(0)
         {
@@ -35,61 +37,66 @@ namespace trip
             boost::uint32_t begin, 
             boost::uint32_t end)
         {
-            request_.type = 0;
-            request_.begin = MAKE_ID(seg, 0, begin / PIECE_SIZE);
-            if (end) {
-                request_.end = MAKE_ID(seg, 0, (end + PIECE_SIZE - 1) / PIECE_SIZE);
-            } else {
-                request_.end = MAKE_ID((seg + 1), 0, 0);
+            DataId ibegin(seg, 0, begin / PIECE_SIZE);
+            DataId iend(seg, 0, (end + PIECE_SIZE - 1) / PIECE_SIZE);
+            if (end == 0) {
+                iend = DataId((seg + 1), 0, 0);
             }
             off_ = begin % PIECE_SIZE;
             size_ = end - begin;
-            if (iter_.id() != request_.begin) {
+            if (pos_.id() != ibegin) {
                 resource_->update_sink(this);
+                pos_ = PieceIterator(*resource_, ibegin); 
             }
-            iter_ = resource_->iterator_at(request_.begin);
+            end_ =  PieceIterator(*resource_, iend);
+            resource_->seek(pos_);
         }
 
         Piece::pointer Sink::read()
         {
-            if (iter_ == end_) {
+            if (pos_ == end_) {
                 resource_->data_ready.un(
                     boost::bind(&Sink::on_event, this, _2));
                 return NULL;
             }
-            Piece::pointer p = *iter_;
+            Piece::pointer p = *pos_;
             if (!p) {
-                iter_ = resource_->iterator_at(request_.begin);
-                p = *iter_;
+                resource_->seek(pos_);
+                p = *pos_;
             }
-            ++iter_;
-            if (off_ || size_ < p->size())
-                p = PartPiece::alloc(p, off_, size_);
-            off_ = 0;
-            size_ -= p->size();
+            if (p) {
+                ++pos_;
+                if (off_ || size_ < p->size())
+                    p = PartPiece::alloc(p, off_, size_);
+                off_ = 0;
+                size_ -= p->size();
+            } else {
+                resource_->data_ready.on(
+                    boost::bind(&Sink::on_event, this, _2));
+            }
             return p;
         }
 
         bool Sink::at_end() const
         {
-            return iter_.id() == request_.end;
+            return pos_ == end_;
         }
 
         void Sink::on_event(
             util::event::Event const & event)
         {
             if (event == resource_->data_ready) {
-                bool notify = iter_ == end_;
-                end_ = PieceIterator(*resource_, resource_->data_ready.id);
+                bool notify = pos_ == avl_;
+                avl_ = PieceIterator(*resource_, resource_->data_ready.id);
                 if (notify) {
                     on_data();
                 }
-                if (end_.id() - iter_.id() > PIECE_PER_BLOCK) {
+                if (avl_.id().segment > pos_.id().segment) {
                     resource_->data_ready.un(
                         boost::bind(&Sink::on_event, this, _2));
                 }
             } else if (event == resource_->seg_meta_ready) {
-                on_meta(resource_->seg_meta_ready.id, *resource_->seg_meta_ready.meta);
+                on_meta(resource_->seg_meta_ready.id.segment, *resource_->seg_meta_ready.meta);
             } else if (event == resource_->merged) {
                 resource_->merged.un(
                     boost::bind(&Sink::on_event, this, _2));

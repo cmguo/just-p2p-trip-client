@@ -32,23 +32,25 @@ namespace trip
 
         bool CdnSource::open()
         {
+            on_ready();
+            return true;
         }
 
         bool CdnSource::close()
         {
-            on_ready();
+            return true;
         }
 
         bool CdnSource::do_request()
         {
             if (requests_.empty())
                 return true;
-            boost::uint64_t seg = SEGMENT(requests_[0]);
+            boost::uint64_t seg = requests_[0].segment;
             util::protocol::http_field::Range range;
             boost::uint64_t b = 0;
             boost::uint64_t e = 0;
             for (size_t i = 0; i < requests_.size(); ++i) {
-                boost::uint64_t pic = BLOCK_PIECE(requests_[0]);
+                boost::uint64_t pic = requests_[i].block_piece;
                 if (pic == e) {
                     ++e;
                 } else {

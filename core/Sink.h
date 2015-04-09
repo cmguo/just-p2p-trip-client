@@ -17,13 +17,6 @@ namespace trip
         class ResourceMeta;
         class SegmentMeta;
 
-        struct SinkRequest
-        {
-            boost::uint32_t type;
-            boost::uint64_t begin;
-            boost::uint64_t end;
-        };
-
         class Sink
         {
         public:
@@ -33,7 +26,9 @@ namespace trip
             virtual ~Sink();
 
         public:
-            SinkRequest get_request() const;
+            boost::uint32_t type() const;
+
+            DataId position() const;
 
             Resource const & resource() const
             {
@@ -55,7 +50,7 @@ namespace trip
                 ResourceMeta const & meta) = 0;
 
             virtual void on_meta(
-                boost::uint64_t id, 
+                boost::uint64_t seg,  
                 SegmentMeta const & meta) = 0;
 
             virtual void on_data() = 0;
@@ -66,8 +61,10 @@ namespace trip
 
         private:
             Resource * resource_;
-            SinkRequest request_;
-            PieceIterator iter_;
+            boost::uint32_t type_;
+            PieceIterator beg_;
+            PieceIterator pos_;
+            PieceIterator avl_;
             PieceIterator end_;
             boost::uint32_t off_;
             boost::uint32_t size_; // left

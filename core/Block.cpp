@@ -1,4 +1,4 @@
-// Block.cpp
+// Block.cpp {
 
 #include "trip/client/Common.h"
 #include "trip/client/core/Block.h"
@@ -11,7 +11,7 @@ namespace trip
 
         Block::Block(
             boost::uint32_t size)
-            : next_(0)
+            : left_(0)
             , expire_(0)
         {
             set_size(size);
@@ -30,9 +30,9 @@ namespace trip
         }
 
         Piece::pointer Block::get_piece(
-            boost::uint64_t id) const
+            DataId id) const
         {
-            boost::uint16_t index = PIECE(id);
+            boost::uint16_t index = id.piece;
             assert(index < pieces_.size());
             expire_ = 0;
             if (index < pieces_.size())
@@ -66,38 +66,48 @@ namespace trip
                 last_piece_size_ = PIECE_SIZE;
             }
             pieces_.resize(piece_count_);
+            left_ = piece_count_;
         }
 
-        boost::uint64_t Block::set_piece(
-            boost::uint64_t id, 
+        bool Block::seek(
+            DataId & id)
+        {
+            boost::uint16_t next = id.piece;
+            while (next < pieces_.size() && pieces_[next])
+                ++next;
+            if (next >= pieces_.size()) {
+                id.piece = 0;
+                return true;
+            } else {
+                id.piece = next;
+                return false;
+            }
+        }
+
+        bool Block::set_piece(
+            DataId id, 
             Piece::pointer piece)
         {
-            boost::uint16_t index = PIECE(id);
+            boost::uint16_t index = id.piece;
             assert(index < pieces_.size());
             assert(pieces_[index] == NULL);
             if (index < pieces_.size() && pieces_[index] == NULL) {
                 pieces_[index].swap(piece);
-                if (next_ == index) {
-                    ++next_;
-                    while (next_ < pieces_.size() && pieces_[next_])
-                        ++next_;
-                    if (next_ == pieces_.size()) {
-                        next_ = MAX_PIECE;
-                    }
-                }
+                --left_;
             }
-            return next_;
+            return !piece;
         }
       
         void Block::release(
-            boost::uint64_t from,
-            boost::uint64_t to)
+            DataId from,
+            DataId to)
         {
-            boost::uint64_t picf = BLOCK(from);
-            boost::uint64_t pict = BLOCK(to);
+            boost::uint32_t picf = from.piece;
+            boost::uint32_t pict = to.piece ? to.piece : pieces_.size();
             while (picf < pict) {
                 pieces_[picf].reset();
                 ++picf;
+                ++left_;
             } 
         }
 

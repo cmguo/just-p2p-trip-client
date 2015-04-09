@@ -9,8 +9,7 @@ namespace trip
     {
 
         ResourceData::ResourceData()
-            : next_(0)
-            , end_(0)
+            : end_(0)
         {
         }
 
@@ -19,7 +18,7 @@ namespace trip
         }
 
         Piece::pointer ResourceData::get_piece(
-            boost::uint64_t id)
+            DataId id)
         {
             Segment2 const * segment2 = get_segment2(id);
             if (segment2 == NULL)
@@ -43,58 +42,66 @@ namespace trip
         {
         }
 
-        PieceIterator ResourceData::iterator_at(
-            boost::uint64_t id)
+        void ResourceData::seek(
+            PieceIterator & iterator)
         {
-            PieceIterator iterator(*this, id);
-            iterator.segment_ = get_segment(id);
-            if (iterator.segment_) {
-                iterator.block_ = iterator.segment_->get_block(id);
+            DataId id = iterator.id();
+            seek(id);
+            update(iterator);
+        }
+
+        void ResourceData::update(
+            PieceIterator & iterator)
+        {
+            DataId id = iterator.id();
+            if (!iterator.block_) {
+                if (!iterator.segment_) {
+                    iterator.segment_ = get_segment(id);
+                }
+                if (iterator.segment_) {
+                    iterator.block_ = iterator.segment_->get_block(id);
+                }
             }
             if (iterator.block_) {
                 iterator.piece_ = iterator.block_->get_piece(id);
             }
-            return iterator;
-        }
-
-        PieceIterator ResourceData::end()
-        {
-            PieceIterator iterator(*this, MAKE_ID(MAX_SEGMENT, MAX_BLOCK, MAX_PIECE));
-            return iterator;
+            if (!iterator.piece_) {
+                Segment2 const * segment2 = get_segment2(id);
+                if (segment2->saved) {
+                    data_miss.id = id;
+                    raise(data_miss);
+                    update(iterator);
+                }
+            }
         }
 
         void ResourceData::increment(
             PieceIterator & iterator)
         {
-            ++iterator.id_;
-            boost::uint16_t pid = PIECE(iterator.id_);
-            if (pid >= iterator.block_->pieces().size()) {
-                pid = 0;
-                iterator.piece_.reset();
-                boost::uint16_t bid = BLOCK(iterator.id_) + 1;
-                if (bid >= iterator.segment_->blocks().size()) {
-                    bid = 0;
-                    iterator.block_ = NULL;
-                    boost::uint64_t sid = SEGMENT(iterator.id_) + 1;
-                    if (sid >= end_) {
-                        sid = MAX_SEGMENT;
-                    }
-                    iterator.id_ = MAKE_ID(sid, bid, 0);
-                    iterator.segment_ = get_segment(iterator.id_);
-                    if (iterator.segment_ == NULL)
+            assert(iterator.piece_);
+            iterator.piece_.reset();
+            if ((size_t)iterator.id_.piece + 1 < iterator.block_->pieces().size()) {
+                iterator.id_.inc_piece();
+            } else {
+                iterator.block_ = NULL;
+                if ((size_t)iterator.id_.block + 1 < iterator.segment_->blocks().size()) {
+                    iterator.id_.inc_block();
+                } else {
+                    iterator.segment_ = NULL;
+                    if (iterator.id_.segment + 1 < end_) {
+                        iterator.id_.inc_segment();
+                    } else {
+                        iterator.id_ = DataId(MAX_SEGMENT, 0, 0);
                         return;
+                    }
                 }
-                iterator.id_ = MAKE_ID(SEGMENT(iterator.id_), bid, 0);
-                iterator.block_ = iterator.segment_->blocks()[bid];
-                if (iterator.block_ == NULL)
-                    return;
             }
-            iterator.piece_ = iterator.block_->pieces()[pid];
+            update(iterator);
         }
 
         ResourceData::lock_t ResourceData::alloc_lock(
-            boost::uint64_t from, 
-            boost::uint64_t to)
+            DataId from, 
+            DataId to)
         {
             Lock * l = new Lock;
             l->from = from;
@@ -105,8 +112,8 @@ namespace trip
 
         void ResourceData::modify_lock(
             lock_t lock, 
-            boost::uint64_t from, 
-            boost::uint64_t to)
+            DataId from, 
+            DataId to)
         {
             Lock * l = (Lock * )lock;
             locks_.erase(l);
@@ -154,7 +161,7 @@ namespace trip
         }
 
         bool ResourceData::save_segment(
-            boost::uint64_t id, 
+            DataId id, 
             boost::filesystem::path const & path)
         {
             Segment2 & segment(modify_segment2(id));
@@ -170,7 +177,7 @@ namespace trip
         }
 
         bool ResourceData::load_segment(
-            boost::uint64_t id, 
+            DataId id, 
             boost::filesystem::path const & path)
         {
             Segment2 & segment(modify_segment2(id));
@@ -184,7 +191,7 @@ namespace trip
         }
 
         void ResourceData::set_segment_meta(
-            boost::uint64_t id, 
+            DataId id, 
             SegmentMeta const & meta)
         {
             Segment2 & segment(modify_segment2(id));
@@ -199,57 +206,78 @@ namespace trip
         }
 
         bool ResourceData::load_block_stat(
-            boost::uint64_t id, 
+            DataId id, 
             boost::dynamic_bitset<boost::uint32_t> & map)
         {
             modify_segment(id).load_block_stat(id, map);
             return true;
         }
 
+        void ResourceData::seek(
+            DataId id)
+        {
+            boost::uint64_t next = id.top_segment;
+            std::map<boost::uint64_t, Segment2>::const_iterator iter = 
+                segments_.find(next);
+            if (next < end_) {
+                if (iter != segments_.end() && iter->second.seg) {
+                    if (!iter->second.seg->seek(id))
+                        return;
+                    ++next;
+                    ++iter;
+                }
+            }
+            while (next < end_ 
+                && iter != segments_.end()
+                && iter->first == next 
+                && (iter->second.saved || (iter->second.seg && iter->second.seg->full()))) {
+                    ++next;
+                    ++iter;
+            }
+            id.block_piece = 0;
+            if (next >= end_) {
+                id.top_segment = MAX_SEGMENT;
+            } else {
+                id.top_segment = next;
+                if (iter != segments_.end() && iter->first == next && iter->second.seg)
+                    iter->second.seg->seek(id);
+            }
+            data_ready.id = id;
+        }
+
         bool ResourceData::set_piece(
-            boost::uint64_t id, 
+            DataId id, 
             Piece::pointer piece)
         {
-            boost::uint64_t nextid = modify_segment(id).set_piece(id, piece);
-            if (nextid == MAKE_ID(0, MAX_BLOCK, 0)) {
-                boost::uint64_t index = SEGMENT(id);
-                if (next_ == index) {
-                    while (true) {
-                        ++next_;
-                        if (next_ == end_) {
-                            next_ = MAX_SEGMENT;
-                            nextid = MAKE_ID(next_, 0, 0);
-                            break;
+            Segment & segment(modify_segment(id));
+            bool result = segment.set_piece(id, piece);
+            if (result) {
+                if (id == data_ready.id) {
+                    if (segment.seek(data_ready.id)) {
+                        if (segment.full()) {
+                            segment_full.id = id;
+                            raise(segment_full);
                         }
-                        Segment & segment(modify_segment(MAKE_ID(next_, 0, 0)));
-                        if (!segment.finished()) {
-                            nextid = MAKE_ID(next_, 0, segment.next());
-                            break;
-                        }
+                        ++data_ready.id.top_segment;
+                        seek(data_ready.id); // will change data_ready.id
                     }
+                    raise(data_ready);
                 }
-            } else {
-                Segment & segment(modify_segment(MAKE_ID(next_, 0, 0)));
-                nextid = MAKE_ID(next_, 0, segment.next());
             }
-            if (id <= nextid) {
-                data_ready.id = nextid;
-                raise(data_ready);
-            }
-            return !piece;
+            return result;
         }
 
         Block const * ResourceData::map_block(
-            boost::uint64_t id, 
+            DataId id, 
             boost::filesystem::path const & path)
         {
             return modify_segment(id).map_block(id, path);
         }
 
         ResourceData::Segment2 const * ResourceData::get_segment2(
-            boost::uint64_t id) const
+            DataId id) const
         {
-            boost::uint64_t index = SEGMENT(id);
+            boost::uint64_t index = id.segment;
             std::map<boost::uint64_t, Segment2>::const_iterator iter = 
                 segments_.find(index);
             if (iter == segments_.end()) {
@@ -259,19 +287,25 @@ namespace trip
         }
 
         ResourceData::Segment2 & ResourceData::modify_segment2(
-            boost::uint64_t id)
+            DataId id)
         {
-            boost::uint64_t index = SEGMENT(id);
-            std::map<boost::uint64_t, Segment2>::iterator iter = 
-                segments_.find(index);
-            if (iter == segments_.end()) {
-                iter = segments_.insert(std::make_pair(index, Segment2())).first;
+            boost::uint64_t index = id.segment;
+            if (index < end_) {
+                std::map<boost::uint64_t, Segment2>::iterator iter = 
+                    segments_.find(index);
+                if (iter == segments_.end()) {
+                    iter = segments_.insert(std::make_pair(index, Segment2())).first;
+                }
+                return iter->second;
+            } else {
+                assert(false);
+                static Segment2 empty_segment;
+                return empty_segment;
             }
-            return iter->second;
         }
 
         Segment const * ResourceData::get_segment(
-            boost::uint64_t id) const
+            DataId id) const
         {
             Segment2 const * segment(get_segment2(id));
             if (segment == NULL) {
@@ -281,7 +315,7 @@ namespace trip
         }
 
         SegmentMeta const * ResourceData::get_segment_meta(
-            boost::uint64_t id) const
+            DataId id) const
         {
             Segment2 const * segment(get_segment2(id));
             if (segment == NULL) {
@@ -291,7 +325,7 @@ namespace trip
         }
 
         Segment & ResourceData::modify_segment(
-            boost::uint64_t id)
+            DataId id)
         {
             Segment2 & segment(modify_segment2(id));
             if (segment.seg == NULL) {
@@ -301,27 +335,29 @@ namespace trip
         }
 
         void ResourceData::release(
-            boost::uint64_t from,
-            boost::uint64_t to)
+            DataId from,
+            DataId to)
         {
-            boost::uint64_t segf = SEGMENT(from);
-            boost::uint64_t segt = SEGMENT(to);
-            while (segf <= segt) {
-                std::map<boost::uint64_t, Segment2>::iterator iter = segments_.find(segf);
-                boost::uint64_t f = from;
-                ++segf;
-                from = MAKE_ID(segf, 0, 0);
-                if (iter == segments_.end() || iter->second.seg == NULL)
-                    continue;
-                if (segf == segt) {
-                    iter->second.seg->release(f, to);
-                } else if (BLOCK_PIECE(from) != 0) {
-                    iter->second.seg->release(f, from);
-                } else {
+            boost::uint64_t segf = from.top_segment;
+            boost::uint64_t segt = to.top_segment;
+            std::map<boost::uint64_t, Segment2>::iterator iter = segments_.lower_bound(segf);
+            if (iter == segments_.end())
+                return;
+            if (segf < segt && from.block_piece) {
+                if (iter->first == segf++ && iter->second.seg) {
+                    iter->second.seg->release(from, DataId(segf, 0, 0));
+                    ++iter;
+                }
+            }
+            for (; segf <= segt; ++segf) {
+                if (iter != segments_.end() && iter->first == segf && iter->second.seg) {
                     delete iter->second.seg;
                     iter->second.seg = NULL;
+                    ++iter;
                 }
-            } 
+            }
+            if (to.block_piece && iter != segments_.end() && iter->first == segf && iter->second.seg)
+                iter->second.seg->release(DataId(segf, 0, 0), to);
         }
 
     } // namespace client

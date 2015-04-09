@@ -162,13 +162,13 @@ namespace trip
         }
 
         void HttpSession::on_meta(
-            boost::uint64_t id, 
+            boost::uint64_t segm, 
             SegmentMeta const & meta)
         {
             boost::system::error_code ec;
             std::list<Request>::iterator iter = open_requests_.begin();
             for (; iter != open_requests_.end(); ++iter) {
-                if (iter->segm != SEGMENT(id)) {
+                if (iter->segm != segm) {
                     continue;
                 }
                 response_t resp;

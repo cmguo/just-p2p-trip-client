@@ -28,9 +28,13 @@ namespace trip
             }
 
         public:
+            virtual bool get_map_range(
+                DataId & begin, 
+                size_t count) = 0;
+
             virtual bool get_task(
                 Source & source, 
-                std::vector<boost::uint64_t> & pieces) = 0;
+                std::vector<DataId> & pieces) = 0;
 
         private:
             Resource & resource_;

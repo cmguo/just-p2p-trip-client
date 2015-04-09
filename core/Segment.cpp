@@ -13,7 +13,8 @@ namespace trip
 
         Segment::Segment(
             boost::uint32_t size)
-            : next_(0)
+            : left_(0)
+            , block_count_(0)
         {
             set_size(size);
         }
@@ -24,9 +25,9 @@ namespace trip
         }
 
         Block const * Segment::get_block(
-            boost::uint64_t id) const
+            DataId id) const
         {
-            boost::uint16_t index = BLOCK(id);
+            boost::uint16_t index = id.block;
             assert(index < blocks_.size());
             if (index < blocks_.size()) {
                 return blocks_[index];
@@ -35,7 +36,7 @@ namespace trip
         }
 
         Piece::pointer Segment::get_piece(
-            boost::uint64_t id) const
+            DataId id) const
         {
             Block const * block = get_block(id);
             if (block == NULL)
@@ -47,7 +48,7 @@ namespace trip
             boost::dynamic_bitset<boost::uint32_t> & map) const
         {
             for (size_t i = 0; i < blocks_.size() - 1; ++i) {
-                map.push_back(blocks_[i] && blocks_[i]->finished());
+                map.push_back(blocks_[i] && blocks_[i]->full());
             }
         }
 
@@ -108,41 +109,58 @@ namespace trip
             }
             assert(block_count_ <= BLOCK_PER_SEGMENT);
             blocks_.resize(block_count_);
+            left_ = block_count_;
         }
 
         bool Segment::load_block_stat(
-            boost::uint64_t id, 
+            DataId id, 
             boost::dynamic_bitset<boost::uint32_t> & map)
         {
             modify_block(id).get_stat(map);
             return true;
         }
 
-        boost::uint64_t Segment::set_piece(
-            boost::uint64_t id, 
-            Piece::pointer piece)
+        bool Segment::seek(
+            DataId & id)
         {
-            boost::uint64_t next_id = modify_block(id).set_piece(id, piece);
-            if (next_id == MAKE_ID(0, 0, MAX_PIECE)) {
-                boost::uint16_t index = BLOCK(id);
-                if (next_ == index) {
-                    ++next_;
-                    while (next_ < blocks_.size() && (blocks_[next_]->finished()))
-                        ++next_;
-                    if (next_ == blocks_.size()) {
-                        next_ = MAX_BLOCK;
-                        return MAKE_ID(0, next_, 0);
-                    }
+            boost::uint16_t next = id.block;
+            if (next < blocks_.size()) {
+                if (blocks_[next]) {
+                    if (!blocks_[next]->seek(id))
+                        return false;
+                    ++next;
                 }
             }
-            return MAKE_ID(0, next_, blocks_[next_]->next());
+            while (next < blocks_.size() && blocks_[next] && blocks_[next]->full())
+                ++next;
+            id.piece = 0;
+            if (next >= blocks_.size()) {
+                id.block = 0;
+                return true;
+            } else {
+                id.block = next;
+                if (blocks_[next])
+                    blocks_[next]->seek(id);
+                return false;
+            }
+        }
+
+        bool Segment::set_piece(
+            DataId id, 
+            Piece::pointer piece)
+        {
+            Block & block = modify_block(id);
+            bool result = block.set_piece(id, piece);
+            if (result && block.full())
+                --left_;
+            return result;
         }
 
         Block const * Segment::map_block(
-            boost::uint64_t id, 
+            DataId id, 
             boost::filesystem::path const & path)
         {
-            boost::uint16_t index = BLOCK(id);
+            boost::uint16_t index = id.block;
             assert(index < blocks_.size() && blocks_[index] == NULL);
             if (index >= blocks_.size() || blocks_[index]) {
                 return NULL;
@@ -154,13 +172,14 @@ namespace trip
             }
             BlockData * data = BlockData::alloc(path, offset, size);
             blocks_[index] = new Block(data);
+            --left_;
             return blocks_[index];
         }
 
         Block & Segment::modify_block(
-            boost::uint64_t id)
+            DataId id)
         {
-            boost::uint16_t index = BLOCK(id);
+            boost::uint16_t index = id.block;
             if (index < blocks_.size()) {
                 if (blocks_[index] == NULL) {
                     if (index < blocks_.size() - 1) {
@@ -178,27 +197,35 @@ namespace trip
         }
 
         void Segment::release(
-            boost::uint64_t from,
-            boost::uint64_t to)
+            DataId from,
+            DataId to)
         {
-            boost::uint64_t blkf = BLOCK(from);
-            boost::uint64_t blkt = BLOCK(to);
-            while (blkf <= blkt) {
-                Block *& blk = blocks_[blkf];
-                boost::uint64_t f = from;
+            boost::uint32_t blkf = from.block;
+            boost::uint32_t blkt = to.block_piece ? to.block : blocks_.size();
+            Block ** blkp = &blocks_[blkf];
+            if (blkf < blkt && from.piece) {
                 ++blkf;
-                from = MAKE_ID(0, blkf, 0);
-                if (blk == NULL)
-                    continue;
-                if (blkf == blkt) {
-                    blk->release(f, to);
-                } else if (PIECE(from) != 0) {
-                    blk->release(f, from);
-                } else {
-                    delete blk;
-                    blk = NULL;
+                if (*blkp) {
+                    if ((*blkp)->full())
+                        ++left_;
+                    (*blkp)->release(from, DataId(0, blkf, 0));
+                    if ((*blkp)->full())
+                        --left_;
+                }
+                ++blkp;
+            }
+            for (; blkf < blkt; ++blkf, ++blkp) {
+                if (*blkp) {
+                    delete *blkp; 
+                    *blkp = NULL;
+                    ++left_;
                 }
             } 
+            if (to.piece && *blkp) {
+                if ((*blkp)->full())
+                    ++left_;
+                (*blkp)->release(DataId(0, blkf, 0), to);
+            }
         }
 
     } // namespace client

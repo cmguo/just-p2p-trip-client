@@ -24,14 +24,9 @@ namespace trip
                 BlockData * data);
 
         public:
-            boost::uint16_t next() const
+            bool full() const
             {
-                return next_;
-            }
-
-            bool finished() const
-            {
-                return next_ == MAX_PIECE;
+                return left_ == 0;
             }
 
             std::vector<Piece::pointer> const & pieces() const
@@ -40,7 +35,7 @@ namespace trip
             }
 
             Piece::pointer get_piece(
-                boost::uint64_t id) const;
+                DataId id) const;
 
             bool expired(
                 boost::uint16_t expire) const;
@@ -49,19 +44,22 @@ namespace trip
                 boost::dynamic_bitset<boost::uint32_t> & map) const;
 
         public:
-          void set_size(
-            boost::uint32_t size);
+            void set_size(
+                boost::uint32_t size);
 
-          boost::uint64_t set_piece(
-                boost::uint64_t id, 
+            bool seek(
+                DataId & id);
+
+            bool set_piece(
+                DataId id, 
                 Piece::pointer piece);
 
             void release(
-                boost::uint64_t from, 
-                boost::uint64_t to);
+                DataId from, 
+                DataId to);
 
         private:
-            boost::uint16_t next_;
+            boost::uint16_t left_;
             mutable boost::uint16_t expire_;
             boost::uint16_t piece_count_;
             boost::uint16_t last_piece_size_;
