@@ -12,12 +12,14 @@ namespace trip
     namespace client
     {
 
+        class CdnManager;
+
         class CdnFinder
             : public Finder
         {
         public:
             CdnFinder(
-                 boost::asio::io_service & io_svc);
+                CdnManager & cmgr);
 
             virtual ~CdnFinder();
 
@@ -38,6 +40,7 @@ namespace trip
                 Resource & resource);
 
         private:
+            CdnManager & cmgr_;
             util::protocol::HttpClient http_;
         };
 

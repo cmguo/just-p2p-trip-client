@@ -3,6 +3,7 @@
 #include "trip/client/Common.h"
 #include "trip/client/cdn/CdnFinder.h"
 #include "trip/client/cdn/CdnSource.h"
+#include "trip/client/cdn/CdnManager.h"
 #include "trip/client/cdn/Error.h"
 #include "trip/client/proto/MessageIndex.h"
 #include "trip/client/core/Resource.h"
@@ -15,8 +16,9 @@ namespace trip
     {
 
         CdnFinder::CdnFinder(
-             boost::asio::io_service & io_svc)
-            : http_(io_svc)
+            CdnManager & cmgr)
+            : cmgr_(cmgr)
+            , http_(cmgr.io_svc())
         {
         }
 
@@ -48,7 +50,7 @@ namespace trip
             Resource & resource, 
             Url const & url)
         {
-            return new CdnSource(http_.get_io_service(), resource, url);
+            return new CdnSource(cmgr_.get_tunnel(url), resource, url);
         }
 
         void CdnFinder::handle_fetch(

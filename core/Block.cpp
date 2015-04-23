@@ -66,7 +66,11 @@ namespace trip
                 last_piece_size_ = PIECE_SIZE;
             }
             pieces_.resize(piece_count_);
-            left_ = piece_count_;
+            left_ = 0;
+            for (size_t i = 0; i < pieces_.size(); ++i) {
+                if (!pieces_[i])
+                    ++left_;
+            }
         }
 
         bool Block::seek(

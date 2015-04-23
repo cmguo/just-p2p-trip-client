@@ -11,6 +11,7 @@ namespace trip
     {
 
         class Finder;
+        class CdnTunnel;
 
         class CdnManager
             : public util::daemon::ModuleBase<CdnManager>
@@ -27,6 +28,9 @@ namespace trip
                 return finder_;
             }
 
+            CdnTunnel & get_tunnel(
+                Url const & url);
+
         private:
             virtual bool startup(
                 boost::system::error_code & ec);
@@ -36,6 +40,7 @@ namespace trip
 
         private:
             Finder * finder_;
+            std::map<std::string, CdnTunnel *> tunnels_;
         };
 
     } // namespace client

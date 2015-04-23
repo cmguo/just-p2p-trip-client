@@ -12,12 +12,14 @@ namespace trip
     namespace client
     {
 
+        class CdnTunnel;
+
         class CdnSource
             : public Source
         {
         public:
             CdnSource(
-                boost::asio::io_service & io_svc,
+                CdnTunnel & tunnel, 
                 Resource & resource, 
                 Url const & url);
 
@@ -38,6 +40,10 @@ namespace trip
                 boost::system::error_code ec, 
                 size_t bytes_read, 
                 Piece::pointer piece);
+
+        private:
+            friend class CdnTunnel;
+            void on_timer();
 
         private:
             util::protocol::HttpClient http_;

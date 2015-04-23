@@ -21,7 +21,7 @@ namespace trip
             DataId id)
         {
             Segment2 const * segment2 = get_segment2(id);
-            if (segment2 == NULL)
+            if (segment2 == NULL || segment2->meta == NULL)
                 return NULL;
             Piece::pointer p;
             if (segment2->seg) {
@@ -202,6 +202,10 @@ namespace trip
                 seg_meta_ready.id = id;
                 seg_meta_ready.meta = segment.meta;
                 raise(seg_meta_ready);
+                if (id == data_ready.id) {
+                    seek(id);
+                    raise(data_ready);
+                }
             }
         }
 
@@ -220,7 +224,7 @@ namespace trip
             std::map<boost::uint64_t, Segment2>::const_iterator iter = 
                 segments_.find(next);
             if (next < end_) {
-                if (iter != segments_.end() && iter->second.seg) {
+                if (iter != segments_.end() && iter->second.meta && iter->second.seg) {
                     if (!iter->second.seg->seek(id))
                         return;
                     ++next;
@@ -230,6 +234,7 @@ namespace trip
             while (next < end_ 
                 && iter != segments_.end()
                 && iter->first == next 
+                && iter->second.meta
                 && (iter->second.saved || (iter->second.seg && iter->second.seg->full()))) {
                     ++next;
                     ++iter;
@@ -252,8 +257,8 @@ namespace trip
             Segment & segment(modify_segment(id));
             bool result = segment.set_piece(id, piece);
             if (result) {
-                if (id == data_ready.id) {
-                    if (segment.seek(data_ready.id)) {
+                if (id == data_ready.id && get_segment_meta(id)) {
+                    if (segment.seek(id)) {
                         if (segment.full()) {
                             segment_full.id = id;
                             raise(segment_full);
@@ -308,7 +313,7 @@ namespace trip
             DataId id) const
         {
             Segment2 const * segment(get_segment2(id));
-            if (segment == NULL) {
+            if (segment == NULL || segment->meta == NULL) {
                 return NULL;
             }
             return segment->seg;
@@ -329,7 +334,7 @@ namespace trip
         {
             Segment2 & segment(modify_segment2(id));
             if (segment.seg == NULL) {
-                segment.seg = new Segment(segment.meta ? segment.meta->bytesize : 0);
+                segment.seg = new Segment(segment.meta ? segment.meta->bytesize : BLOCK_SIZE * 2);
             }
             return *segment.seg;
         }

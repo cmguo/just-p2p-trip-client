@@ -108,8 +108,17 @@ namespace trip
                 ++block_count_;
             }
             assert(block_count_ <= BLOCK_PER_SEGMENT);
+            assert(blocks_.size() <= block_count_);
+            for (size_t i = block_count_; i < blocks_.size(); ++i) {
+                delete blocks_[i];
+            }
             blocks_.resize(block_count_);
-            left_ = block_count_;
+            left_ = 0;
+            for (size_t i = 0; i < blocks_.size(); ++i) {
+                if (!blocks_[i]->full())
+                    ++left_;
+            }
+            blocks_.back()->set_size(last_block_size_);
         }
 
         bool Segment::load_block_stat(

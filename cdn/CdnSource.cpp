@@ -2,6 +2,7 @@
 
 #include "trip/client/Common.h"
 #include "trip/client/cdn/CdnSource.h"
+#include "trip/client/cdn/CdnTunnel.h"
 #include "trip/client/core/Scheduler.h"
 #include "trip/client/core/PoolPiece.h"
 
@@ -16,11 +17,11 @@ namespace trip
     {
 
         CdnSource::CdnSource(
-            boost::asio::io_service & io_svc, 
+            CdnTunnel & tunnel, 
             Resource & resource, 
             Url const & url)
             : Source(resource, url)
-            , http_(io_svc)
+            , http_(tunnel.io_svc())
         {
             //io_svc.post(
             //    boost::bind(&Source::on_ready, this));
