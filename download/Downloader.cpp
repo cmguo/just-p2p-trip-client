@@ -61,5 +61,10 @@ namespace trip
             }
         }
 
+        void Downloader::on_timer(
+            framework::timer::Time const & now)
+        {
+        }
+
     } // namespace client
 } // namespace trip

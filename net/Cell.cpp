@@ -41,22 +41,11 @@ namespace trip
         {
         }
 
-        void Cell::on_timer()
+        void Cell::on_timer(
+            framework::timer::Time const & now)
         {
         }
 
-        void Cell::active()
-        {
-            if (bus_)
-                bus_->active(this);
-        }
- 
-        void Cell::inactive()
-        {
-            if (bus_)
-                bus_->inactive(this);
-        }
- 
         void Cell::signal()
         {
             if (bus_)

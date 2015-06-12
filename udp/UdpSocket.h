@@ -6,6 +6,7 @@
 #include "trip/client/net/Bus.h"
 
 #include <framework/network/Endpoint.h>
+#include <framework/timer/ClockTime.h>
 
 #include <boost/asio/ip/udp.hpp>
 
@@ -16,7 +17,6 @@ namespace trip
 
         class UdpTunnel;
         class UdpPacket;
-        class TimerManager;
 
         class UdpSocket
             : public Bus
@@ -36,6 +36,9 @@ namespace trip
             bool stop(
                 boost::system::error_code & ec);
 
+            void handle_timer(
+                framework::timer::Time const & now);
+
         private:
             void handle_recv(
                 UdpPacket * pkt, 
@@ -44,11 +47,8 @@ namespace trip
 
             void send();
 
-            void handle_timer();
-
         private:
             boost::asio::ip::udp::socket socket_;
-            TimerManager & tmgr_;
             UdpTunnel * main_tul_;
             bool stopped_;
         };

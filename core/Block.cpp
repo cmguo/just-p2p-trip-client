@@ -12,7 +12,7 @@ namespace trip
         Block::Block(
             boost::uint32_t size)
             : left_(0)
-            , expire_(0)
+            , touched_(false)
         {
             set_size(size);
         }
@@ -34,17 +34,19 @@ namespace trip
         {
             boost::uint16_t index = id.piece;
             assert(index < pieces_.size());
-            expire_ = 0;
-            if (index < pieces_.size())
+            if (index < pieces_.size()) {
+                touched_ = true;
                 return pieces_[index];
-            else
+            } else {
                 return NULL;
+            }
         }
 
-        bool Block::expired(
-            boost::uint16_t expire) const
+        bool Block::touched() const
         {
-            return (expire < expire_);
+            bool t = touched_;
+            touched_ = false;
+            return t;
         }
 
         void Block::get_stat(

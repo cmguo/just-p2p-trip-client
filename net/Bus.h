@@ -25,12 +25,6 @@ namespace trip
             bool del(
                 Cell * cell);
 
-            void active(
-                Cell * cell);
-
-            void inactive(
-                Cell * cell);
-
             void signal(
                 Cell * cell);
 
@@ -43,21 +37,44 @@ namespace trip
                 void * head, 
                 NetBuffer & buf);
 
-            virtual void on_timer();
+            virtual void on_timer(
+                framework::timer::Time const & now);
 
         protected:
+            struct Slot;
+            struct Node;
+
             struct Slot
             {
-                Slot(
-                    Cell * cell)
-                    : next(0)
-                    , flag(0)
-                    , cell(cell)
+                enum Flags
                 {
+                    sfUsed      = 1, 
+                    sfActive    = 2, 
+                    sfSignal    = 4, 
+                };
+
+                Slot()
+                {
+                    next = NULL;
+                    flags = 0;
+                    cell = NULL;
                 }
-                size_t next;
-                size_t flag;
-                Cell * cell;
+                Slot * next;
+                boost::uint32_t flags;
+                union {
+                    Cell * cell;
+                    Node * node;
+                    struct {
+                        boost::uint16_t id : 15;
+                        boost::uint16_t mark : 1;
+                        boost::uint16_t timeo;
+                    };
+                };
+            };
+
+            struct Node
+            {
+                Slot slots[32];
             };
 
         protected:
@@ -76,10 +93,27 @@ namespace trip
             Slot & slot_at(
                 Cell * cell);
 
+            Slot * slot_at(
+                boost::uint16_t id);
+
+        private:
+            Slot * slot_alloc();
+
+            void slot_free(
+                boost::uint16_t id); // real free
+
+            void slot_free(
+                Slot & slot);
+
         protected:
-            std::vector<Slot> slots_;
-            size_t free_slots_;
-            size_t ready_slots_;
+            Slot root_;
+            boost::uint16_t next_id_;
+            Slot * signal_slots_;
+            Slot ** signal_slots_tail_;
+            Slot * tmwait_slots_;
+            Slot ** tmwait_slots_tail_;
+            framework::timer::Time time_base_;
+            framework::timer::Time time_tail_;
         };
 
     } // namespace client

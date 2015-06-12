@@ -2,6 +2,7 @@
 
 #include "trip/client/Common.h"
 #include "trip/client/cache/ResourceCache.h"
+#include "trip/client/cache/CacheManager.h"
 #include "trip/client/core/Resource.h"
 
 #include <framework/string/Base16.h>
@@ -16,17 +17,11 @@ namespace trip
     namespace client
     {
 
-        struct ResourceCache::Cache
-        {
-            ResourceData::lock_t lock;
-            Block const * block;
-        };
-
         ResourceCache::ResourceCache(
-            Resource & resource, 
-            WorkQueue & queue)
-            : resource_(resource)
-            , queue_(queue)
+            CacheManager & cmgr, 
+            Resource & resource)
+            : cmgr_(cmgr)
+            , resource_(resource)
         {
         }
 
@@ -82,22 +77,16 @@ namespace trip
         void ResourceCache::on_event(
             util::event::Event const & event)
         {
-            if (event == resource_.data_ready) {
+            if (event == resource_.segment_full) {
             } else if (event == resource_.data_miss) {
                 DataEvent const & e(resource_.data_miss);
                 std::string segname = idstr(e.id.segment);
                 segname.append(1, '.');
                 segname.append(resource_.meta()->file_extension);
-                Block const * block = resource_.map_block(e.id, directory_ / segname);
-                if (block) {
-                    DataId f = e.id;
-                    f.piece = 0;
-                    DataId t = f;
-                    t.top_segment_block++;
-                    Cache c = {resource_.alloc_lock(f, t), block};
-                    cached_blocks_.push_back(c);
-                }
+                boost::filesystem::path segpath(directory_ / segname);
+                cmgr_.alloc_cache(resource_, resource_.data_miss.id, segpath);
             }
         }
+
     } // namespace client
 } // namespace trip

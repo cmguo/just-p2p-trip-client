@@ -33,6 +33,8 @@ namespace trip
 
             ResourceChangedEvent resource_deleting;
 
+            OutOfMemoryEvent out_of_memory;
+
         public:
             Resource & get(
                 Uuid const & rid);
@@ -51,6 +53,10 @@ namespace trip
             void on_event(
                 util::event::Observable const & observable, 
                 util::event::Event const & event);
+
+            static void oom_handler(
+                void * data, 
+                size_t level);
 
         private:
             boost::filesystem::path path_;

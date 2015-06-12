@@ -56,10 +56,8 @@ namespace trip
             case RSP_Meta:
                 break;
             case RSP_Bind:
-                active();
                 break;
             case RSP_Unbind:
-                inactive();
                 break;
             default:
                 assert(false);

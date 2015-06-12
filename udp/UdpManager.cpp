@@ -7,6 +7,9 @@
 #include "trip/client/udp/UdpListener.h"
 #include "trip/client/udp/UdpMainSession.h"
 #include "trip/client/udp/UdpPeer.h"
+#include "trip/client/timer/TimerManager.h"
+
+#include <boost/bind.hpp>
 
 namespace trip
 {
@@ -16,6 +19,7 @@ namespace trip
         UdpManager::UdpManager(
             util::daemon::Daemon & daemon)
             : util::daemon::ModuleBase<UdpManager>(daemon, "UdpManager")
+            , tmgr_(util::daemon::use_module<TimerManager>(daemon))
             , addr_(":6666")
             , parallel_(10)
             , socket_(new UdpSocket(io_svc()))
@@ -34,12 +38,16 @@ namespace trip
         bool UdpManager::startup(
             boost::system::error_code & ec)
         {
+            tmgr_.t_10_ms.on(
+                boost::bind(&UdpManager::on_event, this, _1, _2));
             return socket_->start(addr_, parallel_, ec);
         }
 
         bool UdpManager::shutdown(
             boost::system::error_code & ec)
         {
+            tmgr_.t_10_ms.un(
+                boost::bind(&UdpManager::on_event, this, _1, _2));
             return socket_->stop(ec);
         }
 
@@ -70,6 +78,15 @@ namespace trip
             if (iter == services_.end())
                 return *new UdpSession(tunnel);
             return iter->second(tunnel, msg);
+        }
+
+        void UdpManager::on_event(
+            util::event::Observable const & observable, 
+            util::event::Event const & event)
+        {
+            if (observable == tmgr_) {
+                socket_->handle_timer(tmgr_.t_10_ms.now);
+            }
         }
 
     } // namespace client

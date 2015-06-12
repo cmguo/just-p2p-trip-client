@@ -39,7 +39,6 @@ namespace trip
                     MessageRequestDisconnect & req
                         = msg->as<MessageRequestDisconnect>();
                     MessageResponseDisconnect resp;
-                    inactive();
                 }
                 break;
             default:

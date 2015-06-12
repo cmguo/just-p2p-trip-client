@@ -12,15 +12,15 @@ namespace trip
     namespace client
     {
 
+        class CacheManager;
         class Resource;
-        class WorkQueue;
 
         class ResourceCache
         {
         public:
             ResourceCache(
-                Resource & resource, 
-                WorkQueue & queue);
+                CacheManager & cmgr,
+                Resource & resource);
 
             ~ResourceCache();
 
@@ -43,11 +43,9 @@ namespace trip
                 bool result);
 
         private:
+            CacheManager & cmgr_;
             Resource & resource_;
             boost::filesystem::path directory_;
-            WorkQueue & queue_;
-            struct Cache;
-            std::vector<Cache> cached_blocks_;
         };
 
     } // namespace client

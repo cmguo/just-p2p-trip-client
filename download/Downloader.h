@@ -8,6 +8,8 @@
 #include <util/daemon/Module.h>
 #include <util/event/Event.h>
 
+#include <framework/timer/ClockTime.h>
+
 namespace trip
 {
     namespace client
@@ -32,6 +34,9 @@ namespace trip
                 std::vector<Url> const & urls);
 
             bool close();
+
+            virtual void on_timer(
+                framework::timer::Time const & now);
 
         protected:
             virtual void add_source(

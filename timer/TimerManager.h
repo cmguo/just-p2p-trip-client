@@ -1,7 +1,7 @@
 // TimerManager.h
 
-#ifndef _TRIP_CLIENT_MAIN_RESOURCE_MANAGER_H_
-#define _TRIP_CLIENT_MAIN_RESOURCE_MANAGER_H_
+#ifndef _TRIP_CLIENT_TIMER_TIMER_MANAGER_H_
+#define _TRIP_CLIENT_TIMER_TIMER_MANAGER_H_
 
 #include "trip/client/timer/TimeEvent.h"
 
@@ -34,6 +34,8 @@ namespace trip
 
             TimeEvent t_100_ms;
 
+            TimeEvent t_1_s;
+
         private:
             virtual bool startup(
                 boost::system::error_code & ec);
@@ -51,11 +53,12 @@ namespace trip
         private:
             boost::asio::basic_deadline_timer<framework::timer::ClockTime> timer_;
             boost::shared_ptr<void> cancel_token_;
-            framework::timer::Time expire_;
-            framework::timer::Time expire2_;
+            framework::timer::Time expire_10ms_;
+            framework::timer::Time expire_100ms_;
+            framework::timer::Time expire_1s_;
         };
 
     } // namespace client
 } // namespace trip
 
-#endif // _TRIP_CLIENT_MAIN_RESOURCE_MANAGER_H_
+#endif // _TRIP_CLIENT_TIMER_TIMER_MANAGER_H_

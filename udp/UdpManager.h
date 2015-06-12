@@ -6,6 +6,7 @@
 #include "trip/client/proto/Message.h"
 
 #include <util/daemon/Module.h>
+#include <util/event/Event.h>
 
 #include <framework/network/Endpoint.h>
 
@@ -20,6 +21,8 @@ namespace trip
         class UdpTunnel;
         class UdpSession;
         struct UdpPeer;
+
+        class TimerManager;
 
         class UdpManager
             : public util::daemon::ModuleBase<UdpManager>
@@ -62,6 +65,12 @@ namespace trip
                 boost::system::error_code & ec);
 
         private:
+            void on_event(
+                util::event::Observable const & observable, 
+                util::event::Event const & event);
+
+        private:
+            TimerManager & tmgr_;
             framework::network::Endpoint addr_;
             size_t parallel_;
             UdpSocket * socket_;

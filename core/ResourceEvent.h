@@ -61,6 +61,12 @@ namespace trip
             Sink const * sink;
         };
 
+        struct OutOfMemoryEvent
+            : util::event::Event
+        {
+            size_t level;
+        };
+
     } // namespace client
 } // namespace trip
 

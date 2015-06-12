@@ -29,10 +29,10 @@ namespace trip
         bool TimerManager::startup(
             boost::system::error_code & ec)
         {
-            expire_ += framework::timer::Duration::milliseconds(10);
-            expire2_ += framework::timer::Duration::milliseconds(100);
+            expire_10ms_ += framework::timer::Duration::milliseconds(10);
+            expire_100ms_ += framework::timer::Duration::milliseconds(100);
             cancel_token_.reset(static_cast<void*>(0), noop_deleter());
-            timer_.expires_at(expire_);
+            timer_.expires_at(expire_10ms_);
             timer_.async_wait(boost::bind(&TimerManager::handle_timer, 
                 this, 
                 _1, 
@@ -56,7 +56,7 @@ namespace trip
 
             if (!cancel_token.expired()) {
                 handle_tick();
-                timer_.expires_at(expire_);
+                timer_.expires_at(expire_10ms_);
                 timer_.async_wait(boost::bind(&TimerManager::handle_timer, 
                     this, 
                     _1, 
@@ -66,11 +66,16 @@ namespace trip
 
         void TimerManager::handle_tick()
         {
-            expire_ += framework::timer::Duration::milliseconds(10);
+            expire_10ms_ += framework::timer::Duration::milliseconds(10);
             t_10_ms.now = framework::timer::Time::now();
-            if (t_10_ms.now >= expire2_) {
-                expire2_ += framework::timer::Duration::milliseconds(100);
+            if (t_10_ms.now >= expire_100ms_) {
+                expire_100ms_ += framework::timer::Duration::milliseconds(100);
                 t_100_ms.now = t_10_ms.now;
+                if (t_100_ms.now >= expire_1s_) {
+                    expire_1s_ += framework::timer::Duration::seconds(1);
+                    t_1_s.now = t_10_ms.now;
+                    raise(t_1_s);
+                }
                 raise(t_100_ms);
             }
             raise(t_10_ms);

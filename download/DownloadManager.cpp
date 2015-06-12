@@ -4,6 +4,7 @@
 #include "trip/client/download/DownloadManager.h"
 #include "trip/client/download/Downloader.h"
 #include "trip/client/main/ResourceManager.h"
+#include "trip/client/timer/TimerManager.h"
 #include "trip/client/cdn/CdnManager.h"
 #include "trip/client/p2p/P2pManager.h"
 #include "trip/client/core/Resource.h"
@@ -20,6 +21,7 @@ namespace trip
             util::daemon::Daemon & daemon)
             : util::daemon::ModuleBase<DownloadManager>(daemon, "DownloadManager")
             , rmgr_(util::daemon::use_module<ResourceManager>(daemon))
+            , tmgr_(util::daemon::use_module<TimerManager>(daemon))
         {
             //config().register_module("DownloadManager")
             //    << CONFIG_PARAM_NAME_NOACC("path", path_);
@@ -44,12 +46,20 @@ namespace trip
                 boost::bind(&DownloadManager::on_event, this, _1, _2));
             rmgr_.resource_deleting.on(
                 boost::bind(&DownloadManager::on_event, this, _1, _2));
+            tmgr_.t_100_ms.on(
+                boost::bind(&DownloadManager::on_event, this, _1, _2));
             return true;
         }
 
         bool DownloadManager::shutdown(
             boost::system::error_code & ec)
         {
+            tmgr_.t_100_ms.un(
+                boost::bind(&DownloadManager::on_event, this, _1, _2));
+            rmgr_.resource_deleting.un(
+                boost::bind(&DownloadManager::on_event, this, _1, _2));
+            rmgr_.resource_added.un(
+                boost::bind(&DownloadManager::on_event, this, _1, _2));
             return true;
         }
 
@@ -84,6 +94,12 @@ namespace trip
                         iter->second->close();
                         downloaders_.erase(iter);
                     }
+                }
+            } else if (observable == tmgr_) {
+                std::map<Uuid, Downloader *>::iterator iter = 
+                    downloaders_.begin();
+                for (; iter != downloaders_.end(); ++iter) {
+                    iter->second->on_timer(tmgr_.t_100_ms.now);
                 }
             } else {
                 Resource & r = (Resource &)observable;

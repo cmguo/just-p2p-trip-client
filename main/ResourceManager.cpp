@@ -4,6 +4,7 @@
 #include "trip/client/main/ResourceManager.h"
 #include "trip/client/utils/Format.h"
 #include "trip/client/core/Resource.h"
+#include "trip/client/core/PoolPiece.h"
 
 #include <boost/bind.hpp>
 
@@ -17,6 +18,7 @@ namespace trip
             : util::daemon::ModuleBase<ResourceManager>(daemon, "ResourceManager")
             , mapping_(io_svc())
         {
+            PoolPiece::set_oom_handler(oom_handler, this);
             config().register_module("ResourceManager")
                 << CONFIG_PARAM_NAME_NOACC("path", path_);
         }
@@ -95,6 +97,15 @@ namespace trip
             other_resources_.erase(
                 std::remove(other_resources_.begin(), other_resources_.end(), &r), 
                 other_resources_.end());
+        }
+
+        void ResourceManager::oom_handler(
+            void * data,
+            size_t level)
+        {
+            ResourceManager * inst = (ResourceManager *)data;
+            inst->out_of_memory.level = level;
+            inst->raise(inst->out_of_memory);
         }
 
     } // namespace client
