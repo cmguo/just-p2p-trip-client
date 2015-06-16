@@ -31,6 +31,8 @@ namespace trip
 
             DataEvent data_miss;
 
+            DataEvent data_seek;
+
             DataEvent segment_full;
 
         public:
@@ -47,8 +49,8 @@ namespace trip
                 boost::dynamic_bitset<boost::uint32_t> & map) const;
 
         public:
-            void seek(
-                PieceIterator & iterator);
+            PieceIterator iterator_at(
+                DataId id);
 
             void update(
                 PieceIterator & iterator);
@@ -90,7 +92,7 @@ namespace trip
                 boost::dynamic_bitset<boost::uint32_t> & map);
 
             void seek(
-                DataId id);
+                DataId & id);
 
             bool set_piece(
                 DataId id, 
@@ -100,11 +102,7 @@ namespace trip
                 DataId id, 
                 boost::filesystem::path const & path);
 
-        private:
-            Segment & modify_segment(
-                DataId id);
-
-        private:
+        public:
             struct Segment2
             {
                 SegmentMeta * meta;
@@ -118,7 +116,13 @@ namespace trip
                 }
             };
 
+            Segment2 const * prepare_segment(
+                DataId id);
+
         private:
+            Segment & modify_segment(
+                DataId id);
+
             Segment2 & modify_segment2(
                 DataId id);
 

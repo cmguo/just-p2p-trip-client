@@ -23,7 +23,7 @@ namespace trip
                 boost::forward_traversal_tag
               >
         {
-        public:
+        private:
             PieceIterator(
                 ResourceData & resource, 
                 DataId id)

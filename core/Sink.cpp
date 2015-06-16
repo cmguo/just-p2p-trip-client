@@ -15,7 +15,7 @@ namespace trip
         Sink::Sink(
             Resource & resource)
             : resource_(&resource)
-            , beg_(resource, 0)
+            , beg_(resource.iterator_at(0))
             , pos_(beg_)
             , avl_(beg_)
             , end_(beg_)
@@ -25,6 +25,8 @@ namespace trip
             resource_->merged.on(
                 boost::bind(&Sink::on_event, this, _2));
             resource_->meta_changed.on(
+                boost::bind(&Sink::on_event, this, _2));
+            resource_->data_seek.on(
                 boost::bind(&Sink::on_event, this, _2));
         }
 
@@ -46,10 +48,9 @@ namespace trip
             size_ = end - begin;
             if (pos_.id() != ibegin) {
                 resource_->update_sink(this);
-                pos_ = PieceIterator(*resource_, ibegin); 
+                pos_ = resource_->iterator_at(ibegin); 
             }
-            end_ =  PieceIterator(*resource_, iend);
-            resource_->seek(pos_);
+            end_ =resource_->iterator_at(iend);
         }
 
         Piece::pointer Sink::read()
@@ -61,7 +62,7 @@ namespace trip
             }
             Piece::pointer p = *pos_;
             if (!p) {
-                resource_->seek(pos_);
+                resource_->update(pos_);
                 p = *pos_;
             }
             if (p) {
@@ -87,7 +88,7 @@ namespace trip
         {
             if (event == resource_->data_ready) {
                 bool notify = pos_ == avl_;
-                avl_ = PieceIterator(*resource_, resource_->data_ready.id);
+                avl_ = resource_->iterator_at(resource_->data_ready.id);
                 if (notify) {
                     on_data();
                 }
@@ -105,7 +106,11 @@ namespace trip
                 resource_ = resource_->merged.resource;
                 resource_->seg_meta_ready.on(
                     boost::bind(&Sink::on_event, this, _2));
-            } else {
+            } else if (event == resource_->data_seek) {
+                if (resource_->data_seek.id == beg_.id()) {
+                    on_data();
+                }
+            } else if (event == resource_->meta_changed) {
                 on_meta(*resource_->meta_changed.meta);
                 resource_->meta_changed.un(
                     boost::bind(&Sink::on_event, this, _2));

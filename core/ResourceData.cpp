@@ -42,12 +42,10 @@ namespace trip
         {
         }
 
-        void ResourceData::seek(
-            PieceIterator & iterator)
+        PieceIterator ResourceData::iterator_at(
+            DataId id)
         {
-            DataId id = iterator.id();
-            seek(id);
-            update(iterator);
+            return PieceIterator(*this, id);
         }
 
         void ResourceData::update(
@@ -204,7 +202,8 @@ namespace trip
                 raise(seg_meta_ready);
                 if (id == data_ready.id) {
                     seek(id);
-                    raise(data_ready);
+                    if (id.block_piece)
+                        raise(data_ready);
                 }
             }
         }
@@ -218,15 +217,18 @@ namespace trip
         }
 
         void ResourceData::seek(
-            DataId id)
+            DataId & id)
         {
+            data_seek.id = id;
             boost::uint64_t next = id.top_segment;
             std::map<boost::uint64_t, Segment2>::const_iterator iter = 
                 segments_.find(next);
             if (next < end_) {
                 if (iter != segments_.end() && iter->second.meta && iter->second.seg) {
-                    if (!iter->second.seg->seek(id))
+                    if (!iter->second.seg->seek(id)) {
+                        raise(data_seek);
                         return;
+                    }
                     ++next;
                     ++iter;
                 }
@@ -244,10 +246,11 @@ namespace trip
                 id.top_segment = MAX_SEGMENT;
             } else {
                 id.top_segment = next;
-                if (iter != segments_.end() && iter->first == next && iter->second.seg)
+                if (iter != segments_.end() && iter->first == next && iter->second.meta && iter->second.seg)
                     iter->second.seg->seek(id);
             }
             data_ready.id = id;
+            raise(data_seek);
         }
 
         bool ResourceData::set_piece(
@@ -327,6 +330,20 @@ namespace trip
                 return NULL;
             }
             return segment->meta;
+        }
+
+        ResourceData::Segment2 const * ResourceData::prepare_segment(
+            DataId id)
+        {
+            boost::uint64_t index = id.segment;
+            if (index >= end_) {
+                return NULL;
+            }
+            Segment2 & segment(modify_segment2(id));
+            if (segment.seg == NULL) {
+                segment.seg = new Segment(segment.meta ? segment.meta->bytesize : BLOCK_SIZE * 2);
+            }
+            return &segment;
         }
 
         Segment & ResourceData::modify_segment(

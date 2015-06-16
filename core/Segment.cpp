@@ -24,6 +24,11 @@ namespace trip
             return BLOCK_SIZE * block_count_ - BLOCK_SIZE + last_block_size_;
         }
 
+        boost::uint32_t Segment::piece_count() const
+        {
+            return PIECE_PER_BLOCK * block_count_ - PIECE_PER_BLOCK + Block(last_block_size_).pieces().size();
+        }
+
         Block const * Segment::get_block(
             DataId id) const
         {
@@ -115,10 +120,11 @@ namespace trip
             blocks_.resize(block_count_);
             left_ = 0;
             for (size_t i = 0; i < blocks_.size(); ++i) {
-                if (!blocks_[i]->full())
+                if (blocks_[i] == NULL || !blocks_[i]->full())
                     ++left_;
             }
-            blocks_.back()->set_size(last_block_size_);
+            if (blocks_.back())
+                blocks_.back()->set_size(last_block_size_);
         }
 
         bool Segment::load_block_stat(

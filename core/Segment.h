@@ -41,9 +41,9 @@ namespace trip
                 return left_ == 0;
             }
 
-            md5_bytes cache_md5sum() const;
-
             boost::uint32_t size() const;
+
+            boost::uint32_t piece_count() const;
 
             std::vector<Block *> const & blocks() const
             {
@@ -60,6 +60,8 @@ namespace trip
                 boost::dynamic_bitset<boost::uint32_t> & map) const;
 
         public:
+            md5_bytes cache_md5sum() const;
+
             static md5_bytes file_md5sum(
                 boost::filesystem::path const & path);
 
