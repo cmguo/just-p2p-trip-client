@@ -27,11 +27,13 @@ namespace trip
             virtual ~P2pSource();
 
         public:
-            virtual bool open();
+            virtual bool open(
+                Url const & url);
             
             virtual bool close();
             
-            virtual bool do_request();
+            virtual bool do_request(
+                std::vector<DataId> const & pieces);
             
         private:
             static UdpTunnel & get_tunnel(

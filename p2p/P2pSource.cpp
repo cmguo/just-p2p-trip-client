@@ -30,7 +30,8 @@ namespace trip
         {
         }
 
-        bool P2pSource::open()
+        bool P2pSource::open(
+            Url const & url)
         {
             return false;
         }
@@ -40,7 +41,8 @@ namespace trip
             return false;
         }
 
-        bool P2pSource::do_request()
+        bool P2pSource::do_request(
+            std::vector<DataId> const & pieces)
         {
             return false;
         }

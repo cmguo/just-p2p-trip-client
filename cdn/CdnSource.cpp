@@ -31,7 +31,8 @@ namespace trip
         {
         }
 
-        bool CdnSource::open()
+        bool CdnSource::open(
+            Url const & url)
         {
             on_ready();
             return true;
@@ -42,28 +43,35 @@ namespace trip
             return true;
         }
 
-        bool CdnSource::do_request()
+        bool CdnSource::do_request(
+            std::vector<DataId> const & pieces)
         {
-            if (requests_.empty())
+            if (pieces.empty())
                 return true;
-            boost::uint64_t seg = requests_[0].segment;
+            boost::uint64_t seg = pieces[0].segment;
             util::protocol::http_field::Range range;
-            boost::uint64_t b = 0;
-            boost::uint64_t e = 0;
-            for (size_t i = 0; i < requests_.size(); ++i) {
-                boost::uint64_t pic = requests_[i].block_piece;
-                if (pic == e) {
-                    ++e;
+            PieceRange r;
+            r.b = pieces[0];
+            r.e = pieces[0];
+            for (size_t i = 0; i < pieces.size(); ++i) {
+                DataId pic = pieces[i];
+                if (pic == r.e) {
+                    r.e.inc_piece();
                 } else {
-                    assert(pic > e);
-                    if (e > b)
-                        range.add_range(b * PIECE_SIZE, e * PIECE_SIZE);
-                    b = pic;
-                    e = pic + 1;
+                    assert(pic > r.e);
+                    if (r.e > r.b) {
+                        ranges_.push_back(r);
+                        range.add_range(r.b.block_piece * PIECE_SIZE, r.e.block_piece * PIECE_SIZE);
+                    }
+                    r.b = pic;
+                    pic.inc_piece();
+                    r.e = pic;
                 }
             }
-            if (e > b)
-                range.add_range(b * PIECE_SIZE, e * PIECE_SIZE);
+            if (r.e > r.b) {
+                ranges_.push_back(r);
+                range.add_range(r.b.block_piece * PIECE_SIZE, r.e.block_piece * PIECE_SIZE);
+            }
 
             Url url(url_);
             url.param("seg", framework::string::format(seg));
@@ -100,10 +108,16 @@ namespace trip
 
             if (piece) {
                 ((PoolPiece &)*piece).set_size((boost::uint16_t)bytes_read);
-                on_data(requests_[index_], piece);
-                ++index_;
-                if (index_ >= requests_.size())
+                if (ranges_.empty())
                     return;
+                PieceRange & r = ranges_.front();
+                on_data(r.b, piece);
+                r.b.inc_piece();
+                if (r.b == r.e) {
+                    ranges_.pop_front();
+                    if (ranges_.empty())
+                        return;
+                }
             }
 
             piece_ = PoolPiece::alloc();

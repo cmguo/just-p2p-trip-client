@@ -6,7 +6,6 @@
 #include "trip/client/net/Bus.h"
 
 #include <framework/network/Endpoint.h>
-#include <framework/timer/ClockTime.h>
 
 #include <boost/asio/ip/udp.hpp>
 
@@ -37,7 +36,7 @@ namespace trip
                 boost::system::error_code & ec);
 
             void handle_timer(
-                framework::timer::Time const & now);
+                Time const & now);
 
         private:
             void handle_recv(

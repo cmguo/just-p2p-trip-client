@@ -109,7 +109,7 @@ namespace trip
         }
 
         void UdpSocket::handle_timer(
-            framework::timer::Time const & now)
+            Time const & now)
         {
             on_timer(now);
         }

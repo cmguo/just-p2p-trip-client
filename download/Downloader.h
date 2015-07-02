@@ -36,7 +36,7 @@ namespace trip
             bool close();
 
             virtual void on_timer(
-                framework::timer::Time const & now);
+                Time const & now);
 
         protected:
             virtual void add_source(

@@ -26,11 +26,13 @@ namespace trip
             virtual ~CdnSource();
 
         private:
-            virtual bool open();
+            virtual bool open(
+                Url const & url);
 
             virtual bool close();
 
-            virtual bool do_request();
+            virtual bool do_request(
+                std::vector<DataId> const & pieces);
             
         private:
             void handle_open(
@@ -47,8 +49,13 @@ namespace trip
 
         private:
             util::protocol::HttpClient http_;
-            size_t index_;
             Piece::pointer piece_;
+            struct PieceRange
+            {
+                DataId b;
+                DataId e;
+            };
+            std::deque<PieceRange> ranges_;
         };
 
     } // namespace client

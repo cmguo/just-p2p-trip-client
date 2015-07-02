@@ -5,8 +5,6 @@
 
 #include <streambuf>
 
-#include <framework/timer/ClockTime.h>
-
 namespace trip
 {
     namespace client
@@ -48,7 +46,7 @@ namespace trip
                 NetBuffer & buf);
 
             virtual void on_timer(
-                framework::timer::Time const & now);
+                Time const & now);
 
         protected:
             void signal();

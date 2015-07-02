@@ -42,7 +42,7 @@ namespace trip
         }
 
         void Cell::on_timer(
-            framework::timer::Time const & now)
+            Time const & now)
         {
         }
 

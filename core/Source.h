@@ -43,7 +43,7 @@ namespace trip
 
         public:
             bool request(
-                std::vector<DataId> & pieces);
+                std::vector<DataId> const & pieces);
 
         protected:
             void on_ready();
@@ -56,22 +56,37 @@ namespace trip
                 DataId id, 
                 Piece::pointer piece);
 
+            void on_timer(
+                Time const & now);
+
         private:
-            virtual bool open() = 0;
+            virtual bool open(
+                Url const & url) = 0;
 
             virtual bool close() = 0;
 
-            virtual bool do_request() = 0;
+            virtual bool do_request(
+                std::vector<DataId> const & pieces) = 0;
 
         protected:
             Resource & resource_;
             Url const url_;
-            std::vector<DataId> requests_;
 
         private:
             Scheduler * scheduler_;
             DataId map_id_;
             boost::dynamic_bitset<> map_;
+            Duration delta_;
+            Duration rtt_;
+            struct Request
+            {
+                Request(DataId const & id, Time const & t)
+                    : id(id), time(t) {}
+                bool operator==(Request const & o) { return id == o.id; }
+                DataId id;
+                Time time;
+            };
+            std::deque<Request> requests_;
         };
 
     } // namespace client

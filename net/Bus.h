@@ -38,7 +38,7 @@ namespace trip
                 NetBuffer & buf);
 
             virtual void on_timer(
-                framework::timer::Time const & now);
+                Time const & now);
 
         protected:
             struct Slot;
@@ -112,8 +112,8 @@ namespace trip
             Slot ** signal_slots_tail_;
             Slot * tmwait_slots_;
             Slot ** tmwait_slots_tail_;
-            framework::timer::Time time_base_;
-            framework::timer::Time time_tail_;
+            Time time_base_;
+            Time time_tail_;
         };
 
     } // namespace client

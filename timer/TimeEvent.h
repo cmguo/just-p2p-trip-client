@@ -5,8 +5,6 @@
 
 #include <util/event/Event.h>
 
-#include <framework/timer/ClockTime.h>
-
 namespace trip
 {
     namespace client
@@ -15,7 +13,7 @@ namespace trip
         struct TimeEvent
             : util::event::Event
         {
-            framework::timer::Time now;
+            Time now;
         };
 
     } // namespace client

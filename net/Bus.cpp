@@ -3,9 +3,6 @@
 #include "trip/client/Common.h"
 #include "trip/client/net/Bus.h"
 
-using framework::timer::Time;
-using framework::timer::Duration;
-
 #define SHARER_QUEUE_SIZE 16
 
 #define SLOT_ACTIVE 1

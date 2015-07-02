@@ -53,9 +53,9 @@ namespace trip
         private:
             boost::asio::basic_deadline_timer<framework::timer::ClockTime> timer_;
             boost::shared_ptr<void> cancel_token_;
-            framework::timer::Time expire_10ms_;
-            framework::timer::Time expire_100ms_;
-            framework::timer::Time expire_1s_;
+            Time expire_10ms_;
+            Time expire_100ms_;
+            Time expire_1s_;
         };
 
     } // namespace client
