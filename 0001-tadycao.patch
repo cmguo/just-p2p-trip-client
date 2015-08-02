@@ -1,0 +1,679 @@
+From 8dd9b7eaa3524da2d68afa25360c951ef2948327 Mon Sep 17 00:00:00 2001
+From: tadycao <tadycao@pptv.com>
+Date: Sun, 2 Aug 2015 13:53:59 +0800
+Subject: [PATCH] tadycao
+
+---
+ core/Scheduler.h             |   3 +
+ core/Sink.h                  | 152 ++++++++++++++++++++--------------------
+ core/Source.cpp              |   1 +
+ core/Source.h                |  33 +++++++--
+ download/CdnDownloader.cpp   | 162 +++++++++++++++++++++++++++++++++++++++++++
+ download/CdnDownloader.h     |  88 +++++++++++++++++++++++
+ download/DownloadManager.cpp |   1 +
+ download/Downloader.cpp      |  62 +++++++++++++++--
+ download/Downloader.h        |  17 +++--
+ 9 files changed, 430 insertions(+), 89 deletions(-)
+ create mode 100644 download/CdnDownloader.cpp
+ create mode 100644 download/CdnDownloader.h
+
+diff --git a/core/Scheduler.h b/core/Scheduler.h
+index 4bb2e77..4b54e7e 100644
+--- a/core/Scheduler.h
++++ b/core/Scheduler.h
+@@ -36,6 +36,9 @@ namespace trip
+                 Source & source, 
+                 std::vector<DataId> & pieces) = 0;
+ 
++			virtual void on_timeout(
++				std::vector<DataId>& pieces) = 0;
++
+         private:
+             Resource & resource_;
+         };
+diff --git a/core/Sink.h b/core/Sink.h
+index a72e4ba..11ea9d8 100644
+--- a/core/Sink.h
++++ b/core/Sink.h
+@@ -1,76 +1,76 @@
+-// Sink.h
+-
+-#ifndef _TRIP_CLIENT_CORE_SINK_H_
+-#define _TRIP_CLIENT_CORE_SINK_H_
+-
+-#include "trip/client/core/Piece.h"
+-#include "trip/client/core/PieceIterator.h"
+-
+-#include <util/event/Event.h>
+-
+-namespace trip
+-{
+-    namespace client
+-    {
+-
+-        class Resource;
+-        class ResourceMeta;
+-        class SegmentMeta;
+-
+-        class Sink
+-        {
+-        public:
+-            Sink(
+-                Resource & resource);
+-
+-            virtual ~Sink();
+-
+-        public:
+-            boost::uint32_t type() const;
+-
+-            DataId position() const;
+-
+-            Resource const & resource() const
+-            {
+-                return *resource_;
+-            }
+-
+-        protected:
+-            void seek_to(
+-                boost::uint64_t seg, 
+-                boost::uint32_t begin, 
+-                boost::uint32_t end);
+-
+-            bool at_end() const;
+-
+-            Piece::pointer read();
+-
+-        private:
+-            virtual void on_meta(
+-                ResourceMeta const & meta) = 0;
+-
+-            virtual void on_meta(
+-                boost::uint64_t seg,  
+-                SegmentMeta const & meta) = 0;
+-
+-            virtual void on_data() = 0;
+-
+-        private:
+-            void on_event(
+-                util::event::Event const & event);
+-
+-        private:
+-            Resource * resource_;
+-            boost::uint32_t type_;
+-            PieceIterator beg_;
+-            PieceIterator pos_;
+-            PieceIterator avl_;
+-            PieceIterator end_;
+-            boost::uint32_t off_;
+-            boost::uint32_t size_; // left
+-        };
+-
+-    } // namespace client
+-} // namespace trip
+-
+-#endif // _TRIP_CLIENT_CORE_SINK_H_
++// Sink.h
++
++#ifndef _TRIP_CLIENT_CORE_SINK_H_
++#define _TRIP_CLIENT_CORE_SINK_H_
++
++#include "trip/client/core/Piece.h"
++#include "trip/client/core/PieceIterator.h"
++
++#include <util/event/Event.h>
++
++namespace trip
++{
++    namespace client
++    {
++
++        class Resource;
++        class ResourceMeta;
++        class SegmentMeta;
++
++        class Sink
++        {
++        public:
++            Sink(
++                Resource & resource);
++
++            virtual ~Sink();
++
++        public:
++            boost::uint32_t type() const;
++
++            DataId position() const;
++
++            Resource const & resource() const
++            {
++                return *resource_;
++            }
++
++        protected:
++            void seek_to(
++                boost::uint64_t seg, 
++                boost::uint32_t begin, 
++                boost::uint32_t end);
++
++            bool at_end() const;
++
++            Piece::pointer read();
++
++        private:
++            virtual void on_meta(
++                ResourceMeta const & meta) = 0;
++
++            virtual void on_meta(
++                boost::uint64_t seg,  
++                SegmentMeta const & meta) = 0;
++
++            virtual void on_data() = 0;
++
++        private:
++            void on_event(
++                util::event::Event const & event);
++
++        private:
++            Resource * resource_;
++            boost::uint32_t type_;
++            PieceIterator beg_;
++            PieceIterator pos_;
++            PieceIterator avl_;
++            PieceIterator end_;
++            boost::uint32_t off_;
++            boost::uint32_t size_; // left
++        };
++
++    } // namespace client
++} // namespace trip
++
++#endif // _TRIP_CLIENT_CORE_SINK_H_
+diff --git a/core/Source.cpp b/core/Source.cpp
+index ab020a1..a6016ff 100644
+--- a/core/Source.cpp
++++ b/core/Source.cpp
+@@ -102,6 +102,7 @@ namespace trip
+                 // scheduler_->on_timeout(iter->id);
+                 ++iter;
+             }
++			scheduler_->on_timeout(std::vector<DataId>(requests_.begin(), iter));
+             requests_.erase(requests_.begin(), iter);
+         }
+ 
+diff --git a/core/Source.h b/core/Source.h
+index 29935f0..7ebc937 100644
+--- a/core/Source.h
++++ b/core/Source.h
+@@ -45,6 +45,19 @@ namespace trip
+             bool request(
+                 std::vector<DataId> const & pieces);
+ 
++
++			boost::uint32_t get_windowsize() { return window_size_; }
++
++			boost::uint32_t get_requests_count() 
++			{
++				return (boost::uint32_t)requesting_.size();
++			}
++
++			boost::uint32_t get_window_left() 
++			{
++				return get_windowsize() - get_requests_count();
++			}
++
+         protected:
+             void on_ready();
+ 
+@@ -56,9 +69,7 @@ namespace trip
+                 DataId id, 
+                 Piece::pointer piece);
+ 
+-            void on_timer(
+-                Time const & now);
+-
++	void check_timeout_tasks();
+         private:
+             virtual bool open(
+                 Url const & url) = 0;
+@@ -88,8 +99,20 @@ namespace trip
+             };
+             std::deque<Request> requests_;
+         };
+-
++			struct PieceTask 
++			{
++				boost::uint32_t start_ts_;
++				boost::uint32_t timeout_ts_;
++				DataId id_;
++			};
++			std::deque<PieceTask> requesting_;
++
++			boost::uint32_t rtt_;
++			boost::uint32_t delta_t_;
++			boost::uint32_t window_size_;
++		};
++
+     } // namespace client
+ } // namespace trip
+ 
+-#endif // _TRIP_CLIENT_CORE_SOURCE_H_
++#endif // _TRIP_CLIENT_CORE_SOURCE_H_
+\ No newline at end of file
+diff --git a/download/CdnDownloader.cpp b/download/CdnDownloader.cpp
+new file mode 100644
+index 0000000..267a5a7
+--- /dev/null
++++ b/download/CdnDownloader.cpp
+@@ -0,0 +1,162 @@
++// CdnDownloader.cpp
++
++#include "trip/client/Common.h"
++#include "trip/client/download/CdnDownloader.h"
++#include "trip/client/download/DownloadManager.h"
++#include "trip/client/core/Resource.h"
++#include "trip/client/core/Source.h"
++#include "trip/client/core/Finder.h"
++
++
++namespace trip
++{
++    namespace client
++    {
++		
++
++        CdnDownloader::CdnDownloader(
++            DownloadManager & mgr, 
++            Resource & resource)
++            : Downloader(mgr, resource)
++        {
++        }
++
++        CdnDownloader::~CdnDownloader()
++        {
++        }
++
++		void CdnDownloader::add_source( Source * source )
++		{
++			if (source->get_protocol() == "http")
++			{
++				cdn_sources_.push_back(source);
++				if (task_collection_.find(source) == task_collection_.end()) {
++					task_collection_[source] =   TaskInfo();
++				}
++			}
++			
++		}
++
++		void CdnDownloader::del_source( Source * source )
++		{
++			cdn_sources_.erase(std::remove(cdn_sources_.begin(), cdn_sources_.end(), source));
++			//delete source;
++		}
++
++		bool CdnDownloader::get_task( Source & source, std::vector<DataId> & pieces )
++		{
++			boost::uint32_t need_count = source.get_window_left();
++
++			if (!timeout_tasks_.empty())
++			{
++				for (std::deque<DataId>::iterator iter = timeout_tasks_.begin();
++					iter != timeout_tasks_.end();)
++				{
++					if (source.has_segment(*iter))
++					{
++						pieces.push_back(*iter);
++						timeout_tasks_.erase(iter++);
++						--need_count;
++						if (need_count <= 0)
++							return true;
++					}
++					else
++						iter++;
++				}
++			}
++
++			TaskInfo &taskinfo = task_collection_[&source];
++			while (need_count > 0)
++			{
++				while (taskinfo.cur_seg_ == NULL)
++				{
++					if (taskinfo.cur_seg_id_ < task_window_.beg_id_)
++						taskinfo.cur_seg_id_ = task_window_.beg_id_;
++					else if (taskinfo.cur_seg_id_.top_segment + 1 >= task_window_.beg_id_.top_segment + task_window_.sub_.size())
++						return false;
++					else
++						taskinfo.cur_seg_id_.inc_segment();
++					SubWindow &sub = task_window_.sub_[taskinfo.cur_seg_id_.top_segment - task_window_.beg_id_.top_segment];
++					if (sub.pos_ < sub.count_ && source.has_segment(taskinfo.cur_seg_id_)) 
++						taskinfo.cur_seg_ = &sub;
++				}
++
++				if (taskinfo.cur_seg_->pos_ >= taskinfo.cur_seg_->count_) 
++					taskinfo.cur_seg_ = NULL;
++				else
++				{
++					pieces.push_back(DataId(taskinfo.cur_seg_id_, 0, taskinfo.cur_seg_->pos_));
++					++taskinfo.cur_seg_->pos_;
++					--need_count;
++				}
++			}
++			
++			return true;
++		}
++
++		void CdnDownloader::prepare_taskwindow(size_t seg_count)
++		{
++			DataId play_point(down_info_.master_->position());
++
++			while (task_window_.beg_id_ < play_point) 
++			{
++				task_window_.sub_.pop_front();
++				task_window_.beg_id_.inc_segment();
++			}
++
++			while (task_window_.sub_.size() < seg_count) 
++			{
++
++				Segment2 *seg = resource_.prepare_segment(DataId(play_point.top_segment + task_window_.sub_.size(), 0, 0));
++				if (seg == NULL)
++					break;
++
++				if (seg->saved 
++					|| seg->seg->full())
++				{
++					task_window_.sub_.push_back(SubWindow(0));
++				}
++				else
++				{
++					assert(seg->seg != NULL);
++					DataId pos(0);
++					seg->seg->seek(pos);
++					task_window_.sub_.push_back(SubWindow(seg->seg->size() / PIECE_SIZE, pos));
++				}
++
++			}
++		}
++
++		void CdnDownloader::start()
++		{
++			
++		}
++
++		void CdnDownloader::reset()
++		{
++
++			task_window_.sub_.clear();
++			task_window_.beg_id_ = down_info_.master_->position();
++		}
++
++		void CdnDownloader::stop()
++		{
++			// Reset.
++			for (std::map<Source*, TaskInfo>::iterator iter = task_collection_.begin();
++				iter != task_collection_.end(); ++iter)
++			{
++				iter->second.cur_seg_ = NULL;
++			}
++			
++
++		}
++
++		void CdnDownloader::on_timeout( std::vector<DataId>& pieces )
++		{
++			timeout_tasks_.insert(timeout_tasks_.end(), pieces.begin(), pieces.end());
++		}
++
++
++
++    } // namespace client
++} // namespace trip
+diff --git a/download/CdnDownloader.h b/download/CdnDownloader.h
+new file mode 100644
+index 0000000..08db7db
+--- /dev/null
++++ b/download/CdnDownloader.h
+@@ -0,0 +1,88 @@
++// CdnDownloader.h
++
++#ifndef _TRIP_CLIENT_DOWNLOAD_DOWNLOADER_H_
++#define _TRIP_CLIENT_DOWNLOAD_DOWNLOADER_H_
++
++#include "trip/client/download/Downloader.h"
++
++#include <util/daemon/Module.h>
++#include <util/event/Event.h>
++
++namespace trip
++{
++    namespace client
++    {
++
++        class DownloadManager;
++        class Finder;
++
++        class CdnDownloader
++            : public Downloader
++        {
++        public:
++            CdnDownloader(
++                DownloadManager & mgr, 
++                Resource & resource);
++
++            ~CdnDownloader();
++
++        public:
++            bool close();
++
++        protected:
++            virtual void add_source(
++                Source * source);
++			virtual void del_source( 
++				Source * source);
++
++			virtual void start();
++			
++			virtual void stop();
++
++            virtual bool get_task(
++                Source & source, 
++                std::vector<DataId> & pieces);
++
++			virtual void on_timeout(
++				std::vector<DataId>& pieces);
++
++        private:
++			void prepare_taskwindow(
++				size_t seg_count = 4);
++
++			struct TaskInfo 
++			{
++				//std::vector<boost::uint64_t> tasks_;
++				SubWindow* cur_seg_;
++				DataId cur_seg_id_;
++			};
++			struct SubWindow
++			{
++				DataId pos_;
++				boost::uint32_t count_;
++//				std::deque<DataId> timeout_pieces_;
++				SubWindow()
++					: pos_(0), count_(0) {}
++				SubWindow(boost::uint32_t count, DataId pos = DataId(0)) 
++					: pos_(pos), count_(count) {}
++			};
++			struct TaskWindow
++			{
++				std::deque<SubWindow> sub_;
++				DataId beg_id_;
++			};
++
++			
++			std::vector<Source *> cdn_sources_;
++			std::map<Source  *, TaskInfo> task_collection_;
++
++			TaskWindow task_window_;
++
++			std::deque<DataId> timeout_tasks_;
++        };
++
++
++    } // namespace client
++} // namespace trip
++
++#endif // _TRIP_CLIENT_DOWNLOAD_DOWNLOADER_H_
+diff --git a/download/DownloadManager.cpp b/download/DownloadManager.cpp
+index b2152f9..1ca84e8 100644
+--- a/download/DownloadManager.cpp
++++ b/download/DownloadManager.cpp
+@@ -107,6 +107,7 @@ namespace trip
+                 r.sink_changed.un(
+                     boost::bind(&DownloadManager::on_event, this, _1, _2));
+                 Downloader * downloader = NULL;//new Downloader(*this, r);
++				downloader->set_master()
+                 downloader->on_event(event);
+                 downloaders_[r.id()] = downloader;
+             }
+diff --git a/download/Downloader.cpp b/download/Downloader.cpp
+index 4e10591..d840c99 100644
+--- a/download/Downloader.cpp
++++ b/download/Downloader.cpp
+@@ -7,17 +7,24 @@
+ #include "trip/client/core/Source.h"
+ #include "trip/client/core/Finder.h"
+ 
++#include <framework/logger/Logger.h>
++#include <framework/logger/StreamRecord.h>
++
+ namespace trip
+ {
+     namespace client
+     {
+ 
++		FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("trip.client.Downloader", framework::logger::Debug);
++
+         Downloader::Downloader(
+             DownloadManager & mgr, 
+             Resource & resource)
+             : Scheduler(resource)
+             , mgr_(mgr)
++			, master_(NULL)
+         {
++			resource.sink_changed.on(boost::bind(&Downloader::on_event, this, _2));
+         }
+ 
+         Downloader::~Downloader()
+@@ -31,10 +38,44 @@ namespace trip
+             mgr_.find_sources(*this, proto, count);
+         }
+ 
+-        void Downloader::on_event(
+-            util::event::Event const & event)
+-        {
+-        }
++		void Downloader::on_event(
++			util::event::Event const & event)
++		{
++			Resource r = resource();
++
++			SinkChangedEvent& e = (SinkChangedEvent&)event;
++			switch(e.type){
++				case 0: // add.
++					if (master_ == NULL) {
++						master_ = e.sink;
++						down_info_.download_point_ =  e.sink->position();
++					}
++					break;
++				case 1:  // del.
++					if (master_ != NULL
++						&& master_ == e.sink) {
++						if (r.get_sinks().size() > 0)
++							master_ = resource().sinks_[0]; 
++						else { // To stop download.
++
++						}
++					}
++					break;
++				case 2: // modify.
++					if (master_ != NULL
++						&& master_ == e.sink) {
++						if (down_info_.download_point_ != e.sink->position())
++							down_info_.download_point_ = e.sink->position();
++						stop();
++						reset();
++						start();
++
++					}
++					break;
++				default:
++					LOG_ERROR("[on_event] unexpect event:" << e.type);
++			}
++		}
+ 
+         void Downloader::active_sources(
+             Finder & finder, 
+@@ -60,8 +101,21 @@ namespace trip
+                 }
+             }
+         }
++/*
++		void Downloader::add_source( Source * source )
++		{
++			sources_.push_back(source);
++		}
++
+ 
++		void Downloader::del_source( Source * source )
++		{
++			//sources_.remove()
++		}
++*/
++
+         void Downloader::on_timer(
++            framework::timer::Time const & now)
+             Time const & now)
+         {
+         }
+diff --git a/download/Downloader.h b/download/Downloader.h
+index 8efa254..5e0065d 100644
+--- a/download/Downloader.h
++++ b/download/Downloader.h
+@@ -40,14 +40,18 @@ namespace trip
+ 
+         protected:
+             virtual void add_source(
+-                Source * source);
++				Source * source);
+ 
++			virtual void del_source(
++				Source * source);
++
+             void find_sources(
+                 std::string const & proto, 
+                 size_t count);
+-
+-            void del_source(
+-                Source * source);
++			
++			virtual void start();
++			virtual void reset();
++			virtual void stop();
+ 
+         private:
+             friend class DownloadManager;
+@@ -55,8 +59,13 @@ namespace trip
+                 util::event::Event const & event);
+ 
+         private:
++			struct DownloadInfo {
++				DataId download_point_;
++				Sink* master_;
++			};
+             DownloadManager & mgr_;
+             std::vector<Source *> sources_;
++			DownloadInfo down_info_;
+         };
+ 
+     } // namespace client
+-- 
+1.9.2.msysgit.0
+

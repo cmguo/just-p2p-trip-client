@@ -17,6 +17,7 @@ namespace trip
 
         class DownloadManager;
         class Finder;
+        class Sink;
 
         class Downloader
             : public Scheduler
@@ -40,18 +41,20 @@ namespace trip
 
         protected:
             virtual void add_source(
-				Source * source);
+				Source * source) = 0;
 
 			virtual void del_source(
-				Source * source);
+				Source * source) = 0;
 
             void find_sources(
                 std::string const & proto, 
                 size_t count);
 			
-			virtual void start();
-			virtual void reset();
-			virtual void stop();
+			virtual void start() = 0;
+
+			virtual void reset() = 0;
+
+			virtual void stop() = 0;
 
         private:
             friend class DownloadManager;
@@ -61,10 +64,12 @@ namespace trip
         private:
 			struct DownloadInfo {
 				DataId download_point_;
-				Sink* master_;
+				Sink const * master_;
+                DownloadInfo() : master_(NULL){}
 			};
             DownloadManager & mgr_;
             std::vector<Source *> sources_;
+        protected:
 			DownloadInfo down_info_;
         };
 

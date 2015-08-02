@@ -28,16 +28,12 @@ namespace trip
             }
 
         public:
-            virtual bool get_map_range(
-                DataId & begin, 
-                size_t count) = 0;
-
             virtual bool get_task(
                 Source & source, 
                 std::vector<DataId> & pieces) = 0;
 
 			virtual void on_timeout(
-				std::vector<DataId>& pieces) = 0;
+				DataId const & piece) = 0;
 
         private:
             Resource & resource_;

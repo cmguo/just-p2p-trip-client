@@ -99,10 +99,10 @@ namespace trip
             Time time = now - rtt_;
             std::deque<Request>::iterator iter = requests_.begin();
             while (iter != requests_.end() && iter->time < time) {
-                // scheduler_->on_timeout(iter->id);
+                if (iter->id.top == 0)
+                    scheduler_->on_timeout(iter->id);
                 ++iter;
             }
-			scheduler_->on_timeout(std::vector<DataId>(requests_.begin(), iter));
             requests_.erase(requests_.begin(), iter);
         }
 

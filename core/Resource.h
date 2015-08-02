@@ -92,6 +92,9 @@ namespace trip
             }
 
         private:
+            Resource(Resource const &);
+
+        private:
             Uuid id_;
             ResourceMeta const * meta_;
             std::vector<Url> urls_;

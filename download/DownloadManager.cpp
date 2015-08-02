@@ -3,6 +3,7 @@
 #include "trip/client/Common.h"
 #include "trip/client/download/DownloadManager.h"
 #include "trip/client/download/Downloader.h"
+#include "trip/client/download/CdnDownloader.h"
 #include "trip/client/main/ResourceManager.h"
 #include "trip/client/timer/TimerManager.h"
 #include "trip/client/cdn/CdnManager.h"
@@ -107,7 +108,7 @@ namespace trip
                 r.sink_changed.un(
                     boost::bind(&DownloadManager::on_event, this, _1, _2));
                 Downloader * downloader = NULL;//new Downloader(*this, r);
-				downloader->set_master()
+                downloader = new CdnDownloader(*this, r);
                 downloader->on_event(event);
                 downloaders_[r.id()] = downloader;
             }

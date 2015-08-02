@@ -1,7 +1,7 @@
 // CdnDownloader.h
 
-#ifndef _TRIP_CLIENT_DOWNLOAD_DOWNLOADER_H_
-#define _TRIP_CLIENT_DOWNLOAD_DOWNLOADER_H_
+#ifndef _TRIP_CLIENT_DOWNLOAD_CDN_DOWNLOADER_H_
+#define _TRIP_CLIENT_DOWNLOAD_CDN_DOWNLOADER_H_
 
 #include "trip/client/download/Downloader.h"
 
@@ -37,6 +37,8 @@ namespace trip
 
 			virtual void start();
 			
+			virtual void reset();
+			
 			virtual void stop();
 
             virtual bool get_task(
@@ -44,11 +46,13 @@ namespace trip
                 std::vector<DataId> & pieces);
 
 			virtual void on_timeout(
-				std::vector<DataId>& pieces);
+				DataId const & piece);
 
         private:
 			void prepare_taskwindow(
 				size_t seg_count = 4);
+
+			struct SubWindow;
 
 			struct TaskInfo 
 			{
@@ -85,4 +89,4 @@ namespace trip
     } // namespace client
 } // namespace trip
 
-#endif // _TRIP_CLIENT_DOWNLOAD_DOWNLOADER_H_
+#endif // _TRIP_CLIENT_DOWNLOAD_CDN_DOWNLOADER_H_
