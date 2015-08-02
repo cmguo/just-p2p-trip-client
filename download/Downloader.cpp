@@ -7,17 +7,24 @@
 #include "trip/client/core/Source.h"
 #include "trip/client/core/Finder.h"
 
+#include <framework/logger/Logger.h>
+#include <framework/logger/StreamRecord.h>
+
 namespace trip
 {
     namespace client
     {
+
+		FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("trip.client.Downloader", framework::logger::Debug);
 
         Downloader::Downloader(
             DownloadManager & mgr, 
             Resource & resource)
             : Scheduler(resource)
             , mgr_(mgr)
+			, master_(NULL)
         {
+			resource.sink_changed.on(boost::bind(&Downloader::on_event, this, _2));
         }
 
         Downloader::~Downloader()
@@ -31,10 +38,44 @@ namespace trip
             mgr_.find_sources(*this, proto, count);
         }
 
-        void Downloader::on_event(
-            util::event::Event const & event)
-        {
-        }
+		void Downloader::on_event(
+			util::event::Event const & event)
+		{
+			Resource r = resource();
+
+			SinkChangedEvent& e = (SinkChangedEvent&)event;
+			switch(e.type){
+				case 0: // add.
+					if (master_ == NULL) {
+						master_ = e.sink;
+						down_info_.download_point_ =  e.sink->position();
+					}
+					break;
+				case 1:  // del.
+					if (master_ != NULL
+						&& master_ == e.sink) {
+						if (r.get_sinks().size() > 0)
+							master_ = resource().sinks_[0]; 
+						else { // To stop download.
+
+						}
+					}
+					break;
+				case 2: // modify.
+					if (master_ != NULL
+						&& master_ == e.sink) {
+						if (down_info_.download_point_ != e.sink->position())
+							down_info_.download_point_ = e.sink->position();
+						stop();
+						reset();
+						start();
+
+					}
+					break;
+				default:
+					LOG_ERROR("[on_event] unexpect event:" << e.type);
+			}
+		}
 
         void Downloader::active_sources(
             Finder & finder, 
@@ -60,8 +101,21 @@ namespace trip
                 }
             }
         }
+/*
+		void Downloader::add_source( Source * source )
+		{
+			sources_.push_back(source);
+		}
+
+
+		void Downloader::del_source( Source * source )
+		{
+			//sources_.remove()
+		}
+*/
 
         void Downloader::on_timer(
+            framework::timer::Time const & now)
             Time const & now)
         {
         }

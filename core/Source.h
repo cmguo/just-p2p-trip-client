@@ -45,6 +45,19 @@ namespace trip
             bool request(
                 std::vector<DataId> const & pieces);
 
+
+			boost::uint32_t get_windowsize() { return window_size_; }
+
+			boost::uint32_t get_requests_count() 
+			{
+				return (boost::uint32_t)requesting_.size();
+			}
+
+			boost::uint32_t get_window_left() 
+			{
+				return get_windowsize() - get_requests_count();
+			}
+
         protected:
             void on_ready();
 
@@ -56,9 +69,7 @@ namespace trip
                 DataId id, 
                 Piece::pointer piece);
 
-            void on_timer(
-                Time const & now);
-
+	void check_timeout_tasks();
         private:
             virtual bool open(
                 Url const & url) = 0;
@@ -88,6 +99,18 @@ namespace trip
             };
             std::deque<Request> requests_;
         };
+			struct PieceTask 
+			{
+				boost::uint32_t start_ts_;
+				boost::uint32_t timeout_ts_;
+				DataId id_;
+			};
+			std::deque<PieceTask> requesting_;
+
+			boost::uint32_t rtt_;
+			boost::uint32_t delta_t_;
+			boost::uint32_t window_size_;
+		};
 
     } // namespace client
 } // namespace trip

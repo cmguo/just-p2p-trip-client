@@ -107,6 +107,7 @@ namespace trip
                 r.sink_changed.un(
                     boost::bind(&DownloadManager::on_event, this, _1, _2));
                 Downloader * downloader = NULL;//new Downloader(*this, r);
+				downloader->set_master()
                 downloader->on_event(event);
                 downloaders_[r.id()] = downloader;
             }

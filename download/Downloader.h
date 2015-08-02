@@ -40,14 +40,18 @@ namespace trip
 
         protected:
             virtual void add_source(
-                Source * source);
+				Source * source);
+
+			virtual void del_source(
+				Source * source);
 
             void find_sources(
                 std::string const & proto, 
                 size_t count);
-
-            void del_source(
-                Source * source);
+			
+			virtual void start();
+			virtual void reset();
+			virtual void stop();
 
         private:
             friend class DownloadManager;
@@ -55,8 +59,13 @@ namespace trip
                 util::event::Event const & event);
 
         private:
+			struct DownloadInfo {
+				DataId download_point_;
+				Sink* master_;
+			};
             DownloadManager & mgr_;
             std::vector<Source *> sources_;
+			DownloadInfo down_info_;
         };
 
     } // namespace client

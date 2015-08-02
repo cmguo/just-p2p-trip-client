@@ -36,6 +36,9 @@ namespace trip
                 Source & source, 
                 std::vector<DataId> & pieces) = 0;
 
+			virtual void on_timeout(
+				std::vector<DataId>& pieces) = 0;
+
         private:
             Resource & resource_;
         };

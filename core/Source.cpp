@@ -102,6 +102,7 @@ namespace trip
                 // scheduler_->on_timeout(iter->id);
                 ++iter;
             }
+			scheduler_->on_timeout(std::vector<DataId>(requests_.begin(), iter));
             requests_.erase(requests_.begin(), iter);
         }
 
