@@ -18,6 +18,7 @@ namespace trip
         class DownloadManager;
         class Finder;
         class Sink;
+        struct SegmentMeta;
 
         class Downloader
             : public Scheduler
@@ -30,11 +31,9 @@ namespace trip
             ~Downloader();
 
         public:
-            void active_sources(
+            void on_sources(
                 Finder & finder, 
                 std::vector<Url> const & urls);
-
-            bool close();
 
             virtual void on_timer(
                 Time const & now);
@@ -50,11 +49,11 @@ namespace trip
                 std::string const & proto, 
                 size_t count);
 			
-			virtual void start() = 0;
-
 			virtual void reset() = 0;
 
-			virtual void stop() = 0;
+			virtual void update_segment(
+                DataId sid, 
+                SegmentMeta const & meta) = 0;
 
         private:
             friend class DownloadManager;

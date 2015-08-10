@@ -116,12 +116,16 @@ namespace trip
                 if (option_ == "/fetch") {
                     ResourceMeta const * meta = session_->resource().meta();
                     SegmentMeta const * smeta = session_->resource().get_segment_meta(0);
-                    Range range(request_head().range.get_value_or(Range()));
-                    RangeUnit const & unit(range[0]);
+                    RangeUnit unit;
+                    if (request_head().range.is_initialized()) {
+                        unit = request_head().range.get()[0];
+                    }
                     if (unit.has_end() && unit.end() > smeta->bytesize) {
                         ec = http_error::requested_range_not_satisfiable;
                     } else {
-                        http_field::ContentRange content_range(smeta->bytesize, range[0]);
+                        if (!unit.has_end())
+                            unit = RangeUnit(unit.begin(), smeta->bytesize);
+                        http_field::ContentRange content_range(smeta->bytesize, unit);
                         if (unit.begin() > 0 || (unit.has_end() && unit.end() < smeta->bytesize)) {
                             response_head().err_code = http_error::partial_content;
                             response_head().content_range = content_range;

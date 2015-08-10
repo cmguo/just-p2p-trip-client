@@ -26,21 +26,19 @@ namespace trip
 
             ~CdnDownloader();
 
-        public:
-            bool close();
-
         protected:
             virtual void add_source(
                 Source * source);
 			virtual void del_source( 
 				Source * source);
 
-			virtual void start();
-			
 			virtual void reset();
 			
-			virtual void stop();
+			virtual void update_segment(
+                DataId sid, 
+                SegmentMeta const & meta);
 
+        public:
             virtual bool get_task(
                 Source & source, 
                 std::vector<DataId> & pieces);
@@ -52,37 +50,28 @@ namespace trip
 			void prepare_taskwindow(
 				size_t seg_count = 4);
 
-			struct SubWindow;
+			struct SegmentInfo;
 
-			struct TaskInfo 
+			struct SourceInfo 
 			{
-				//std::vector<boost::uint64_t> tasks_;
-				SubWindow* cur_seg_;
-				DataId cur_seg_id_;
-			};
-			struct SubWindow
-			{
-				DataId pos_;
-				boost::uint32_t count_;
-//				std::deque<DataId> timeout_pieces_;
-				SubWindow()
-					: pos_(0), count_(0) {}
-				SubWindow(boost::uint32_t count, DataId pos = DataId(0)) 
-					: pos_(pos), count_(count) {}
-			};
-			struct TaskWindow
-			{
-				std::deque<SubWindow> sub_;
-				DataId beg_id_;
+				SegmentInfo* cur_seg;
 			};
 
+			struct SegmentInfo
+			{
+                bool meta_ready;
+				DataId pos;
+				DataId end;
+  				std::deque<DataId> timeout_pieces_;
+				SegmentInfo() : meta_ready(false), pos(0), end(0) {}
+                bool empty() { return meta_ready && timeout_pieces_.empty() && pos >= end; }
+			};
 			
-			std::vector<Source *> cdn_sources_;
-			std::map<Source  *, TaskInfo> task_collection_;
+			std::map<Source *, SourceInfo> sources_;
 
-			TaskWindow task_window_;
-
-			std::deque<DataId> timeout_tasks_;
+            DataId beg_seg_;
+            DataId end_seg_;
+            std::deque<SegmentInfo *> segments_;
         };
 
 

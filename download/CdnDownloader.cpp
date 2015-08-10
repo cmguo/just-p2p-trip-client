@@ -18,6 +18,8 @@ namespace trip
             Resource & resource)
             : Downloader(mgr, resource)
         {
+            reset();
+            find_sources("http", 10);
         }
 
         CdnDownloader::~CdnDownloader()
@@ -28,9 +30,8 @@ namespace trip
         {
             if (source->url().protocol() == "http")
             {
-                cdn_sources_.push_back(source);
-                if (task_collection_.find(source) == task_collection_.end()) {
-                    task_collection_[source] =   TaskInfo();
+                if (sources_.find(source) == sources_.end()) {
+                    sources_[source] =   SourceInfo();
                 }
             }
 
@@ -38,56 +39,57 @@ namespace trip
 
         void CdnDownloader::del_source( Source * source )
         {
-            cdn_sources_.erase(std::remove(cdn_sources_.begin(), cdn_sources_.end(), source));
-            //delete source;
+        }
+
+        void CdnDownloader::update_segment(
+            DataId sid, 
+            SegmentMeta const & meta)
+        {
+            if (sid >= beg_seg_ && sid < end_seg_) {
+                SegmentInfo * seg = segments_[sid.segment - beg_seg_.segment];
+                seg->meta_ready = true;
+                seg->end.inc_segment(0);
+                seg->end.inc_block_piece(resource().get_segment(sid)->piece_count());
+            }
         }
 
         bool CdnDownloader::get_task( Source & source, std::vector<DataId> & pieces )
         {
-            boost::uint32_t need_count = source.get_window_left();
+            SourceInfo &taskinfo = sources_[&source];
+            SegmentInfo * seg = taskinfo.cur_seg;
+            boost::uint32_t need_count = source.window_left();
 
-            if (!timeout_tasks_.empty())
-            {
-                for (std::deque<DataId>::iterator iter = timeout_tasks_.begin();
-                    iter != timeout_tasks_.end();)
-                {
-                    if (source.has_segment(*iter))
-                    {
-                        pieces.push_back(*iter);
-                        timeout_tasks_.erase(iter++);
-                        --need_count;
-                        if (need_count <= 0)
-                            return true;
-                    }
-                    else
-                        iter++;
-                }
+            if (seg && seg->empty()) {
+                seg = NULL;
             }
 
-            TaskInfo &taskinfo = task_collection_[&source];
-            while (need_count > 0)
-            {
-                while (taskinfo.cur_seg_ == NULL)
-                {
-                    if (taskinfo.cur_seg_id_ < task_window_.beg_id_)
-                        taskinfo.cur_seg_id_ = task_window_.beg_id_;
-                    else if (taskinfo.cur_seg_id_.segment + 1 >= task_window_.beg_id_.segment + task_window_.sub_.size())
-                        return false;
+            if (seg == NULL) {
+                for (size_t i = 0; i < segments_.size(); ++i) {
+                    seg = segments_[i];
+                    if (seg->empty() || !source.has_segment(seg->pos))
+                        seg = NULL;
                     else
-                        taskinfo.cur_seg_id_.inc_segment();
-                    SubWindow &sub = task_window_.sub_[taskinfo.cur_seg_id_.segment - task_window_.beg_id_.segment];
-                    if (sub.pos_ < sub.count_ && source.has_segment(taskinfo.cur_seg_id_)) 
-                        taskinfo.cur_seg_ = &sub;
+                        break;
                 }
+                if (seg == NULL)
+                    return false;
+            }
 
-                if (taskinfo.cur_seg_->pos_ >= taskinfo.cur_seg_->count_) 
-                    taskinfo.cur_seg_ = NULL;
-                else
-                {
-                    pieces.push_back(DataId(taskinfo.cur_seg_id_.segment, 0, taskinfo.cur_seg_->pos_.block_piece));
-                    taskinfo.cur_seg_->pos_.inc_piece();
-                    --need_count;
-                }
+            std::deque<DataId>::iterator beg = seg->timeout_pieces_.begin();
+            std::deque<DataId>::iterator end = seg->timeout_pieces_.end();
+            if (seg->timeout_pieces_.size() > need_count) {
+                end = beg + need_count;
+                need_count = 0;
+            } else {
+                need_count -= seg->timeout_pieces_.size();
+            }
+            pieces.insert(pieces.end(), beg, end);
+            seg->timeout_pieces_.erase(beg, end);
+
+            while (need_count > 0 && seg->pos < seg->end) {
+                pieces.push_back(seg->pos);
+                seg->pos.inc_piece();
+                --need_count;
             }
 
             return true;
@@ -96,62 +98,56 @@ namespace trip
         void CdnDownloader::prepare_taskwindow(size_t seg_count)
         {
             DataId play_point(down_info_.master_->position());
+            play_point.inc_segment(0);
 
-            while (task_window_.beg_id_ < play_point) 
-            {
-                task_window_.sub_.pop_front();
-                task_window_.beg_id_.inc_segment();
+            while (beg_seg_ < play_point) {
+                delete segments_.front();
+                segments_.pop_front();
+                beg_seg_.inc_segment();
             }
 
-            while (task_window_.sub_.size() < seg_count) 
-            {
-
-                Resource::Segment2 const *seg = resource().prepare_segment(DataId(play_point.segment + task_window_.sub_.size(), 0, 0));
-                if (seg == NULL)
+            DataId segid(beg_seg_);
+            segid.inc_segment(segments_.size());
+            while (segments_.size() < seg_count) {
+                Resource::Segment2 const *seg = resource().prepare_segment(segid);
+                if (seg == NULL) {
                     break;
-
-                if (seg->saved 
-                    || seg->seg->full())
-                {
-                    task_window_.sub_.push_back(SubWindow(0));
                 }
-                else
-                {
-                    assert(seg->seg != NULL);
-                    DataId pos(0);
-                    seg->seg->seek(pos);
-                    task_window_.sub_.push_back(SubWindow(seg->seg->size() / PIECE_SIZE, pos));
+                SegmentInfo * sinfo = new SegmentInfo;
+                sinfo->meta_ready = seg->meta != NULL;
+                sinfo->pos = segid;
+                sinfo->end = segid;
+                sinfo->end.inc_block_piece(seg->seg->piece_count());
+                if (seg->saved || seg->seg->full()) {
+                    sinfo->pos = sinfo->end;
+                } else {
+                    seg->seg->seek(sinfo->pos);
                 }
-
+                segments_.push_back(sinfo);
+                segid.inc_segment();
             }
-        }
-
-        void CdnDownloader::start()
-        {
-
+            end_seg_ = segid;
         }
 
         void CdnDownloader::reset()
         {
-            task_window_.sub_.clear();
-            task_window_.beg_id_ = down_info_.master_->position();
-        }
-
-        void CdnDownloader::stop()
-        {
             // Reset.
-            for (std::map<Source*, TaskInfo>::iterator iter = task_collection_.begin();
-                iter != task_collection_.end(); ++iter)
+            for (std::map<Source*, SourceInfo>::iterator iter = sources_.begin();
+                iter != sources_.end(); ++iter)
             {
-                iter->second.cur_seg_ = NULL;
+                iter->second.cur_seg = NULL;
             }
-
-
+            segments_.clear();
+            beg_seg_ = down_info_.master_->position();
+            prepare_taskwindow(4);
         }
 
         void CdnDownloader::on_timeout(DataId const& piece)
         {
-            timeout_tasks_.push_back(piece);
+            if (piece >= beg_seg_ && piece < end_seg_) {
+                SegmentInfo * seg = segments_[piece.segment - beg_seg_.segment];
+                seg->timeout_pieces_.push_back(piece);
+            }
         }
 
 

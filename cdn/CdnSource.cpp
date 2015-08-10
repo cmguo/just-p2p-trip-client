@@ -5,8 +5,11 @@
 #include "trip/client/cdn/CdnTunnel.h"
 #include "trip/client/core/Scheduler.h"
 #include "trip/client/core/PoolPiece.h"
+#include "trip/client/core/Segment.h"
 
 #include <framework/string/Format.h>
+#include <framework/logger/Logger.h>
+#include <framework/logger/StreamRecord.h>
 
 #include <boost/bind.hpp>
 #include <boost/asio/read.hpp>
@@ -15,6 +18,8 @@ namespace trip
 {
     namespace client
     {
+
+        FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("trip.client.CdnSource", framework::logger::Debug);
 
         CdnSource::CdnSource(
             CdnTunnel & tunnel, 
@@ -34,18 +39,21 @@ namespace trip
         bool CdnSource::open(
             Url const & url)
         {
+            LOG_INFO("[open] url=" << url.to_string());
             on_ready();
             return true;
         }
 
         bool CdnSource::close()
         {
+            LOG_INFO("[close]");
             return true;
         }
 
-        bool CdnSource::do_request(
+        bool CdnSource::request(
             std::vector<DataId> const & pieces)
         {
+            LOG_INFO("[do_request]");
             if (pieces.empty())
                 return true;
             boost::uint64_t seg = pieces[0].segment;
@@ -74,20 +82,52 @@ namespace trip
             }
 
             Url url(url_);
-            url.param("seg", framework::string::format(seg));
+            url.path(url.path() + framework::string::format(seg));
             util::protocol::HttpRequestHead head;
             head.host = url.host_svc();
             head.path = url.path_all();
+            head.range = range;
+            LOG_INFO("[do_request] url=" << url.to_string() << ", range=" << range.to_string());
+            //head.get_content(std::cout);
             http_.async_open(head, boost::bind(
                     &CdnSource::handle_open, this, _1));
             return true;
         }
 
+        bool CdnSource::has_segment(
+            DataId sid) const
+        {
+            return true;
+        }
+
+        bool CdnSource::has_block(
+            DataId bid) const
+        {
+            return false;
+        }
+
+        boost::uint32_t CdnSource::window_size() const
+        {
+            return PIECE_PER_BLOCK;
+        }
+
+        boost::uint32_t CdnSource::window_left() const
+        {
+            return window_size();
+        }
+
         void CdnSource::handle_open(
             boost::system::error_code ec)
         {
+            LOG_INFO("[handle_open] ec=" << ec.message());
             if (ec)
                 return;
+
+            //http_.response().head().get_content(std::cout);
+
+            SegmentMeta meta;
+            meta.bytesize = http_.response().head().content_range.get().total();
+            on_segment_meta(ranges_.front().b, meta);
 
             handle_read(ec, 0, NULL);
         }
@@ -115,15 +155,18 @@ namespace trip
                 r.b.inc_piece();
                 if (r.b == r.e) {
                     ranges_.pop_front();
-                    if (ranges_.empty())
+                    if (ranges_.empty()) {
+                        http_.close(ec);
+                        on_ready();
                         return;
+                    }
                 }
             }
 
             piece_ = PoolPiece::alloc();
             boost::asio::async_read(
                 http_.response_stream(), 
-                boost::asio::buffer(piece->data(), piece->size()), 
+                boost::asio::buffer(piece_->data(), piece_->size()), 
                 boost::asio::transfer_all(), 
                 boost::bind(&CdnSource::handle_read, this, _1, _2, piece_));
         }

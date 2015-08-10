@@ -35,6 +35,7 @@ namespace trip
             ResourceMeta const & meta)
         {
             meta_ = new ResourceMeta(meta);
+            ResourceData::set_meta(meta);
             meta_changed.meta = meta_;
             raise(meta_changed);
         }

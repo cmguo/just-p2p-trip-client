@@ -49,7 +49,7 @@ namespace trip
             virtual void on_meta(
                 ResourceMeta const & meta) = 0;
 
-            virtual void on_meta(
+            virtual void on_segment_meta(
                 boost::uint64_t seg,  
                 SegmentMeta const & meta) = 0;
 
@@ -67,7 +67,7 @@ namespace trip
             PieceIterator avl_;
             PieceIterator end_;
             boost::uint32_t off_;
-            boost::uint32_t size_; // left
+            boost::uint32_t off2_; // left
         };
 
     } // namespace client

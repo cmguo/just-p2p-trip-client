@@ -10,10 +10,15 @@
 
 #include <util/archive/XmlIArchive.h>
 
+#include <framework/logger/Logger.h>
+#include <framework/logger/StreamRecord.h>
+
 namespace trip
 {
     namespace client
     {
+
+        FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("trip.client.CdnFinder", framework::logger::Debug);
 
         CdnFinder::CdnFinder(
             CdnManager & cmgr)
@@ -35,6 +40,7 @@ namespace trip
             Resource & resource, 
             size_t count)
         {
+            LOG_INFO("[find] rid=" << resource.id());
             Url url("http://jump.trip.com/jump.xml");
             url.param("rid", resource.id().to_string());
             std::vector<Url> const & urls = resource.urls();
@@ -50,6 +56,7 @@ namespace trip
             Resource & resource, 
             Url const & url)
         {
+            LOG_INFO("[create] rid=" << resource.id() << ", url=" << url.to_string());
             return new CdnSource(cmgr_.get_tunnel(url), resource, url);
         }
 
@@ -57,6 +64,7 @@ namespace trip
             boost::system::error_code ec, 
             Resource & resource)
         {
+             LOG_INFO("[handle_fetch] rid=" << resource.id() << ", ec=" << ec.message());
             std::vector<Url> urls;
             if (!ec) {
                 util::archive::XmlIArchive<> ia(http_.response_data());

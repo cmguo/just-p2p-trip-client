@@ -56,6 +56,7 @@ namespace trip
             HttpServer * server, 
             response_t const & resp)
         {
+            LOG_INFO("[async_open] server=" << (void*)server);
             Request r;
             r.server = server;
             r.segm = MAX_SEGMENT;
@@ -73,6 +74,7 @@ namespace trip
             boost::uint64_t segm, 
             response_t const & resp)
         {
+            LOG_INFO("[async_open] server=" << (void*)server << ", segment=" << segm);
             Request r;
             r.server = server;
             r.segm = segm;
@@ -106,6 +108,7 @@ namespace trip
             util::stream::Sink * sink,
             response_t const & resp)
         {
+            LOG_INFO("[async_fetch] server=" << (void*)server << ", range=" << range.to_string());
             std::list<Request>::iterator iter = 
                 std::find_if(open_requests_.begin(), open_requests_.end(), find_request(server));
             assert(iter != open_requests_.end());
@@ -124,6 +127,7 @@ namespace trip
             HttpServer * server, 
             boost::system::error_code & ec)
         {
+            LOG_INFO("[close_request] server=" << (void*)server);
             std::list<Request>::iterator iter = 
                 std::find_if(open_requests_.begin(), open_requests_.end(), find_request(server));
             if (iter != open_requests_.end()) {
@@ -149,6 +153,7 @@ namespace trip
         void HttpSession::on_meta(
             ResourceMeta const & meta)
         {
+            LOG_INFO("[on_meta]");
             boost::system::error_code ec;
             std::list<Request>::iterator iter = open_requests_.begin();
             for (; iter != open_requests_.end(); ++iter) {
@@ -161,10 +166,11 @@ namespace trip
             }
         }
 
-        void HttpSession::on_meta(
+        void HttpSession::on_segment_meta(
             boost::uint64_t segm, 
             SegmentMeta const & meta)
         {
+            LOG_INFO("[on_segment_meta] segment=" << segm);
             boost::system::error_code ec;
             std::list<Request>::iterator iter = open_requests_.begin();
             for (; iter != open_requests_.end(); ++iter) {
@@ -182,12 +188,13 @@ namespace trip
             Request const & r(fetch_requests_.front());
             Sink::seek_to(r.segm, 
                 boost::uint32_t(r.range.begin()), 
-                r.range.has_end() ? boost::uint32_t(r.range.end()) : boost::uint32_t(-1));
+                r.range.has_end() ? boost::uint32_t(r.range.end()) : 0);
             on_data();
         }
 
         void HttpSession::on_data()
         {
+            LOG_INFO("[on_data]");
             on_write(boost::system::error_code(), 0);
         }
 

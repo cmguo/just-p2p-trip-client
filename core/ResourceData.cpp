@@ -2,6 +2,7 @@
 
 #include "trip/client/Common.h"
 #include "trip/client/core/ResourceData.h"
+#include "trip/client/core/Resource.h"
 
 namespace trip
 {
@@ -15,6 +16,12 @@ namespace trip
 
         ResourceData::~ResourceData()
         {
+        }
+
+        void ResourceData::set_meta(
+            ResourceMeta const & meta)
+        {
+            end_ = meta.duration / meta.interval;
         }
 
         Piece::pointer ResourceData::get_piece(
@@ -201,9 +208,11 @@ namespace trip
                 seg_meta_ready.meta = segment.meta;
                 raise(seg_meta_ready);
                 if (id == data_ready.id) {
-                    seek(id);
-                    if (id.block_piece)
+                    priv_seek(id);
+                    if (id.block_piece) {
+                        data_ready.id = id;
                         raise(data_ready);
+                    }
                 }
             }
         }
@@ -220,13 +229,19 @@ namespace trip
             DataId & id)
         {
             data_seek.id = id;
+            priv_seek(id);
+            raise(data_seek);
+        }
+
+        void ResourceData::priv_seek(
+            DataId & id)
+        {
             boost::uint64_t next = id.top_segment;
             std::map<boost::uint64_t, Segment2>::const_iterator iter = 
                 segments_.find(next);
             if (next < end_) {
                 if (iter != segments_.end() && iter->second.meta && iter->second.seg) {
                     if (!iter->second.seg->seek(id)) {
-                        raise(data_seek);
                         return;
                     }
                     ++next;
@@ -249,8 +264,6 @@ namespace trip
                 if (iter != segments_.end() && iter->first == next && iter->second.meta && iter->second.seg)
                     iter->second.seg->seek(id);
             }
-            data_ready.id = id;
-            raise(data_seek);
         }
 
         bool ResourceData::set_piece(
@@ -266,9 +279,10 @@ namespace trip
                             segment_full.id = id;
                             raise(segment_full);
                         }
-                        ++data_ready.id.top_segment;
-                        seek(data_ready.id); // will change data_ready.id
+                        id.inc_segment();
                     }
+                    priv_seek(id); // will change data_ready.id
+                    data_ready.id = id;
                     raise(data_ready);
                 }
             }

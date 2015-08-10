@@ -6,12 +6,17 @@
 #include "trip/client/core/Resource.h"
 #include "trip/client/core/PoolPiece.h"
 
+#include <framework/logger/Logger.h>
+#include <framework/logger/StreamRecord.h>
+
 #include <boost/bind.hpp>
 
 namespace trip
 {
     namespace client
     {
+
+        FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("trip.client.ResourceManager", framework::logger::Debug);
 
         ResourceManager::ResourceManager(
             util::daemon::Daemon & daemon)
@@ -58,11 +63,12 @@ namespace trip
         Resource & ResourceManager::get(
             std::vector<Url> & urls)
         {
+            LOG_INFO("[get] new resource with no rid");
             Resource * r = new Resource;
             r->set_urls(urls);
             resource_added.resource = r;
             other_resources_.push_back(r);
-            raise(resource_added);
+            //raise(resource_added);
             r->meta_changed.on(
                 boost::bind(&ResourceManager::on_event, this, _1, _2));
             mapping_.find(*r);
@@ -79,6 +85,7 @@ namespace trip
             util::event::Observable const & observable, 
             util::event::Event const & event)
         {
+            LOG_INFO("[on_event] meta_changed");
             Resource & r = (Resource &)observable;
             assert(r.meta_changed == event);
             r.meta_changed.un(

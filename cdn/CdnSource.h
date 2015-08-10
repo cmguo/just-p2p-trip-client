@@ -25,13 +25,24 @@ namespace trip
 
             virtual ~CdnSource();
 
-        private:
+        public:
+            virtual bool has_segment(
+                DataId sid) const;
+
+            virtual bool has_block(
+                DataId bid) const;
+
+            virtual boost::uint32_t window_size() const;
+
+            virtual boost::uint32_t window_left() const;
+
+        public:
             virtual bool open(
                 Url const & url);
 
             virtual bool close();
 
-            virtual bool do_request(
+            virtual bool request(
                 std::vector<DataId> const & pieces);
             
         private:

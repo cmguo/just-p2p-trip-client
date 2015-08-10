@@ -5,6 +5,9 @@
 #include "trip/client/main/ResourceManager.h"
 #include "trip/client/cache/CacheManager.h"
 #include "trip/client/udp/UdpManager.h"
+#include "trip/client/cdn/CdnManager.h"
+#include "trip/client/p2p/P2pManager.h"
+#include "trip/client/download/DownloadManager.h"
 #include "trip/client/http/HttpManager.h"
 
 #include <framework/logger/Logger.h>
@@ -39,6 +42,9 @@ namespace trip
                 util::daemon::use_module<ResourceManager>(*this);
                 util::daemon::use_module<CacheManager>(*this);
                 util::daemon::use_module<UdpManager>(*this);
+                util::daemon::use_module<CdnManager>(*this);
+                util::daemon::use_module<P2pManager>(*this);
+                util::daemon::use_module<DownloadManager>(*this);
                 util::daemon::use_module<HttpManager>(*this);
 
                 LOG_INFO("Client ready.");

@@ -27,12 +27,23 @@ namespace trip
             virtual ~P2pSource();
 
         public:
+            virtual bool has_segment(
+                DataId sid) const;
+
+            virtual bool has_block(
+                DataId bid) const;
+
+            virtual boost::uint32_t window_size() const;
+
+            virtual boost::uint32_t window_left() const;
+
+        public:
             virtual bool open(
                 Url const & url);
             
             virtual bool close();
             
-            virtual bool do_request(
+            virtual bool request(
                 std::vector<DataId> const & pieces);
             
         private:
@@ -43,6 +54,35 @@ namespace trip
         private:
             virtual void on_msg(
                 Message * msg);
+
+            virtual void on_timer(
+                Time const & now);
+
+        private:
+            void on_map(
+                DataId id,
+                boost::dynamic_bitset<> & map);
+
+            void on_data(
+                DataId id, 
+                Piece::pointer piece);
+
+        private:
+            struct Request
+            {
+                Request(DataId const & id, Time const & t)
+                    : id(id), time(t) {}
+                bool operator==(Request const & o) { return id == o.id; }
+                DataId id;
+                Time time;
+            };
+
+        private:
+            DataId map_id_;
+            boost::dynamic_bitset<> map_;
+            Duration delta_;
+            Duration rtt_;
+            std::deque<Request> requests_;
         };
 
     } // namespace client

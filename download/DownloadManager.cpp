@@ -11,12 +11,17 @@
 #include "trip/client/core/Resource.h"
 #include "trip/client/core/Finder.h"
 
+#include <framework/logger/Logger.h>
+#include <framework/logger/StreamRecord.h>
+
 #include <boost/bind.hpp>
 
 namespace trip
 {
     namespace client
     {
+
+        FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("trip.client.DownloadManager", framework::logger::Debug);
 
         DownloadManager::DownloadManager(
             util::daemon::Daemon & daemon)
@@ -83,20 +88,29 @@ namespace trip
             if (observable == rmgr_) {
                 Resource & r = *rmgr_.resource_added.resource;
                 if (event == rmgr_.resource_added) {
-                    r.sink_changed.on(
-                        boost::bind(&DownloadManager::on_event, this, _1, _2));
+                    LOG_INFO("[on_event] resource_added, id=" << r.id());
+                    if (r.get_sinks().empty()) {
+                        r.sink_changed.on(
+                            boost::bind(&DownloadManager::on_event, this, _1, _2));
+                    } else {
+                        Downloader * downloader = NULL;//new Downloader(*this, r);
+                        downloader = new CdnDownloader(*this, r);
+                        downloaders_[r.id()] = downloader;
+                    }
                 } else {
+                    LOG_INFO("[on_event] resource_deleting, id=" << r.id());
                     std::map<Uuid, Downloader *>::iterator iter = 
                         downloaders_.find(r.id());
                     if (iter == downloaders_.end()) {
                         r.sink_changed.un(
                             boost::bind(&DownloadManager::on_event, this, _1, _2));
                     } else {
-                        iter->second->close();
+                        delete iter->second;
                         downloaders_.erase(iter);
                     }
                 }
             } else if (observable == tmgr_) {
+                //LOG_INFO("[on_event] t_100_ms");
                 std::map<Uuid, Downloader *>::iterator iter = 
                     downloaders_.begin();
                 for (; iter != downloaders_.end(); ++iter) {
@@ -105,11 +119,11 @@ namespace trip
             } else {
                 Resource & r = (Resource &)observable;
                 assert(r.sink_changed == event);
+                LOG_INFO("[on_event] sink_changed");
                 r.sink_changed.un(
                     boost::bind(&DownloadManager::on_event, this, _1, _2));
                 Downloader * downloader = NULL;//new Downloader(*this, r);
                 downloader = new CdnDownloader(*this, r);
-                downloader->on_event(event);
                 downloaders_[r.id()] = downloader;
             }
         }
@@ -123,7 +137,7 @@ namespace trip
             std::map<Uuid, Downloader *>::iterator iter = downloaders_.begin();
             if (iter == downloaders_.end())
                 return;
-            iter->second->active_sources(finder, urls);
+            iter->second->on_sources(finder, urls);
         }
 
     } // namespace client

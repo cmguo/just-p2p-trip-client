@@ -64,7 +64,7 @@ namespace trip
             virtual void on_meta(
                 ResourceMeta const & meta);
 
-            virtual void on_meta(
+            virtual void on_segment_meta(
                 boost::uint64_t segm, 
                 SegmentMeta const & meta);
 

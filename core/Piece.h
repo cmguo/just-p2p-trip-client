@@ -5,7 +5,7 @@
 
 #include "trip/client/core/DataId.h"
 
-#include <boost/operators.hpp>
+#include <boost/intrusive_ptr.hpp>
 
 namespace trip
 {
@@ -55,7 +55,7 @@ namespace trip
             void set_size(
                 boost::uint16_t size)
             {
-                assert(size < size_);
+                assert(size <= size_);
                 size_ = size;
             }
 

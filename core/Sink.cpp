@@ -5,12 +5,17 @@
 #include "trip/client/core/Resource.h"
 #include "trip/client/core/PartPiece.h"
 
+#include <framework/logger/Logger.h>
+#include <framework/logger/StreamRecord.h>
+
 #include <boost/bind.hpp>
 
 namespace trip
 {
     namespace client
     {
+
+        FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("trip.client.Sink", framework::logger::Debug);
 
         Sink::Sink(
             Resource & resource)
@@ -20,7 +25,7 @@ namespace trip
             , avl_(beg_)
             , end_(beg_)
             , off_(0)
-            , size_(0)
+            , off2_(0)
         {
             resource_->merged.on(
                 boost::bind(&Sink::on_event, this, _2));
@@ -32,6 +37,7 @@ namespace trip
 
         Sink::~Sink()
         {
+            resource_->del_sink(this);
         }
 
         void Sink::seek_to(
@@ -39,23 +45,25 @@ namespace trip
             boost::uint32_t begin, 
             boost::uint32_t end)
         {
+            LOG_INFO("[seek_to] seg=" << seg);
             DataId ibegin(seg, 0, begin / PIECE_SIZE);
             DataId iend(seg, 0, (end + PIECE_SIZE - 1) / PIECE_SIZE);
             if (end == 0) {
-                iend = DataId((seg + 1), 0, 0);
+                iend.inc_segment();
             }
             off_ = begin % PIECE_SIZE;
-            size_ = end - begin;
+            off2_ = end % PIECE_SIZE;
             if (pos_.id() != ibegin) {
                 resource_->update_sink(this);
                 pos_ = resource_->iterator_at(ibegin); 
             }
-            end_ =resource_->iterator_at(iend);
+            end_ = resource_->iterator_at(iend);
         }
 
         Piece::pointer Sink::read()
         {
             if (pos_ == end_) {
+                LOG_INFO("[read] at end");
                 resource_->data_ready.un(
                     boost::bind(&Sink::on_event, this, _2));
                 return NULL;
@@ -66,12 +74,16 @@ namespace trip
                 p = *pos_;
             }
             if (p) {
+                LOG_INFO("[read] pos=" << pos_.id().block_piece);
                 ++pos_;
-                if (off_ || size_ < p->size())
-                    p = PartPiece::alloc(p, off_, size_);
-                off_ = 0;
-                size_ -= p->size();
+                if (off_) {
+                    p = PartPiece::alloc(p, off_, p->size() - off_);
+                    off_ = 0;
+                }
+                if (pos_ == end_ && off2_)
+                    p = PartPiece::alloc(p, 0, off2_);
             } else {
+                LOG_INFO("[read] would block");
                 resource_->data_ready.on(
                     boost::bind(&Sink::on_event, this, _2));
             }
@@ -83,10 +95,16 @@ namespace trip
             return pos_ == end_;
         }
 
+        DataId Sink::position() const
+        {
+            return pos_.id();
+        }
+
         void Sink::on_event(
             util::event::Event const & event)
         {
             if (event == resource_->data_ready) {
+                LOG_INFO("[on_event] data_ready, id=" << resource_->data_ready.id.id);
                 bool notify = pos_ == avl_;
                 avl_ = resource_->iterator_at(resource_->data_ready.id);
                 if (notify) {
@@ -97,8 +115,10 @@ namespace trip
                         boost::bind(&Sink::on_event, this, _2));
                 }
             } else if (event == resource_->seg_meta_ready) {
-                on_meta(resource_->seg_meta_ready.id.segment, *resource_->seg_meta_ready.meta);
+                LOG_INFO("[on_event] seg_meta_ready, segment=" << resource_->seg_meta_ready.id.segment);
+                on_segment_meta(resource_->seg_meta_ready.id.segment, *resource_->seg_meta_ready.meta);
             } else if (event == resource_->merged) {
+                LOG_INFO("[on_event] merged, id=" << resource_->merged.resource->id());
                 resource_->merged.un(
                     boost::bind(&Sink::on_event, this, _2));
                 resource_->seg_meta_ready.un(
@@ -107,15 +127,18 @@ namespace trip
                 resource_->seg_meta_ready.on(
                     boost::bind(&Sink::on_event, this, _2));
             } else if (event == resource_->data_seek) {
-                if (resource_->data_seek.id == beg_.id()) {
+                LOG_INFO("[on_event] data_seek, id=" << resource_->data_seek.id.id);
+                if (!at_end() && resource_->data_seek.id == beg_.id()) {
                     on_data();
                 }
             } else if (event == resource_->meta_changed) {
+                LOG_INFO("[on_event] meta_changed");
                 on_meta(*resource_->meta_changed.meta);
                 resource_->meta_changed.un(
                     boost::bind(&Sink::on_event, this, _2));
                 resource_->seg_meta_ready.on(
                     boost::bind(&Sink::on_event, this, _2));
+                resource_->add_sink(this);
             }
         }
 

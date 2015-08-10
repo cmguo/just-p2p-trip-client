@@ -16,6 +16,8 @@ namespace trip
     namespace client
     {
 
+        struct ResourceMeta;
+
         class ResourceData
             : public util::event::Observable
         {
@@ -119,7 +121,14 @@ namespace trip
             Segment2 const * prepare_segment(
                 DataId id);
 
+        protected:
+            void set_meta(
+                ResourceMeta const & meta);
+
         private:
+            void priv_seek(
+                DataId & id);
+
             Segment & modify_segment(
                 DataId id);
 
