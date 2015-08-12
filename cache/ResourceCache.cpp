@@ -52,7 +52,7 @@ namespace trip
             directory_ = directory;
             boost::filesystem::path external(directory_ / "external");
             if (boost::filesystem::exists(external)) {
-                std::ifstream ifs(external.file_string().c_str());
+                std::ifstream ifs(external.string().c_str());
                 std::string line;
                 if (std::getline(ifs, line)) {
                     directory_ = line;
@@ -64,7 +64,7 @@ namespace trip
             boost::filesystem::directory_iterator end;
             for (; iter != end; ++iter) {
                 if (iter->path().extension() == resource_.meta()->file_extension) {
-                    boost::uint64_t segid = strid(iter->path().stem());
+                    boost::uint64_t segid = strid(iter->path().stem().string());
                     DataId id(segid, 0, 0);
                     if (!resource_.load_segment(id, iter->path())) {
                         boost::filesystem::remove(iter->path());

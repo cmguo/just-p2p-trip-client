@@ -31,7 +31,8 @@ namespace trip
             }
 
         public:
-            virtual void on_timer();
+            virtual void on_timer(
+                Time const & now);
 
         private:
             boost::asio::io_service & io_svc_;

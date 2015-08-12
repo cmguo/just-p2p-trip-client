@@ -56,7 +56,8 @@ namespace trip
 
         private:
             friend class CdnTunnel;
-            void on_timer();
+            void on_timer(
+                Time const & now);
 
         private:
             util::protocol::HttpClient http_;

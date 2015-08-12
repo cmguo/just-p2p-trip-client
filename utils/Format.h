@@ -13,7 +13,7 @@ namespace boost
         inline std::string to_string(
             boost::filesystem::path const & path)
         {
-            return path.file_string();
+            return path.string();
         }
 
         inline bool from_string(

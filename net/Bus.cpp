@@ -20,6 +20,11 @@ namespace trip
             Bus * bus, 
             Queue * queue)
             : Cell(bus, queue)
+            , next_id_(0)
+            , signal_slots_(NULL)
+            , signal_slots_tail_(&signal_slots_)
+            , tmwait_slots_(NULL)
+            , tmwait_slots_tail_(&tmwait_slots_)
         {
         }
 

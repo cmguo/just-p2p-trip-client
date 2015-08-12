@@ -41,6 +41,9 @@ namespace trip
                 boost::uint32_t begin, 
                 boost::uint32_t end);
 
+            void seek_end(
+                boost::uint64_t seg);
+
             bool at_end() const;
 
             Piece::pointer read();

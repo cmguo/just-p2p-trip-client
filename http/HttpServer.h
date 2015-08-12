@@ -16,6 +16,7 @@ namespace trip
         class HttpSession;
 
         using util::protocol::http_field::Range;
+        using util::protocol::http_field::RangeUnit;
 
         class HttpServer
             : public util::protocol::HttpServer
@@ -61,6 +62,7 @@ namespace trip
             std::string option_;
             boost::uint64_t segment_;
             HttpSession * session_;
+            RangeUnit unit_;
         };
 
     } // namespace client

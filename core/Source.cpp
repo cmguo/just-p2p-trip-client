@@ -72,7 +72,7 @@ namespace trip
             DataId id, 
             Piece::pointer piece)
         {
-            LOG_INFO("[on_data] id=" << id.id);
+            //LOG_INFO("[on_data] id=" << id.id);
             resource_.set_piece(id, piece);
             // scheduler_->on_piece(id);
         }

@@ -48,7 +48,6 @@ namespace trip
 
         private:
             boost::asio::ip::udp::socket socket_;
-            UdpTunnel * main_tul_;
             bool stopped_;
         };
 

@@ -60,6 +60,13 @@ namespace trip
             end_ = resource_->iterator_at(iend);
         }
 
+        void Sink::seek_end(
+            boost::uint64_t seg)
+        {
+            resource_->data_ready.un(
+                boost::bind(&Sink::on_event, this, _2));
+        }
+
         Piece::pointer Sink::read()
         {
             if (pos_ == end_) {
@@ -74,7 +81,7 @@ namespace trip
                 p = *pos_;
             }
             if (p) {
-                LOG_INFO("[read] pos=" << pos_.id().block_piece);
+                //LOG_INFO("[read] pos=" << pos_.id().block_piece);
                 ++pos_;
                 if (off_) {
                     p = PartPiece::alloc(p, off_, p->size() - off_);
@@ -83,7 +90,7 @@ namespace trip
                 if (pos_ == end_ && off2_)
                     p = PartPiece::alloc(p, 0, off2_);
             } else {
-                LOG_INFO("[read] would block");
+                //LOG_INFO("[read] would block");
                 resource_->data_ready.on(
                     boost::bind(&Sink::on_event, this, _2));
             }
@@ -104,15 +111,13 @@ namespace trip
             util::event::Event const & event)
         {
             if (event == resource_->data_ready) {
-                LOG_INFO("[on_event] data_ready, id=" << resource_->data_ready.id.id);
+                //LOG_INFO("[on_event] data_ready, id=" << resource_->data_ready.id.id);
+                resource_->data_ready.un(
+                    boost::bind(&Sink::on_event, this, _2));
                 bool notify = pos_ == avl_;
                 avl_ = resource_->iterator_at(resource_->data_ready.id);
                 if (notify) {
                     on_data();
-                }
-                if (avl_.id().segment > pos_.id().segment) {
-                    resource_->data_ready.un(
-                        boost::bind(&Sink::on_event, this, _2));
                 }
             } else if (event == resource_->seg_meta_ready) {
                 LOG_INFO("[on_event] seg_meta_ready, segment=" << resource_->seg_meta_ready.id.segment);

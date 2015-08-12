@@ -171,5 +171,10 @@ namespace trip
                 boost::bind(&CdnSource::handle_read, this, _1, _2, piece_));
         }
 
+        void CdnSource::on_timer(
+            Time const & now)
+        {
+        }
+
     } // namespace client
 } // namespace trip

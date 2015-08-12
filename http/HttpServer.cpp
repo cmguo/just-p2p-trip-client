@@ -116,17 +116,17 @@ namespace trip
                 if (option_ == "/fetch") {
                     ResourceMeta const * meta = session_->resource().meta();
                     SegmentMeta const * smeta = session_->resource().get_segment_meta(0);
-                    RangeUnit unit;
+                    unit_ = RangeUnit();
                     if (request_head().range.is_initialized()) {
-                        unit = request_head().range.get()[0];
+                        unit_ = request_head().range.get()[0];
                     }
-                    if (unit.has_end() && unit.end() > smeta->bytesize) {
+                    if (unit_.has_end() && unit_.end() > smeta->bytesize) {
                         ec = http_error::requested_range_not_satisfiable;
                     } else {
-                        if (!unit.has_end())
-                            unit = RangeUnit(unit.begin(), smeta->bytesize);
-                        http_field::ContentRange content_range(smeta->bytesize, unit);
-                        if (unit.begin() > 0 || (unit.has_end() && unit.end() < smeta->bytesize)) {
+                        if (!unit_.has_end())
+                            unit_ = RangeUnit(unit_.begin(), smeta->bytesize);
+                        http_field::ContentRange content_range(smeta->bytesize, unit_);
+                        if (unit_.begin() > 0 || (unit_.has_end() && unit_.end() < smeta->bytesize)) {
                             response_head().err_code = http_error::partial_content;
                             response_head().content_range = content_range;
                         }
@@ -165,8 +165,7 @@ namespace trip
                 assert(option_ == "/fetch");
                 boost::system::error_code ec;
                 set_non_block(true, ec);
-                Range range(request_head().range.get_value_or(Range()));
-                session_->async_fetch(this, range[0], &response_stream(), 
+                session_->async_fetch(this, unit_, &response_stream(), 
                     boost::bind(&HttpServer::handle_fetch, this, resp, _1));
             }
         }

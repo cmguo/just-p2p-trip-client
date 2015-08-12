@@ -3,6 +3,7 @@
 #include "trip/client/Common.h"
 #include "trip/client/udp/UdpTunnel.h"
 #include "trip/client/udp/UdpSocket.h"
+#include "trip/client/udp/UdpSession.h"
 #include "trip/client/proto/TunnelHeader.h"
 #include "trip/client/net/Queue.h"
 
@@ -23,6 +24,11 @@ namespace trip
 
         UdpTunnel::~UdpTunnel()
         {
+        }
+
+        UdpSession * UdpTunnel::main_session()
+        {
+            return static_cast<UdpSession *>(slot_at(uint16_t(0))->cell);
         }
 
         void UdpTunnel::on_send(

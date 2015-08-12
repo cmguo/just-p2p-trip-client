@@ -34,10 +34,11 @@ namespace trip
                 sources_.end());
         }
 
-        void CdnTunnel::on_timer()
+        void CdnTunnel::on_timer(
+            Time const & now)
         {
             for (size_t i = 0; i < sources_.size(); ++i)
-                sources_[i]->on_timer();
+                sources_[i]->on_timer(now);
         }
 
     } // namespace client

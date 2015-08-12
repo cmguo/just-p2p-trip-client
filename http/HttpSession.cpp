@@ -139,12 +139,17 @@ namespace trip
             }
             iter = std::find_if(fetch_requests_.begin(), fetch_requests_.end(), find_request(server));
             if (iter != fetch_requests_.end()) {
-                if (iter != fetch_requests_.begin() || !piece_) {
-                    io_svc_.post(
-                        boost::bind(iter->resp, boost::asio::error::operation_aborted));
-                    fetch_requests_.erase(iter);
-                } else {
+                Sink::seek_end(iter->segm);
+                bool first = (iter == fetch_requests_.begin());
+                if (first && piece_) {
                     iter->sink = NULL;
+                } else {
+                    if (!iter->resp.empty()) {
+                        io_svc_.post(
+                            boost::bind(iter->resp, boost::asio::error::operation_aborted));
+                    }
+                    fetch_requests_.erase(iter);
+                    if (first && !fetch_requests_.empty()) fetch_next();
                 }
             }
             return true;
@@ -194,14 +199,24 @@ namespace trip
 
         void HttpSession::on_data()
         {
-            LOG_INFO("[on_data]");
-            on_write(boost::system::error_code(), 0);
+            //LOG_INFO("[on_data]");
+            assert(!piece_);
+            Request & r(fetch_requests_.front());
+            if ((piece_ = read())) {
+                boost::asio::async_write(*r.sink, 
+                    boost::asio::buffer(piece_->data(), piece_->size()), 
+                    boost::asio::transfer_all(), 
+                    boost::bind(&HttpSession::on_write, this, _1, _2));
+            }
         }
 
         void HttpSession::on_write(
             boost::system::error_code const & ec, 
             size_t bytes_write)
         {
+            //LOG_INFO("[on_write]");
+            assert(piece_);
+            piece_.reset();
             Request & r(fetch_requests_.front());
             if (ec || at_end()) {
                 response_t resp;
