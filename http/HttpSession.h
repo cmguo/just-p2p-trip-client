@@ -48,17 +48,23 @@ namespace trip
             void async_open(
                 HttpServer * server,
                 boost::uint64_t segm, 
+                RangeUnit const & range, 
                 response_t const & resp);
 
             void async_fetch(
                 HttpServer * server,
-                RangeUnit const & range, 
                 util::stream::Sink * sink,
                 response_t const & resp);
 
             bool close_request(
                 HttpServer * server, 
                 boost::system::error_code & ec);
+
+        public:
+            ResourceMeta const * meta();
+
+            SegmentMeta const * segment_meta(
+                boost::uint64_t segm);
 
         private:
             virtual void on_meta(
@@ -71,15 +77,19 @@ namespace trip
             virtual void on_data();
 
         private:
+            struct Request;
+
             void fetch_next();
 
             void on_write(
                 boost::system::error_code const & ec, 
                 size_t bytes_write);
 
+            void write(
+                Request & r);
+
         private:
             boost::asio::io_service & io_svc_;
-            struct Request;
             struct find_request;
             std::list<Request> open_requests_;
             std::list<Request> fetch_requests_;

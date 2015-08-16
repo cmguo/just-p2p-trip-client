@@ -93,9 +93,7 @@ namespace trip
                         r.sink_changed.on(
                             boost::bind(&DownloadManager::on_event, this, _1, _2));
                     } else {
-                        Downloader * downloader = NULL;//new Downloader(*this, r);
-                        downloader = new CdnDownloader(*this, r);
-                        downloaders_[r.id()] = downloader;
+                        on_event(r, r.sink_changed);
                     }
                 } else {
                     LOG_INFO("[on_event] resource_deleting, id=" << r.id());
@@ -125,6 +123,7 @@ namespace trip
                 Downloader * downloader = NULL;//new Downloader(*this, r);
                 downloader = new CdnDownloader(*this, r);
                 downloaders_[r.id()] = downloader;
+                downloader->on_event(event);
             }
         }
 

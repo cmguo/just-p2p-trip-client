@@ -60,7 +60,7 @@ namespace trip
             Request r;
             r.server = server;
             r.segm = MAX_SEGMENT;
-            if (resource().meta()) {
+            if (meta()) {
                 io_svc_.post(
                         boost::bind(resp, boost::system::error_code()));
             } else {
@@ -72,19 +72,23 @@ namespace trip
         void HttpSession::async_open(
             HttpServer * server, 
             boost::uint64_t segm, 
+            RangeUnit const & range, 
             response_t const & resp)
         {
-            LOG_INFO("[async_open] server=" << (void*)server << ", segment=" << segm);
+            LOG_INFO("[async_open] server=" << (void*)server << ", segment=" << segm << ", range=" << range.to_string());
             Request r;
             r.server = server;
             r.segm = segm;
-            if (resource().get_segment_meta(MAKE_ID(segm, 0, 0))) {
+            r.range = range;
+            if (segment_meta(segm)) {
                 io_svc_.post(
                         boost::bind(resp, boost::system::error_code()));
             } else {
                 r.resp = resp;
             }
             open_requests_.push_back(r);
+            if (open_requests_.size() == 1 && fetch_requests_.empty())
+                fetch_next();
         }
 
         struct HttpSession::find_request
@@ -104,16 +108,14 @@ namespace trip
 
         void HttpSession::async_fetch(
             HttpServer * server, 
-            RangeUnit const & range, 
             util::stream::Sink * sink,
             response_t const & resp)
         {
-            LOG_INFO("[async_fetch] server=" << (void*)server << ", range=" << range.to_string());
+            LOG_INFO("[async_fetch] server=" << (void*)server);
             std::list<Request>::iterator iter = 
                 std::find_if(open_requests_.begin(), open_requests_.end(), find_request(server));
             assert(iter != open_requests_.end());
             assert(iter->resp.empty());
-            iter->range = range;
             iter->sink = sink;
             iter->resp = resp;
             fetch_requests_.push_back(*iter);
@@ -135,7 +137,10 @@ namespace trip
                     io_svc_.post(
                         boost::bind(iter->resp, boost::asio::error::operation_aborted));
                 }
+                bool first = (iter == open_requests_.begin());
                 open_requests_.erase(iter);
+                if (first && fetch_requests_.empty()) fetch_next();
+                return true;
             }
             iter = std::find_if(fetch_requests_.begin(), fetch_requests_.end(), find_request(server));
             if (iter != fetch_requests_.end()) {
@@ -151,8 +156,21 @@ namespace trip
                     fetch_requests_.erase(iter);
                     if (first && !fetch_requests_.empty()) fetch_next();
                 }
+                return true;
             }
-            return true;
+            LOG_WARN("[close_request] no such request");
+            return false;
+        }
+
+        ResourceMeta const * HttpSession::meta()
+        {
+            return resource().meta();
+        }
+
+        SegmentMeta const * HttpSession::segment_meta(
+            boost::uint64_t segm)
+        {
+            return resource().get_segment_meta(DataId(segm, 0, 0));
         }
 
         void HttpSession::on_meta(
@@ -190,11 +208,14 @@ namespace trip
 
         void HttpSession::fetch_next()
         {
-            Request const & r(fetch_requests_.front());
+            if (open_requests_.empty() && fetch_requests_.empty())
+                return;
+            Request & r(fetch_requests_.empty() ? open_requests_.front() : fetch_requests_.front());
             Sink::seek_to(r.segm, 
                 boost::uint32_t(r.range.begin()), 
                 r.range.has_end() ? boost::uint32_t(r.range.end()) : 0);
-            on_data();
+            if (r.sink)
+                write(r);
         }
 
         void HttpSession::on_data()
@@ -202,12 +223,7 @@ namespace trip
             //LOG_INFO("[on_data]");
             assert(!piece_);
             Request & r(fetch_requests_.front());
-            if ((piece_ = read())) {
-                boost::asio::async_write(*r.sink, 
-                    boost::asio::buffer(piece_->data(), piece_->size()), 
-                    boost::asio::transfer_all(), 
-                    boost::bind(&HttpSession::on_write, this, _1, _2));
-            }
+            write(r);
         }
 
         void HttpSession::on_write(
@@ -218,16 +234,31 @@ namespace trip
             assert(piece_);
             piece_.reset();
             Request & r(fetch_requests_.front());
-            if (ec || at_end()) {
+            if (r.sink == NULL) {
+                response_t resp;
+                resp.swap(r.resp);
+                resp(boost::asio::error::operation_aborted);
+                fetch_requests_.pop_front();
+                fetch_next();
+                return;
+            }
+            if (ec) {
+                LOG_INFO("[on_write] at end");
                 response_t resp;
                 resp.swap(r.resp);
                 resp(ec);
                 return;
             }
-            if (r.sink == NULL) {
+            write(r);
+        }
+
+        void HttpSession::write(
+            Request & r)
+        {
+            if (at_end()) {
                 response_t resp;
                 resp.swap(r.resp);
-                resp(boost::asio::error::operation_aborted);
+                resp(boost::system::error_code());
                 return;
             }
             if ((piece_ = read())) {

@@ -53,7 +53,7 @@ namespace trip
 
         void Source::on_ready()
         {
-            LOG_INFO("[on_ready]");
+            LOG_TRACE("[on_ready]");
             std::vector<DataId> pieces;
             if (scheduler_->get_task(*this, pieces)) {
                 request(pieces);
@@ -64,7 +64,7 @@ namespace trip
             DataId id, 
             SegmentMeta const & meta)
         {
-            LOG_INFO("[on_segment_meta]");
+            LOG_DEBUG("[on_segment_meta]");
             resource_.set_segment_meta(id, meta);
         }
 

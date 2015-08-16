@@ -72,7 +72,7 @@ namespace trip
             }
             if (!iterator.piece_) {
                 Segment2 const * segment2 = get_segment2(id);
-                if (segment2->saved) {
+                if (segment2 && segment2->saved) {
                     data_miss.id = id;
                     raise(data_miss);
                     update(iterator);
@@ -231,6 +231,9 @@ namespace trip
             data_seek.id = id;
             priv_seek(id);
             raise(data_seek);
+            data_ready.id = id;
+            if (data_ready.id != data_seek.id)
+                raise(data_ready);
         }
 
         void ResourceData::priv_seek(

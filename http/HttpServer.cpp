@@ -79,7 +79,11 @@ namespace trip
             }
 
             if (option_ == "/fetch") {
-                session_->async_open(this, segment_, 
+                unit_ = RangeUnit();
+                if (request_head().range.is_initialized()) {
+                    unit_ = request_head().range.get()[0];
+                }
+                session_->async_open(this, segment_, unit_, 
                     boost::bind(&HttpServer::handle_open, this, resp, _1));
             } else {
                 session_->async_open(this, 
@@ -114,12 +118,8 @@ namespace trip
 
             if (!ec) {
                 if (option_ == "/fetch") {
-                    ResourceMeta const * meta = session_->resource().meta();
-                    SegmentMeta const * smeta = session_->resource().get_segment_meta(0);
-                    unit_ = RangeUnit();
-                    if (request_head().range.is_initialized()) {
-                        unit_ = request_head().range.get()[0];
-                    }
+                    ResourceMeta const * meta = session_->meta();
+                    SegmentMeta const * smeta = session_->segment_meta(segment_);
                     if (unit_.has_end() && unit_.end() > smeta->bytesize) {
                         ec = http_error::requested_range_not_satisfiable;
                     } else {
@@ -165,7 +165,7 @@ namespace trip
                 assert(option_ == "/fetch");
                 boost::system::error_code ec;
                 set_non_block(true, ec);
-                session_->async_fetch(this, unit_, &response_stream(), 
+                session_->async_fetch(this, &response_stream(), 
                     boost::bind(&HttpServer::handle_fetch, this, resp, _1));
             }
         }

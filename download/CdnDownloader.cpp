@@ -18,7 +18,6 @@ namespace trip
             Resource & resource)
             : Downloader(mgr, resource)
         {
-            reset();
             find_sources("http", 10);
         }
 
@@ -65,15 +64,17 @@ namespace trip
 
             if (seg == NULL) {
                 for (size_t i = 0; i < segments_.size(); ++i) {
-                    seg = segments_[i];
-                    if (seg->empty() || !source.has_segment(seg->pos))
-                        seg = NULL;
-                    else
+                    SegmentInfo * seg2 = segments_[i];
+                    if (!seg2->empty() && source.has_segment(seg2->pos)) {
+                        seg = seg2;
                         break;
+                    }
                 }
-                if (seg == NULL)
+                if (seg == NULL) // TODO: No tasks, how to resume?
                     return false;
             }
+
+            taskinfo.cur_seg = seg;
 
             std::deque<DataId>::iterator beg = seg->timeout_pieces_.begin();
             std::deque<DataId>::iterator end = seg->timeout_pieces_.end();
@@ -97,7 +98,7 @@ namespace trip
 
         void CdnDownloader::prepare_taskwindow(size_t seg_count)
         {
-            DataId play_point(down_info_.master_->position());
+            DataId play_point(master_->position());
             play_point.inc_segment(0);
 
             while (beg_seg_ < play_point) {
@@ -131,6 +132,7 @@ namespace trip
 
         void CdnDownloader::reset()
         {
+            // TODO: keep old segments_ that can be reused
             // Reset.
             for (std::map<Source*, SourceInfo>::iterator iter = sources_.begin();
                 iter != sources_.end(); ++iter)
@@ -138,7 +140,7 @@ namespace trip
                 iter->second.cur_seg = NULL;
             }
             segments_.clear();
-            beg_seg_ = down_info_.master_->position();
+            beg_seg_ = master_->position();
             prepare_taskwindow(4);
         }
 

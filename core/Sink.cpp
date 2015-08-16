@@ -22,7 +22,6 @@ namespace trip
             : resource_(&resource)
             , beg_(resource.iterator_at(0))
             , pos_(beg_)
-            , avl_(beg_)
             , end_(beg_)
             , off_(0)
             , off2_(0)
@@ -51,13 +50,14 @@ namespace trip
             if (end == 0) {
                 iend.inc_segment();
             }
+            DataId pos = pos_.id();
             off_ = begin % PIECE_SIZE;
             off2_ = end % PIECE_SIZE;
-            if (pos_.id() != ibegin) {
-                resource_->update_sink(this);
-                pos_ = resource_->iterator_at(ibegin); 
-            }
+            pos_ = resource_->iterator_at(ibegin); 
             end_ = resource_->iterator_at(iend);
+            if (pos != ibegin) {
+                resource_->update_sink(this);
+            }
         }
 
         void Sink::seek_end(
@@ -69,12 +69,7 @@ namespace trip
 
         Piece::pointer Sink::read()
         {
-            if (pos_ == end_) {
-                LOG_INFO("[read] at end");
-                resource_->data_ready.un(
-                    boost::bind(&Sink::on_event, this, _2));
-                return NULL;
-            }
+            assert(!at_end());
             Piece::pointer p = *pos_;
             if (!p) {
                 resource_->update(pos_);
@@ -99,7 +94,7 @@ namespace trip
 
         bool Sink::at_end() const
         {
-            return pos_ == end_;
+            return pos_.id() >= end_.id();
         }
 
         DataId Sink::position() const
@@ -114,11 +109,7 @@ namespace trip
                 //LOG_INFO("[on_event] data_ready, id=" << resource_->data_ready.id.id);
                 resource_->data_ready.un(
                     boost::bind(&Sink::on_event, this, _2));
-                bool notify = pos_ == avl_;
-                avl_ = resource_->iterator_at(resource_->data_ready.id);
-                if (notify) {
-                    on_data();
-                }
+                on_data();
             } else if (event == resource_->seg_meta_ready) {
                 LOG_INFO("[on_event] seg_meta_ready, segment=" << resource_->seg_meta_ready.id.segment);
                 on_segment_meta(resource_->seg_meta_ready.id.segment, *resource_->seg_meta_ready.meta);

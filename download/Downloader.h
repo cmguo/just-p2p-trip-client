@@ -61,15 +61,11 @@ namespace trip
                 util::event::Event const & event);
 
         private:
-			struct DownloadInfo {
-				DataId download_point_;
-				Sink const * master_;
-                DownloadInfo() : master_(NULL){}
-			};
             DownloadManager & mgr_;
             std::vector<Source *> sources_;
         protected:
-			DownloadInfo down_info_;
+            Sink const * master_;
+            DataId download_point_;
         };
 
     } // namespace client

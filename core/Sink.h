@@ -67,7 +67,6 @@ namespace trip
             boost::uint32_t type_;
             PieceIterator beg_;
             PieceIterator pos_;
-            PieceIterator avl_;
             PieceIterator end_;
             boost::uint32_t off_;
             boost::uint32_t off2_; // left

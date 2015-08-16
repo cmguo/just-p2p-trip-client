@@ -53,7 +53,7 @@ namespace trip
         bool CdnSource::request(
             std::vector<DataId> const & pieces)
         {
-            LOG_INFO("[do_request]");
+            LOG_TRACE("[request]");
             if (pieces.empty())
                 return true;
             boost::uint64_t seg = pieces[0].segment;
@@ -87,7 +87,7 @@ namespace trip
             head.host = url.host_svc();
             head.path = url.path_all();
             head.range = range;
-            LOG_INFO("[do_request] url=" << url.to_string() << ", range=" << range.to_string());
+            LOG_INFO("[request] url=" << url.to_string() << ", range=" << range.to_string());
             //head.get_content(std::cout);
             http_.async_open(head, boost::bind(
                     &CdnSource::handle_open, this, _1));
@@ -119,7 +119,7 @@ namespace trip
         void CdnSource::handle_open(
             boost::system::error_code ec)
         {
-            LOG_INFO("[handle_open] ec=" << ec.message());
+            LOG_DEBUG("[handle_open] ec=" << ec.message());
             if (ec)
                 return;
 
