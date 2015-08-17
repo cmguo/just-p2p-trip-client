@@ -4,10 +4,15 @@
 #include "trip/client/core/ResourceData.h"
 #include "trip/client/core/Resource.h"
 
+#include <framework/logger/Logger.h>
+#include <framework/logger/StreamRecord.h>
+
 namespace trip
 {
     namespace client
     {
+
+        FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("trip.client.ResourceData", framework::logger::Debug);
 
         ResourceData::ResourceData()
             : end_(0)
@@ -111,7 +116,7 @@ namespace trip
             Lock * l = new Lock;
             l->from = from;
             l->to = to;
-            locks_.insert(l);
+            insert_lock(l);
             return l;
         }
 
@@ -127,8 +132,8 @@ namespace trip
             o.to = l->to;
             l->from = from;
             l->to = to;
-            locks_.insert(l);
-            release_lock(&o);
+            insert_lock(l);
+            remove_lock(&o);
         }
 
         void ResourceData::release_lock(
@@ -136,13 +141,21 @@ namespace trip
         {
             Lock * l = (Lock * )lock;
             locks_.erase(l);
-            release_lock(l);
+            remove_lock(l);
             delete l;
         }
 
-        void ResourceData::release_lock(
+        void ResourceData::insert_lock(
             Lock * l)
         {
+            LOG_INFO("[insert_lock] from: " << l->from << " to: " << l->to);
+            locks_.insert(l);
+        }
+
+        void ResourceData::remove_lock(
+            Lock * l)
+        {
+            LOG_INFO("[remove_lock] from: " << l->from << " to: " << l->to);
             for (Lock * p = locks_.first(); p; p = locks_.next(p)) {
                 if (p->from <= l->from) {
                     if (p->to <= l->from)
@@ -163,6 +176,7 @@ namespace trip
                     return;
                 }
             }
+            release(l->from, l->to);
         }
 
         bool ResourceData::save_segment(
@@ -377,6 +391,7 @@ namespace trip
             DataId from,
             DataId to)
         {
+            LOG_INFO("[release] from: " << from << " to: " << to);
             boost::uint64_t segf = from.top_segment;
             boost::uint64_t segt = to.top_segment;
             std::map<boost::uint64_t, Segment2>::iterator iter = segments_.lower_bound(segf);
@@ -388,7 +403,7 @@ namespace trip
                     ++iter;
                 }
             }
-            for (; segf <= segt; ++segf) {
+            for (; segf < segt; ++segf) {
                 if (iter != segments_.end() && iter->first == segf && iter->second.seg) {
                     delete iter->second.seg;
                     iter->second.seg = NULL;

@@ -62,9 +62,10 @@ namespace trip
 			
 			std::vector<Source *> sources_;
 
-            DataId beg_seg_;
-            DataId end_seg_;
+            DataId win_beg_;
+            DataId win_end_;
             std::deque<SegmentInfo *> segments_;
+            Resource::lock_t lock_;
         };
 
 

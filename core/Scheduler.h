@@ -3,6 +3,7 @@
 #ifndef _TRIP_CLIENT_CORE_SCHEDULER_H_
 #define _TRIP_CLIENT_CORE_SCHEDULER_H_
 
+#include "trip/client/core/Resource.h"
 #include "trip/client/core/Piece.h"
 
 namespace trip
@@ -10,7 +11,6 @@ namespace trip
     namespace client
     {
 
-        class Resource;
         class Source;
 
         class Scheduler

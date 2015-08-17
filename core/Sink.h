@@ -3,6 +3,7 @@
 #ifndef _TRIP_CLIENT_CORE_SINK_H_
 #define _TRIP_CLIENT_CORE_SINK_H_
 
+#include "trip/client/core/Resource.h"
 #include "trip/client/core/Piece.h"
 #include "trip/client/core/PieceIterator.h"
 
@@ -12,10 +13,6 @@ namespace trip
 {
     namespace client
     {
-
-        class Resource;
-        class ResourceMeta;
-        class SegmentMeta;
 
         class Sink
         {
@@ -70,6 +67,7 @@ namespace trip
             PieceIterator end_;
             boost::uint32_t off_;
             boost::uint32_t off2_; // left
+            Resource::lock_t lock_;
         };
 
     } // namespace client

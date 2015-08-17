@@ -25,6 +25,7 @@ namespace trip
             , end_(beg_)
             , off_(0)
             , off2_(0)
+            , lock_(NULL)
         {
             resource_->merged.on(
                 boost::bind(&Sink::on_event, this, _2));
@@ -32,11 +33,13 @@ namespace trip
                 boost::bind(&Sink::on_event, this, _2));
             resource_->data_seek.on(
                 boost::bind(&Sink::on_event, this, _2));
+            lock_ = resource_->alloc_lock(beg_.id(), end_.id());
         }
 
         Sink::~Sink()
         {
             resource_->del_sink(this);
+            resource_->release_lock(lock_);
         }
 
         void Sink::seek_to(
@@ -58,11 +61,13 @@ namespace trip
             if (pos != ibegin) {
                 resource_->update_sink(this);
             }
+            resource_->modify_lock(lock_, ibegin, iend);
         }
 
         void Sink::seek_end(
             boost::uint64_t seg)
         {
+            LOG_INFO("[seek_end] seg=" << seg);
             resource_->data_ready.un(
                 boost::bind(&Sink::on_event, this, _2));
         }
@@ -106,7 +111,7 @@ namespace trip
             util::event::Event const & event)
         {
             if (event == resource_->data_ready) {
-                //LOG_INFO("[on_event] data_ready, id=" << resource_->data_ready.id.id);
+                //LOG_INFO("[on_event] data_ready, id=" << resource_->data_ready.id);
                 resource_->data_ready.un(
                     boost::bind(&Sink::on_event, this, _2));
                 on_data();
@@ -123,7 +128,7 @@ namespace trip
                 resource_->seg_meta_ready.on(
                     boost::bind(&Sink::on_event, this, _2));
             } else if (event == resource_->data_seek) {
-                LOG_INFO("[on_event] data_seek, id=" << resource_->data_seek.id.id);
+                LOG_INFO("[on_event] data_seek, id=" << resource_->data_seek.id);
                 //if (!at_end() && resource_->data_seek.id == beg_.id()) {
                 //    on_data();
                 //}

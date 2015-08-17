@@ -156,14 +156,21 @@ namespace trip
                 }
             };
 
-            void release_lock(
+            void insert_lock(
+                Lock * l);
+
+            void remove_lock(
                 Lock * l);
 
         private:
             boost::uint64_t next_;
             boost::uint64_t end_;
             std::map<boost::uint64_t, Segment2> segments_;
-            framework::container::Ordered<Lock> locks_;
+            framework::container::Ordered<Lock, 
+                framework::container::identity<Lock>, 
+                std::less<Lock>, 
+                framework::container::ordered_non_unique_tag
+            > locks_;
         };
 
     } // namespace client

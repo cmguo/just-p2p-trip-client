@@ -5,6 +5,8 @@
 
 #include <boost/operators.hpp>
 
+#include <ostream>
+
 namespace trip
 {
     namespace client
@@ -117,6 +119,15 @@ namespace trip
                 return l.id == r.id;
             }
         };
+
+        template <class C, class T>
+        inline std::basic_ostream<C, T> & operator<<(
+            std::basic_ostream<C, T> & os, 
+            DataId const & id)
+        {
+            os << id.segment << '/' << id.block << '/' << id.piece;
+            return os;
+        }
 
     } // namespace client
 } // namespace trip
