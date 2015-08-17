@@ -25,18 +25,16 @@ namespace trip
         {
         }
 
-        void CdnDownloader::add_source( Source * source )
+        void CdnDownloader::add_source(
+            Source * source)
         {
-            if (source->url().protocol() == "http")
-            {
-                if (sources_.find(source) == sources_.end()) {
-                    sources_[source] =   SourceInfo();
-                }
+            if (source->url().protocol() == "http") {
+                sources_.push_back(source);
             }
-
         }
 
-        void CdnDownloader::del_source( Source * source )
+        void CdnDownloader::del_source(
+            Source * source)
         {
         }
 
@@ -54,42 +52,42 @@ namespace trip
 
         bool CdnDownloader::get_task( Source & source, std::vector<DataId> & pieces )
         {
-            SourceInfo &taskinfo = sources_[&source];
-            SegmentInfo * seg = taskinfo.cur_seg;
+            SegmentInfo * sinfo = (SegmentInfo *)source.context();
             boost::uint32_t need_count = source.window_left();
 
-            if (seg && seg->empty()) {
-                seg = NULL;
+            if (sinfo && sinfo->empty()) {
+                sinfo = NULL;
+                source.context(sinfo);
             }
 
-            if (seg == NULL) {
+            if (sinfo == NULL) {
                 for (size_t i = 0; i < segments_.size(); ++i) {
                     SegmentInfo * seg2 = segments_[i];
                     if (!seg2->empty() && source.has_segment(seg2->pos)) {
-                        seg = seg2;
+                        sinfo = seg2;
                         break;
                     }
                 }
-                if (seg == NULL) // TODO: No tasks, how to resume?
+                if (sinfo == NULL) // TODO: No tasks, how to resume?
                     return false;
             }
 
-            taskinfo.cur_seg = seg;
+            source.context(sinfo);
 
-            std::deque<DataId>::iterator beg = seg->timeout_pieces_.begin();
-            std::deque<DataId>::iterator end = seg->timeout_pieces_.end();
-            if (seg->timeout_pieces_.size() > need_count) {
+            std::deque<DataId>::iterator beg = sinfo->timeout_pieces_.begin();
+            std::deque<DataId>::iterator end = sinfo->timeout_pieces_.end();
+            if (sinfo->timeout_pieces_.size() > need_count) {
                 end = beg + need_count;
                 need_count = 0;
             } else {
-                need_count -= seg->timeout_pieces_.size();
+                need_count -= sinfo->timeout_pieces_.size();
             }
             pieces.insert(pieces.end(), beg, end);
-            seg->timeout_pieces_.erase(beg, end);
+            sinfo->timeout_pieces_.erase(beg, end);
 
-            while (need_count > 0 && seg->pos < seg->end) {
-                pieces.push_back(seg->pos);
-                seg->pos.inc_piece();
+            while (need_count > 0 && sinfo->pos < sinfo->end) {
+                pieces.push_back(sinfo->pos);
+                sinfo->pos.inc_piece();
                 --need_count;
             }
 
@@ -98,49 +96,93 @@ namespace trip
 
         void CdnDownloader::prepare_taskwindow(size_t seg_count)
         {
-            DataId play_point(master_->position());
-            play_point.inc_segment(0);
+            DataId play_pos(master_->position());
+            DataId play_beg = play_pos;
+            play_beg.inc_segment(0);
+            DataId play_end = play_pos;
+            play_end.inc_segment(seg_count);
 
-            while (beg_seg_ < play_point) {
-                delete segments_.front();
-                segments_.pop_front();
-                beg_seg_.inc_segment();
+            std::deque<SegmentInfo *> remove;
+            if (beg_seg_ >= play_end || end_seg_ <= play_beg) {
+                remove.swap(segments_);
+                beg_seg_ = end_seg_ = play_beg;
+            } else if (beg_seg_ < play_beg) {
+                std::deque<SegmentInfo *>::iterator beg = segments_.begin();
+                std::deque<SegmentInfo *>::iterator pos = beg + size_t(play_beg.segment - beg_seg_.segment);
+                remove.insert(remove.end(), beg, pos);
+                segments_.erase(beg, pos);
+                beg_seg_ = play_beg;
+            } else if (play_end < end_seg_) {
+                std::deque<SegmentInfo *>::iterator beg = segments_.begin();
+                std::deque<SegmentInfo *>::iterator pos = beg + size_t(play_end.segment - beg_seg_.segment);
+                std::deque<SegmentInfo *>::iterator end = segments_.end();
+                remove.insert(remove.end(), pos, end);
+                segments_.erase(pos, end);
+                end_seg_ = play_end;
             }
 
-            DataId segid(beg_seg_);
-            segid.inc_segment(segments_.size());
-            while (segments_.size() < seg_count) {
-                Resource::Segment2 const *seg = resource().prepare_segment(segid);
-                if (seg == NULL) {
-                    break;
+            for (size_t i = 0; i < remove.size(); ++i) {
+                SegmentInfo * sinfo = remove[i];
+                for (size_t i = 0; i < sources_.size(); ++i) {
+                    Source * src = sources_[i];
+                    if (src->context() == sinfo) {
+                        src->context(NULL);
+                    }
                 }
-                SegmentInfo * sinfo = new SegmentInfo;
-                sinfo->meta_ready = seg->meta != NULL;
-                sinfo->pos = segid;
-                sinfo->end = segid;
-                sinfo->end.inc_block_piece(seg->seg->piece_count());
-                if (seg->saved || seg->seg->full()) {
-                    sinfo->pos = sinfo->end;
+                delete sinfo;
+            }
+            remove.clear();
+
+            if (play_beg < beg_seg_) {
+                segments_.insert(segments_.begin(), beg_seg_.segment - play_beg.segment, NULL);
+                beg_seg_ = play_beg;
+            }
+            if (end_seg_ < play_end) {
+                segments_.insert(segments_.end(), play_end.segment - end_seg_.segment, NULL);
+                end_seg_ = play_end;
+            }
+
+            for (size_t i = 0; i < seg_count; ++i) {
+                SegmentInfo * sinfo = segments_[i];
+                if (sinfo == NULL) {
+                    Resource::Segment2 const * seg = resource().prepare_segment(play_pos);
+                    if (seg == NULL) {
+                        end_seg_ = play_beg;
+                        segments_.erase(segments_.begin() + i, segments_.end());
+                        break;
+                    }
+                    SegmentInfo * sinfo = new SegmentInfo;
+                    sinfo->meta_ready = seg->meta != NULL;
+                    sinfo->pos = play_pos;
+                    sinfo->end = play_beg;
+                    sinfo->end.inc_block_piece(seg->seg->piece_count());
+                    if (seg->saved || seg->seg->full()) {
+                        sinfo->pos = sinfo->end;
+                    } else {
+                        seg->seg->seek(sinfo->pos);
+                    }
+                    segments_[i] = sinfo;
                 } else {
-                    seg->seg->seek(sinfo->pos);
+                    if (sinfo->pos < play_pos)
+                        sinfo->pos = play_pos;
                 }
-                segments_.push_back(sinfo);
-                segid.inc_segment();
+                play_pos.inc_segment();
+                play_beg = play_pos;
             }
-            end_seg_ = segid;
+
+            for (size_t i = 0; i < sources_.size(); ++i) {
+                Source * src = sources_[i];
+                if (src->context() == NULL) {
+                    std::vector<DataId> requests;
+                    get_task(*src, requests);
+                    src->request(requests);
+                }
+            }
         }
 
         void CdnDownloader::reset()
         {
             // TODO: keep old segments_ that can be reused
-            // Reset.
-            for (std::map<Source*, SourceInfo>::iterator iter = sources_.begin();
-                iter != sources_.end(); ++iter)
-            {
-                iter->second.cur_seg = NULL;
-            }
-            segments_.clear();
-            beg_seg_ = master_->position();
             prepare_taskwindow(4);
         }
 

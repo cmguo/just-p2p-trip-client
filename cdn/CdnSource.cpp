@@ -137,12 +137,17 @@ namespace trip
             size_t bytes_read, 
             Piece::pointer piece)
         {
-            if (piece && piece->nref() == 1) // canceled
+            if (piece && piece->nref() == 1) {// canceled
+                http_.close(ec);
+                on_ready();
                 return;
+            }
 
             piece_.reset();
 
             if (ec && ec != boost::asio::error::eof) {
+                http_.close(ec);
+                on_ready();
                 return;
             }
 

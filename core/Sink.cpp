@@ -124,9 +124,9 @@ namespace trip
                     boost::bind(&Sink::on_event, this, _2));
             } else if (event == resource_->data_seek) {
                 LOG_INFO("[on_event] data_seek, id=" << resource_->data_seek.id.id);
-                if (!at_end() && resource_->data_seek.id == beg_.id()) {
-                    on_data();
-                }
+                //if (!at_end() && resource_->data_seek.id == beg_.id()) {
+                //    on_data();
+                //}
             } else if (event == resource_->meta_changed) {
                 LOG_INFO("[on_event] meta_changed");
                 on_meta(*resource_->meta_changed.meta);

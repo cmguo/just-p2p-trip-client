@@ -50,13 +50,6 @@ namespace trip
 			void prepare_taskwindow(
 				size_t seg_count = 4);
 
-			struct SegmentInfo;
-
-			struct SourceInfo 
-			{
-				SegmentInfo* cur_seg;
-			};
-
 			struct SegmentInfo
 			{
                 bool meta_ready;
@@ -67,7 +60,7 @@ namespace trip
                 bool empty() { return meta_ready && timeout_pieces_.empty() && pos >= end; }
 			};
 			
-			std::map<Source *, SourceInfo> sources_;
+			std::vector<Source *> sources_;
 
             DataId beg_seg_;
             DataId end_seg_;

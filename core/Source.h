@@ -33,6 +33,11 @@ namespace trip
 
             bool attached() const;
 
+            void context(
+                void * ctx);
+
+            void * context() const;
+
         public:
             Url const & url() const;
 
@@ -77,6 +82,7 @@ namespace trip
 
         private:
             Scheduler * scheduler_;
+            void * ctx_;
         };
 
     } // namespace client

@@ -20,6 +20,7 @@ namespace trip
             Url const & url)
             : resource_(resource)
             , url_(url)
+            , ctx_(NULL)
         {
         }
 
@@ -39,6 +40,17 @@ namespace trip
         {
             LOG_INFO("[detach]");
             close();
+        }
+
+        void Source::context(
+            void * ctx)
+        {
+            ctx_ = ctx;
+        }
+
+        void * Source::context() const
+        {
+            return ctx_;
         }
 
         Url const & Source::url() const
