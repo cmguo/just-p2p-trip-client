@@ -19,11 +19,13 @@ namespace trip
     namespace client
     {
 
+        using util::protocol::http_field::RangeUnit;
+
         struct HttpSession::Request
         {
             HttpServer * server;
             boost::uint64_t segm;
-            RangeUnit range;
+            Range range;
             util::stream::Sink * sink;
             HttpSession::response_t resp;
 
@@ -72,7 +74,7 @@ namespace trip
         void HttpSession::async_open(
             HttpServer * server, 
             boost::uint64_t segm, 
-            RangeUnit const & range, 
+            Range const & range, 
             response_t const & resp)
         {
             LOG_INFO("[async_open] server=" << (void*)server << ", segment=" << segm << ", range=" << range.to_string());
@@ -211,9 +213,13 @@ namespace trip
             if (open_requests_.empty() && fetch_requests_.empty())
                 return;
             Request & r(fetch_requests_.empty() ? open_requests_.front() : fetch_requests_.front());
-            Sink::seek_to(r.segm, 
-                boost::uint32_t(r.range.begin()), 
-                r.range.has_end() ? boost::uint32_t(r.range.end()) : 0);
+            if (r.range.size()) {
+                // TODO: support multiple range
+                RangeUnit & unit(r.range.front());
+                Sink::seek_to(r.segm, 
+                    boost::uint32_t(unit.begin()), unit.has_end() ? boost::uint32_t(unit.end()) : 0);
+                r.range.pop();
+            }
             if (r.sink)
                 write(r);
         }
@@ -230,7 +236,7 @@ namespace trip
             boost::system::error_code const & ec, 
             size_t bytes_write)
         {
-            //LOG_INFO("[on_write]");
+            //LOG_DEBUG("[on_write] bytes_write=" << bytes_write);
             assert(piece_);
             piece_.reset();
             Request & r(fetch_requests_.front());

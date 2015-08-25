@@ -77,7 +77,7 @@ namespace trip
                 Work const & work, 
                 Callback const & callback)
             {
-                post(WorkCallback<Work, Callback>(io_svc_, work, callback));
+                io_svc_.post(WorkCallback<Work, Callback>(io_svc_, work, callback));
             }
 
             bool stop();

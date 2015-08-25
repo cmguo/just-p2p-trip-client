@@ -66,7 +66,8 @@ namespace trip
                         ec = http_error::not_found;
                 } else {
                     Range range(request_head().range.get_value_or(Range()));
-                    if (range.count() > 1) {
+                    // TODO: support multiple range
+                    if (range.size() > 1) {
                         ec = http_error::requested_range_not_satisfiable;
                     }
                 }
@@ -79,11 +80,11 @@ namespace trip
             }
 
             if (option_ == "/fetch") {
-                unit_ = RangeUnit();
+                range_ = Range(0);
                 if (request_head().range.is_initialized()) {
-                    unit_ = request_head().range.get()[0];
+                    range_ = request_head().range.get();
                 }
-                session_->async_open(this, segment_, unit_, 
+                session_->async_open(this, segment_, range_, 
                     boost::bind(&HttpServer::handle_open, this, resp, _1));
             } else {
                 session_->async_open(this, 
@@ -120,13 +121,15 @@ namespace trip
                 if (option_ == "/fetch") {
                     ResourceMeta const * meta = session_->meta();
                     SegmentMeta const * smeta = session_->segment_meta(segment_);
-                    if (unit_.has_end() && unit_.end() > smeta->bytesize) {
+                    // TODO: support multiple range
+                    RangeUnit & unit(range_.front());
+                    if (unit.has_end() && unit.end() > smeta->bytesize) {
                         ec = http_error::requested_range_not_satisfiable;
                     } else {
-                        if (!unit_.has_end())
-                            unit_ = RangeUnit(unit_.begin(), smeta->bytesize);
-                        http_field::ContentRange content_range(smeta->bytesize, unit_);
-                        if (unit_.begin() > 0 || (unit_.has_end() && unit_.end() < smeta->bytesize)) {
+                        if (!unit.has_end())
+                            unit = RangeUnit(unit.begin(), smeta->bytesize);
+                        http_field::ContentRange content_range(smeta->bytesize, unit);
+                        if (unit.begin() > 0 || (unit.has_end() && unit.end() < smeta->bytesize)) {
                             response_head().err_code = http_error::partial_content;
                             response_head().content_range = content_range;
                         }

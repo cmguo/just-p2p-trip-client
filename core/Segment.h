@@ -14,17 +14,17 @@ namespace trip
     namespace client
     {
 
-        typedef framework::string::Md5::bytes_type md5_bytes;
+        using framework::string::Md5Sum;
 
         struct SegmentMeta
         {
             boost::uint32_t duration;
             boost::uint32_t bytesize;
-            md5_bytes md5sum;
+            Md5Sum md5sum;
 
             SegmentMeta()
                 : duration(0)
-                , bytesize(0)
+                  , bytesize(0)
             {
             }
         };
@@ -34,6 +34,8 @@ namespace trip
         public:
             Segment(
                 boost::uint32_t size = 0);
+
+            ~Segment();
 
         public:
             bool full() const
@@ -56,17 +58,19 @@ namespace trip
             Piece::pointer get_piece(
                 DataId id) const;
 
-            void get_stat(
+            void get_status(
+                DataId from, 
                 boost::dynamic_bitset<boost::uint32_t> & map) const;
 
         public:
-            md5_bytes cache_md5sum() const;
+            Md5Sum cache_md5sum() const;
 
-            static md5_bytes file_md5sum(
+            static Md5Sum file_md5sum(
                 boost::filesystem::path const & path);
 
             bool save(
-                boost::filesystem::path const & path) const;
+                boost::filesystem::path const & path, 
+                boost::system::error_code & ec) const;
 
             bool load(
                 boost::filesystem::path const & path);
@@ -74,10 +78,6 @@ namespace trip
         public:
             void set_size(
                 boost::uint32_t size);
-
-            bool load_block_stat(
-                DataId id, 
-                boost::dynamic_bitset<boost::uint32_t> & map);
 
             bool seek(
                 DataId & id);
@@ -95,6 +95,7 @@ namespace trip
                 DataId to);
 
         private:
+            friend class ResourceData;
             Block & modify_block(
                 DataId id);
 
@@ -105,8 +106,20 @@ namespace trip
             std::vector<Block *> blocks_;
         };
 
+        struct Segment2
+        {
+            SegmentMeta * meta;
+            Segment * seg;
+            bool saved;
+            Segment2()
+                : meta(NULL)
+                  , seg(NULL)
+                  , saved(false)
+            {
+            }
+        };
+
     } // namespace client
 } // namespace trip
 
 #endif // _TRIP_CLIENT_CORE_SEGMENT_H_
-

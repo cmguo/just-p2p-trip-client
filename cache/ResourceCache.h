@@ -3,6 +3,9 @@
 #ifndef _TRIP_CLIENT_CACHE_RESOURCE_CACHE_H_
 #define _TRIP_CLIENT_CACHE_RESOURCE_CACHE_H_
 
+#include "trip/client/core/DataId.h"
+#include "trip/client/core/Segment.h"
+
 #include <util/event/Event.h>
 
 #include <boost/filesystem/path.hpp>
@@ -19,31 +22,39 @@ namespace trip
         {
         public:
             ResourceCache(
-                CacheManager & cmgr,
-                Resource & resource);
+                Resource & resource, 
+                boost::filesystem::path const & directory);
 
             ~ResourceCache();
 
         public:
+            Resource & resource()
+            {
+                return resource_;
+            }
+
+        public:
+            bool save_status();
+
             bool load_status(
-                boost::filesystem::path const & directory);
+                boost::dynamic_bitset<boost::uint32_t> & map);
 
-            bool load_piece(
-                boost::uint64_t index);
+            Block const * map_block(
+                DataId bid);
 
-        private:
-            void on_event(
-                util::event::Event const & event);
+            bool save_segment(
+                DataId sid, 
+                Segment2 const & segment);
 
-        private:
-            bool save(
-                boost::uint64_t segid);
-
-            void on_saved(
-                bool result);
+            bool load_segment(
+                DataId sid, 
+                SegmentMeta const & segment);
 
         private:
-            CacheManager & cmgr_;
+            boost::filesystem::path seg_path(
+                DataId sid) const;
+
+        private:
             Resource & resource_;
             boost::filesystem::path directory_;
         };

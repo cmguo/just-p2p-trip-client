@@ -4,10 +4,17 @@
 #include "trip/client/cache/ResourceCache.h"
 #include "trip/client/cache/CacheManager.h"
 #include "trip/client/core/Resource.h"
+#include "trip/client/proto/MessageIndex.h"
+
+#include <util/archive/XmlIArchive.h>
+#include <util/archive/XmlOArchive.h>
 
 #include <framework/string/Base16.h>
 #include <framework/system/BytesOrder.h>
+#include <framework/logger/Logger.h>
+#include <framework/logger/StreamRecord.h>
 
+#include <boost/bind.hpp>
 #include <boost/filesystem/operations.hpp>
 
 #include <fstream>
@@ -17,12 +24,25 @@ namespace trip
     namespace client
     {
 
+        FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("trip.client.ResourceCache", framework::logger::Debug);
+
         ResourceCache::ResourceCache(
-            CacheManager & cmgr, 
-            Resource & resource)
-            : cmgr_(cmgr)
-            , resource_(resource)
+            Resource & resource, 
+            boost::filesystem::path const & directory)
+            : resource_(resource)
         {
+            boost::system::error_code ec;
+            directory_ = directory / resource_.id().to_string();
+            boost::filesystem::path external(directory_ / "external");
+            if (boost::filesystem::exists(external)) {
+                std::ifstream ifs(external.string().c_str());
+                std::string line;
+                if (std::getline(ifs, line)) {
+                    directory_ = line;
+                }
+            }
+            if (!boost::filesystem::exists(directory_))
+                boost::filesystem::create_directory(directory_, ec);
         }
 
         ResourceCache::~ResourceCache()
@@ -46,46 +66,98 @@ namespace trip
             return framework::string::Base16::encode(sid);
         }
 
-        bool ResourceCache::load_status(
-            boost::filesystem::path const & directory)
+        bool ResourceCache::save_status()
         {
-            directory_ = directory;
-            boost::filesystem::path external(directory_ / "external");
-            if (boost::filesystem::exists(external)) {
-                std::ifstream ifs(external.string().c_str());
-                std::string line;
-                if (std::getline(ifs, line)) {
-                    directory_ = line;
-                }
-            }
-            if (!boost::filesystem::exists(directory_))
+            if (!resource_.meta_dirty())
                 return false;
+            ResourceInfo info;
+            info.id = resource_.id();
+            info.meta = *resource_.meta();
+            info.segments = std::vector<SegmentMeta>();
+            resource_.get_segments(info.segments.get());
+            std::ofstream ofs((directory_ / "meta.xml").string().c_str(), std::ios::binary);
+            util::archive::XmlOArchive<> oa(ofs);
+            oa << info;
+            if (!oa) return false;
+            return true;
+        }
+
+        // Run in work thread
+        bool ResourceCache::load_status(
+            boost::dynamic_bitset<boost::uint32_t> & map)
+        {
+            ResourceInfo info;
+            std::ifstream is((directory_ / "meta.xml").string().c_str(), std::ios::binary);
+            util::archive::XmlIArchive<> ia(is);
+            ia >> info;
+            if (!ia) return false;
+
+            resource_.set_meta(info.meta);
+            if (info.segments.is_initialized())
+                resource_.set_segments(info.segments.get());
+            resource_.meta_dirty(); // clear dirty mark
+
             boost::filesystem::directory_iterator iter(directory_);
             boost::filesystem::directory_iterator end;
             for (; iter != end; ++iter) {
                 if (iter->path().extension() == resource_.meta()->file_extension) {
                     boost::uint64_t segid = strid(iter->path().stem().string());
-                    DataId id(segid, 0, 0);
-                    if (!resource_.load_segment(id, iter->path())) {
-                        boost::filesystem::remove(iter->path());
-                    }
+                    if (map.size() <= segid)
+                        map.resize(segid + 1);
+                    map[segid] = true;
                 }
             }
             return true;
         }
 
-        void ResourceCache::on_event(
-            util::event::Event const & event)
+        Block const * ResourceCache::map_block(
+            DataId bid)
         {
-            if (event == resource_.segment_full) {
-            } else if (event == resource_.data_miss) {
-                DataEvent const & e(resource_.data_miss);
-                std::string segname = idstr(e.id.segment);
-                segname.append(1, '.');
-                segname.append(resource_.meta()->file_extension);
-                boost::filesystem::path segpath(directory_ / segname);
-                cmgr_.alloc_cache(resource_, resource_.data_miss.id, segpath);
+            LOG_INFO("[map_block] rid=" << resource_.id() << ", id=" << bid);
+            return resource_.map_block(bid, seg_path(bid));
+        }
+
+        // Run in work thread
+        bool ResourceCache::save_segment(
+            DataId sid, 
+            Segment2 const & segment)
+        {
+            LOG_INFO("[save_segment] rid=" << resource_.id() << ", segment=" << sid.segment);
+            if (segment.meta == NULL || segment.seg == NULL) {
+                return false;
             }
+            if (segment.seg->cache_md5sum() != segment.meta->md5sum) {
+                LOG_WARN("[save_segment] md5sum not match, segment=" << sid.segment);
+                return false;
+            }
+            boost::system::error_code ec;
+            bool ret = segment.seg->save(seg_path(sid), ec);
+            if (!ret)
+                LOG_WARN("[save_segment] failed, ec=" << ec.message());
+            return ret;
+        }
+
+        // Run in work thread
+        bool ResourceCache::load_segment(
+            DataId sid, 
+            SegmentMeta const & segment)
+        {
+            boost::filesystem::path path = seg_path(sid);
+            Md5Sum md5 = Segment::file_md5sum(path);
+            if (md5 != segment.md5sum) {
+                boost::system::error_code ec;
+                boost::filesystem::remove(path, ec);
+                return false;
+            }
+            return true;
+        }
+
+        boost::filesystem::path ResourceCache::seg_path(
+            DataId sid) const
+        {
+            std::string segname = idstr(sid.segment);
+            segname.append(resource_.meta()->file_extension);
+            return (directory_ / segname);
         }
 
     } // namespace client

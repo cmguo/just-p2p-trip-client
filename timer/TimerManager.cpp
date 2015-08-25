@@ -31,6 +31,8 @@ namespace trip
         {
             expire_10ms_ += Duration::milliseconds(10);
             expire_100ms_ += Duration::milliseconds(100);
+            expire_1s_ += Duration::seconds(1);
+            expire_10s_ += Duration::seconds(10);
             cancel_token_.reset(static_cast<void*>(0), noop_deleter());
             timer_.expires_at(expire_10ms_);
             timer_.async_wait(boost::bind(&TimerManager::handle_timer, 
@@ -74,6 +76,10 @@ namespace trip
                 if (t_100_ms.now >= expire_1s_) {
                     expire_1s_ += Duration::seconds(1);
                     t_1_s.now = t_10_ms.now;
+                    if (t_1_s.now >= expire_10s_) {
+                        expire_10s_ += Duration::seconds(10);
+                        raise(t_10_s);
+                    }
                     raise(t_1_s);
                 }
                 raise(t_100_ms);

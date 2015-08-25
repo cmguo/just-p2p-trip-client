@@ -36,6 +36,8 @@ namespace trip
 
             TimeEvent t_1_s;
 
+            TimeEvent t_10_s;
+
         private:
             virtual bool startup(
                 boost::system::error_code & ec);
@@ -56,6 +58,7 @@ namespace trip
             Time expire_10ms_;
             Time expire_100ms_;
             Time expire_1s_;
+            Time expire_10s_;
         };
 
     } // namespace client

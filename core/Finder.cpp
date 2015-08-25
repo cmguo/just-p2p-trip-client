@@ -33,17 +33,16 @@ namespace trip
         }
             
         void Finder::found(
-            boost::system::error_code const & ec, 
-            Resource & resource, 
+            Uuid const & rid, 
             std::vector<Url> const & urls)
         {
             std::map<Uuid, std::pair<size_t, resp_t> >::iterator iter = 
-                requests_.find(resource.id());
+                requests_.find(rid);
             if (iter != requests_.end()) {
                 resp_t resp;
                 resp.swap(iter->second.second);
                 requests_.erase(iter);
-                resp(ec, urls);
+                resp(urls);
             }
         }
 

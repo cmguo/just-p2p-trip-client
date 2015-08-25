@@ -23,7 +23,7 @@ namespace trip
             , framework::network::ServerManager<HttpServer, HttpManager>(daemon.io_svc())
             , addr_("0.0.0.0:9006+")
         {
-            config().register_module("HttpManager")
+            config().register_module("trip.client.HttpManager")
                 << CONFIG_PARAM_NAME_RDWR("addr", addr_);
         }
 

@@ -17,16 +17,9 @@ namespace trip
             set_size(size);
         }
 
-        Block::Block(
-            BlockData * data)
+        boost::uint32_t  Block::get_size() const
         {
-            set_size(data->size_);
-            boost::uint8_t * addr = (boost::uint8_t *)data->map_addr_;
-            for (size_t i = 0; i < pieces_.size() - 1; ++i) {
-                pieces_[i] = BlockPiece::alloc(data, addr, PIECE_SIZE);
-                addr += PIECE_SIZE;
-            }
-            pieces_[piece_count_ - 1] = BlockPiece::alloc(data, addr, last_piece_size_);
+            return PIECE_SIZE * piece_count_ + last_piece_size_ - PIECE_SIZE;
         }
 
         Piece::pointer Block::get_piece(
@@ -104,6 +97,19 @@ namespace trip
             return !piece;
         }
       
+        bool Block::set_data(
+            boost::intrusive_ptr<BlockData> data)
+        {
+            assert(get_size() == data->size_);
+            boost::uint8_t * addr = (boost::uint8_t *)data->map_addr_;
+            for (size_t i = 0; i < pieces_.size() - 1; ++i) {
+                pieces_[i] = BlockPiece::alloc(data, addr, PIECE_SIZE);
+                addr += PIECE_SIZE;
+            }
+            pieces_[piece_count_ - 1] = BlockPiece::alloc(data, addr, last_piece_size_);
+            return true;
+        }
+
         void Block::release(
             DataId from,
             DataId to)

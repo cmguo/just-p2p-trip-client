@@ -66,6 +66,7 @@ namespace trip
             DataId win_end_;
             std::deque<SegmentInfo *> segments_;
             Resource::lock_t lock_;
+            SegmentInfo * full_seg_;
         };
 
 

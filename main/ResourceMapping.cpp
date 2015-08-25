@@ -48,11 +48,12 @@ namespace trip
             ResourceInfo info;
             ia >> info;
 
-            resource.set_id(info.rid);
-            ResourceMeta meta;
-            meta.duration = info.duration;
-            meta.interval = info.interval;
-            resource.set_meta(meta);
+            resource.set_id(info.id);
+            resource.set_meta(info.meta);
+            if (info.urls.is_initialized())
+                resource.set_urls(info.urls.get());
+            if (info.segments.is_initialized())
+                resource.set_segments(info.segments.get());
         }
 
     } // namespace client

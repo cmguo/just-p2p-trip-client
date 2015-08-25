@@ -36,8 +36,7 @@ namespace trip
 
         private:
             void handle_fetch(
-                boost::system::error_code ec, 
-                Resource & resource);
+                boost::system::error_code ec);
 
         private:
             CdnManager & cmgr_;

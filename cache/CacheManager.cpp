@@ -2,26 +2,47 @@
 
 #include "trip/client/Common.h"
 #include "trip/client/cache/CacheManager.h"
+#include "trip/client/cache/ResourceCache.h"
+#include "trip/client/cache/MemoryCachePool.h"
+#include "trip/client/cache/DiskCachePool.h"
 #include "trip/client/main/ResourceManager.h"
 #include "trip/client/utils/Format.h"
 #include "trip/client/timer/TimerManager.h"
 #include "trip/client/core/Resource.h"
+
+#include <framework/logger/Logger.h>
+#include <framework/logger/StreamRecord.h>
+
+#include <boost/bind.hpp>
+#include <boost/filesystem/operations.hpp>
 
 namespace trip
 {
     namespace client
     {
 
+        FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("trip.client.CacheManager", framework::logger::Debug);
+
         CacheManager::CacheManager(
             util::daemon::Daemon & daemon)
             : util::daemon::ModuleBase<CacheManager>(daemon, "CacheManager")
             , rmgr_(util::daemon::use_module<ResourceManager>(daemon))
             , tmgr_(util::daemon::use_module<TimerManager>(daemon))
-            , queue_(io_svc())
+            , capacity_(0)
+            , cache_memory_(4 << 20) // 4M
+            , memory_cache_(NULL)
+            , disk_cache_(NULL)
         {
-            config().register_module("CacheManager")
+            config().register_module("trip.client.CacheManager")
                 << CONFIG_PARAM_NAME_NOACC("path", path_)
-                << CONFIG_PARAM_NAME_NOACC("capacity", capacity_);
+                << CONFIG_PARAM_NAME_NOACC("capacity", capacity_)
+                << CONFIG_PARAM_NAME_NOACC("cache_memory", cache_memory_)
+                ;
+
+            memory_cache_ = new MemoryCachePool(size_t(cache_memory_ / BLOCK_SIZE));
+            if (capacity_) {
+                disk_cache_ = new DiskCachePool(io_svc(), size_t(capacity_ / SEGMENT_SIZE));
+            }
         }
 
         CacheManager::~CacheManager()
@@ -35,14 +56,25 @@ namespace trip
                 boost::bind(&CacheManager::on_event, this, _1, _2));
             rmgr_.resource_deleting.on(
                 boost::bind(&CacheManager::on_event, this, _1, _2));
+            rmgr_.out_of_memory.on(
+                boost::bind(&CacheManager::on_event, this, _1, _2));
             tmgr_.t_1_s.on(
                 boost::bind(&CacheManager::on_event, this, _1, _2));
+            tmgr_.t_10_s.on(
+                boost::bind(&CacheManager::on_event, this, _1, _2));
+
+            if (disk_cache_) {
+                io_svc().post(boost::bind(&CacheManager::load_cache, this));
+            }
+
             return true;
         }
 
         bool CacheManager::shutdown(
             boost::system::error_code & ec)
         {
+            tmgr_.t_10_s.un(
+                boost::bind(&CacheManager::on_event, this, _1, _2));
             tmgr_.t_1_s.un(
                 boost::bind(&CacheManager::on_event, this, _1, _2));
             rmgr_.resource_deleting.un(
@@ -52,6 +84,20 @@ namespace trip
             return true;
         }
 
+        void CacheManager::load_cache()
+        {
+            boost::filesystem::directory_iterator iter(path_);
+            boost::filesystem::directory_iterator end;
+            Uuid id;
+            for (; iter != end; ++iter) {
+                std::string idstr = iter->path().stem().string();
+                if (!id.from_string(idstr)) {
+                    LOG_INFO("[load_cache] found resource, id=" << id.to_string());
+                    rmgr_.get(id);
+                }
+            }
+        }
+
         void CacheManager::on_event(
             util::event::Observable const & observable, 
             util::event::Event const & event)
@@ -59,113 +105,58 @@ namespace trip
             if (observable == rmgr_) {
                 Resource & r = *rmgr_.resource_added.resource;
                 if (event == rmgr_.resource_added) {
-                    rcaches_[r.id()] = new ResourceCache(*this, r);
-                } else {
+                    LOG_INFO("[on_event] resource_added, id=" << r.id());
+                    ResourceCache * rcache = new ResourceCache(r, path_);
+                    rcaches_[r.id()] = rcache;
+                    ((DiskCachePool *)disk_cache_)->load_cache(rcache);
+                    r.data_miss.on(
+                        boost::bind(&CacheManager::on_event, this, _1, _2));
+                    r.segment_full.on(
+                        boost::bind(&CacheManager::on_event, this, _1, _2));
+                } else if (event == rmgr_.resource_deleting) {
+                    LOG_INFO("[on_event] resource_deleting, id=" << r.id());
+                    r.segment_full.un(
+                        boost::bind(&CacheManager::on_event, this, _1, _2));
                     std::map<Uuid,  ResourceCache *>::iterator iter = 
                         rcaches_.find(r.id());
                     if (iter != rcaches_.end()) {
+                        memory_cache_->free_cache(iter->second);
+                        if (disk_cache_)
+                            disk_cache_->free_cache(iter->second);
                         delete iter->second;
                         rcaches_.erase(iter);
-                        free_cache(r);
                     }
+                } else if (event == rmgr_.out_of_memory) {
+                    LOG_INFO("[on_event] out_of_memory, level=" << rmgr_.out_of_memory.level);
+                    // for level 0, delete blocks not visited in current 30 seconds
+                    // for level 5, delete blocks not visited in current 05 seconds
+                    memory_cache_->reclaim_caches((6 - rmgr_.out_of_memory.level) * 5);
                 }
             } else if (observable == tmgr_) {
-            }
-        }
-
-        bool CacheManager::alloc_cache(
-            Resource & resc,
-            DataId const & block, 
-            boost::filesystem::path const & path)
-        {
-            Cache ** p = alloc_cache();
-            if (p == NULL || *p == NULL)
-                return false;
-            Cache * c = *p;
-            c->resc = &resc;
-            c->block = resc.map_block(block, path);
-            if (c->block == NULL) {
-                free_cache(p);
-                return false;
-            }
-            DataId f = block;
-            f.piece = 0;
-            DataId t = f;
-            t.top_segment_block++;
-            c->lock = resc.alloc_lock(f, t);
-            return true;
-        }
-
-        void CacheManager::free_cache(
-            Resource & resc)
-        {
-            Cache ** p = &used_caches_;
-            while (*p) {
-                Cache * c = *p;
-                if (c->resc == &resc) {
-                    free_cache(p);
+                if (event == tmgr_.t_1_s) {
+                    memory_cache_->check_caches();
                 } else {
-                    p = &c->next;
+                    if (disk_cache_)
+                        disk_cache_->check_caches();
+                    std::map<Uuid,  ResourceCache *>::iterator iter = rcaches_.begin();
+                    for (; iter != rcaches_.end(); ++iter) {
+                        iter->second->save_status();
+                    }
                 }
-            }
-        }
-
-        CacheManager::Cache ** CacheManager::alloc_cache()
-        {
-            if (free_caches_ == NULL) {
-                if (used_caches_ && used_caches_->lru > 0) {
-                    free_cache(&used_caches_);
+            } else {
+                Resource const & r = (Resource const &)observable;
+                ResourceCache * rcache = rcaches_[r.id()];
+                if (event == r.segment_full) {
+                    DataEvent const & e(r.segment_full);
+                    LOG_INFO("[on_event] segment_full, rid=" << r.id() << ", segment=" << e.id.segment);
+                    if (disk_cache_) {
+                        disk_cache_->alloc_cache(rcache, e.id);
+                    }
+                } else if (event == r.data_miss) {
+                    DataEvent const & e(r.data_miss);
+                    LOG_INFO("[on_event] data_miss, rid=" << r.id() << ", id=" << e.id);
+                    memory_cache_->alloc_cache(rcache, e.id);
                 }
-            }
-            if (free_caches_ == NULL) {
-                return NULL;
-            }
-            Cache * c = free_caches_;
-            free_caches_ = free_caches_->next;
-            Cache ** p = used_caches_tail_;
-            *used_caches_tail_ = c;
-            used_caches_tail_ = &c->next;
-            return p;
-        }
-
-        void CacheManager::free_cache(
-            Cache ** cache)
-        {
-            Cache * c = *cache;
-            if (c->lock)
-                c->resc->release_lock(c->lock);
-            c->resc = NULL;
-            c->block = NULL;
-            c->lru = 0;
-            *cache = (*cache)->next;
-            c->next = free_caches_;
-            free_caches_ = c;
-        }
-
-        void CacheManager::check_caches()
-        {
-            Cache ** p = &used_caches_;
-            for (; *p; p = &(*p)->next) {
-                Cache * c = *p;
-                if (c->block->touched()) {
-                    c->lru = 0;
-                    *p = c->next;
-                    c->next = NULL;
-                    *used_caches_tail_ = c;
-                    used_caches_tail_ = &c->next;
-                } else {
-                    ++c->lru;
-                }
-            }
-        }
-
-        void CacheManager::reclaim_caches(
-            size_t limit)
-        {
-            while (used_caches_) {
-                if (used_caches_->lru < limit)
-                    break;
-                free_cache(&used_caches_);
             }
         }
 

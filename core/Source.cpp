@@ -76,7 +76,7 @@ namespace trip
             DataId id, 
             SegmentMeta const & meta)
         {
-            LOG_DEBUG("[on_segment_meta]");
+            //LOG_TRACE("[on_segment_meta]");
             resource_.set_segment_meta(id, meta);
         }
 

@@ -11,6 +11,7 @@ namespace trip
     {
 
         Resource::Resource()
+            : meta_(NULL)
         {
         }
 

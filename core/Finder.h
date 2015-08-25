@@ -18,7 +18,6 @@ namespace trip
         public:
             typedef boost::function<
                 void (
-                    boost::system::error_code const &, 
                     std::vector<Url> const &)
             > resp_t;
 
@@ -44,8 +43,7 @@ namespace trip
 
         protected:
             void found(
-                boost::system::error_code const & ec, 
-                Resource & resource, 
+                Uuid const & rid, 
                 std::vector<Url> const & urls);
 
         private:

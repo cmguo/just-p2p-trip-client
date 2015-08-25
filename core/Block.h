@@ -20,9 +20,6 @@ namespace trip
             Block(
                 boost::uint32_t size = 0);
 
-            Block(
-                BlockData * data);
-
         public:
             bool full() const
             {
@@ -33,6 +30,8 @@ namespace trip
             {
                 return pieces_;
             }
+
+            boost::uint32_t get_size() const;
 
             Piece::pointer get_piece(
                 DataId id) const;
@@ -52,6 +51,9 @@ namespace trip
             bool set_piece(
                 DataId id, 
                 Piece::pointer piece);
+
+            bool set_data(
+                boost::intrusive_ptr<BlockData> data);
 
             void release(
                 DataId from, 

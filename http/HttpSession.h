@@ -21,7 +21,7 @@ namespace trip
         struct ResourceStat;
         struct SegmentMeta;
 
-        using util::protocol::http_field::RangeUnit;
+        using util::protocol::http_field::Range;
 
         class HttpSession
             : public Sink
@@ -48,7 +48,7 @@ namespace trip
             void async_open(
                 HttpServer * server,
                 boost::uint64_t segm, 
-                RangeUnit const & range, 
+                Range const & range, 
                 response_t const & resp);
 
             void async_fetch(

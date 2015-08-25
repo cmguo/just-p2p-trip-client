@@ -38,6 +38,9 @@ namespace trip
             DataEvent segment_full;
 
         public:
+            void get_segments(
+                std::vector<SegmentMeta> & metas);
+
             SegmentMeta const * get_segment_meta(
                 DataId id) const;
 
@@ -47,12 +50,20 @@ namespace trip
             Piece::pointer get_piece(
                 DataId id);
 
-            void get_stat(
+            void get_segment_status(
+                DataId from, 
                 boost::dynamic_bitset<boost::uint32_t> & map) const;
+
+            bool get_block_status(
+                DataId id, 
+                boost::dynamic_bitset<boost::uint32_t> & map) const;
+
+            bool meta_dirty() const;
 
         public:
             PieceIterator iterator_at(
-                DataId id);
+                DataId id, 
+                bool update = true);
 
             void update(
                 PieceIterator & iterator);
@@ -76,22 +87,16 @@ namespace trip
                 lock_t lock);
 
         public:
-            bool save_segment(
-                DataId id, 
-                boost::filesystem::path const & path);
+            void set_segments(
+                std::vector<SegmentMeta> const & metas);
 
-            bool load_segment(
-                DataId id,
-                boost::filesystem::path const & path);
-
-        public:
             void set_segment_meta(
                 DataId id, 
                 SegmentMeta const & meta);
 
-            bool load_block_stat(
+            void set_segment_status(
                 DataId id, 
-                boost::dynamic_bitset<boost::uint32_t> & map);
+                bool saved);
 
             void seek(
                 DataId & id);
@@ -105,21 +110,11 @@ namespace trip
                 boost::filesystem::path const & path);
 
         public:
-            struct Segment2
-            {
-                SegmentMeta * meta;
-                Segment * seg;
-                bool saved;
-                Segment2()
-                    : meta(NULL)
-                    , seg(NULL)
-                    , saved(false)
-                {
-                }
-            };
-
             Segment2 const * prepare_segment(
                 DataId id);
+
+            Segment2 const * get_segment2(
+                DataId segid) const;
 
         protected:
             void set_meta(
@@ -134,9 +129,6 @@ namespace trip
 
             Segment2 & modify_segment2(
                 DataId id);
-
-            Segment2 const * get_segment2(
-                DataId segid) const;
 
             void release(
                 DataId from, 
@@ -171,6 +163,7 @@ namespace trip
                 std::less<Lock>, 
                 framework::container::ordered_non_unique_tag
             > locks_;
+            mutable bool meta_dirty_;
         };
 
     } // namespace client

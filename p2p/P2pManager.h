@@ -10,7 +10,13 @@ namespace trip
     namespace client
     {
 
+        struct P2pPeer;
+
+        class UdpManager;
         class Finder;
+        class UdpTunnel;
+
+        typedef UdpTunnel P2pTunnel;
 
         class P2pManager
             : public util::daemon::ModuleBase<P2pManager>
@@ -27,6 +33,13 @@ namespace trip
                 return finder_;
             }
 
+        public:
+            P2pTunnel & get_tunnel(
+                Uuid const & pid);
+
+            P2pTunnel & get_tunnel(
+                P2pPeer const & peer);
+
         private:
             virtual bool startup(
                 boost::system::error_code & ec);
@@ -35,7 +48,9 @@ namespace trip
                 boost::system::error_code & ec);
 
         private:
+            UdpManager & umgr_;
             Finder * finder_;
+            std::map<Uuid, P2pTunnel *> tunnels_;
         };
 
     } // namespace client

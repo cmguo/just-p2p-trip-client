@@ -45,7 +45,6 @@ namespace trip
                 util::event::Event const & event);
 
             void handle_find(
-                boost::system::error_code const & ec, 
                 Uuid const & rid, 
                 Finder & finder, 
                 std::vector<Url> const & urls);

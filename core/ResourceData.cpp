@@ -16,6 +16,7 @@ namespace trip
 
         ResourceData::ResourceData()
             : end_(0)
+            , meta_dirty_(false)
         {
         }
 
@@ -23,10 +24,16 @@ namespace trip
         {
         }
 
-        void ResourceData::set_meta(
-            ResourceMeta const & meta)
+        void ResourceData::get_segments(
+            std::vector<SegmentMeta> & metas)
         {
-            end_ = meta.duration / meta.interval;
+            metas.resize(end_);
+            DataId id;
+            for (boost::uint64_t i = 0; i < end_; ++i) {
+                SegmentMeta const * meta = get_segment_meta(id);
+                if (meta) metas[i] = *meta;
+                id.inc_segment();
+            }
         }
 
         Piece::pointer ResourceData::get_piece(
@@ -49,42 +56,57 @@ namespace trip
             return p;
         }
 
-        void ResourceData::get_stat(
+        void ResourceData::get_segment_status(
+            DataId from, 
             boost::dynamic_bitset<boost::uint32_t> & map) const
         {
         }
 
-        PieceIterator ResourceData::iterator_at(
-            DataId id)
+        bool ResourceData::get_block_status(
+            DataId id, 
+            boost::dynamic_bitset<boost::uint32_t> & map) const
         {
-            return PieceIterator(*this, id);
+            Segment const * segment(get_segment(id));
+            if (segment == NULL)
+                return false;
+            segment->get_status(id, map);
+            return true;
+        }
+
+        bool ResourceData::meta_dirty() const
+        {
+            bool tmp = meta_dirty_;
+            meta_dirty_ = false;
+            return tmp;
+        }
+
+        PieceIterator ResourceData::iterator_at(
+            DataId id, 
+            bool update)
+        {
+            PieceIterator iterator(*this, id);
+            if (update) {
+                iterator.segment2_ = &modify_segment2(id);
+                iterator.segment_ = iterator.segment2_->seg;
+                if (iterator.segment_ == NULL)
+                    iterator.segment_ = &modify_segment(id);
+                iterator.block_ = &iterator.segment_->modify_block(id);
+                if (iterator.segment2_->saved) {
+                    data_miss.id = id;
+                    raise(data_miss);
+                }
+                iterator.piece_ = iterator.block_->get_piece(iterator.id_);
+            }
+            return iterator;
         }
 
         void ResourceData::update(
             PieceIterator & iterator)
         {
-            DataId id = iterator.id();
-            if (!iterator.block_) {
-                if (!iterator.segment_) {
-                    iterator.segment_ = get_segment(id);
-                }
-                if (iterator.segment_) {
-                    iterator.block_ = iterator.segment_->get_block(id);
-                }
-            }
-            if (iterator.block_) {
-                iterator.piece_ = iterator.block_->get_piece(id);
-            }
-            if (!iterator.piece_) {
-                Segment2 const * segment2 = get_segment2(id);
-                if (segment2 && segment2->saved) {
-                    data_miss.id = id;
-                    raise(data_miss);
-                    update(iterator);
-                }
-            }
+            iterator.piece_ = iterator.block_->get_piece(iterator.id_);
         }
 
+        /*
         void ResourceData::increment(
             PieceIterator & iterator)
         {
@@ -107,6 +129,46 @@ namespace trip
                 }
             }
             update(iterator);
+        }
+        */
+
+        void ResourceData::increment(
+            PieceIterator & iterator)
+        {
+            DataId & id = iterator.id_;
+            iterator.piece_.reset();
+            if ((size_t)id.piece + 1 < iterator.block_->pieces().size()) {
+                id.inc_piece();
+            } else {
+                iterator.block_ = NULL;
+                if ((size_t)id.block + 1 < iterator.segment_->blocks().size()) {
+                    id.inc_block();
+                } else {
+                    if (!iterator.segment2_->meta) {
+                        assert((size_t)id.block < iterator.segment_->blocks().size());
+                        id.inc_block();
+                        return;
+                    }
+                    iterator.segment2_ = NULL;
+                    iterator.segment_ = NULL;
+                    if (id.segment + 1 < end_) {
+                        id.inc_segment();
+                    } else {
+                        id = DataId(MAX_SEGMENT, 0, 0);
+                        return;
+                    }
+                    iterator.segment2_ = &modify_segment2(id);
+                    iterator.segment_ = iterator.segment2_->seg;
+                    if (iterator.segment_ == NULL)
+                        iterator.segment_ = &modify_segment(id);
+                }
+                iterator.block_ = &iterator.segment_->modify_block(id);
+                if (iterator.segment2_->saved) {
+                    data_miss.id = id;
+                    raise(data_miss);
+                }
+            }
+            iterator.piece_ = iterator.block_->get_piece(id);
         }
 
         ResourceData::lock_t ResourceData::alloc_lock(
@@ -156,6 +218,7 @@ namespace trip
             Lock * l)
         {
             LOG_INFO("[remove_lock] from: " << l->from << " to: " << l->to);
+            if (l->from == l->to) return;
             for (Lock * p = locks_.first(); p; p = locks_.next(p)) {
                 if (p->from <= l->from) {
                     if (p->to <= l->from)
@@ -179,34 +242,23 @@ namespace trip
             release(l->from, l->to);
         }
 
-        bool ResourceData::save_segment(
-            DataId id, 
-            boost::filesystem::path const & path)
+        void ResourceData::set_meta(
+            ResourceMeta const & meta)
         {
-            Segment2 & segment(modify_segment2(id));
-            if (segment.meta == NULL || segment.seg == NULL) {
-                return false;
-            }
-            if (segment.seg->cache_md5sum() != segment.meta->md5sum)
-                return false;
-            if (segment.seg->save(path))
-                return false;
-            segment.saved = true;
-            return true;
+            end_ = meta.duration / meta.interval;
+            meta_dirty_ = true;
         }
 
-        bool ResourceData::load_segment(
-            DataId id, 
-            boost::filesystem::path const & path)
+        void ResourceData::set_segments(
+            std::vector<SegmentMeta> const & metas)
         {
-            Segment2 & segment(modify_segment2(id));
-            if (segment.meta == NULL) {
-                return false;
+            DataId id(0);
+            for (size_t i = 0; i < metas.size(); ++i) {
+                if (metas[i].bytesize != 0)
+                    set_segment_meta(id, metas[i]);
+                id.inc_segment();
             }
-            if (Segment::file_md5sum(path) != segment.meta->md5sum)
-                return false;
-            segment.saved = true;
-            return true;
+            meta_dirty_ = true;
         }
 
         void ResourceData::set_segment_meta(
@@ -228,15 +280,18 @@ namespace trip
                         raise(data_ready);
                     }
                 }
+                meta_dirty_ = true;
             }
         }
 
-        bool ResourceData::load_block_stat(
+        void ResourceData::set_segment_status(
             DataId id, 
-            boost::dynamic_bitset<boost::uint32_t> & map)
+            bool saved)
         {
-            modify_segment(id).load_block_stat(id, map);
-            return true;
+            Segment2 & segment(modify_segment2(id));
+            if (segment.meta) {
+                segment.saved = saved;
+            }
         }
 
         void ResourceData::seek(
@@ -256,30 +311,22 @@ namespace trip
             boost::uint64_t next = id.top_segment;
             std::map<boost::uint64_t, Segment2>::const_iterator iter = 
                 segments_.find(next);
-            if (next < end_) {
-                if (iter != segments_.end() && iter->second.meta && iter->second.seg) {
-                    if (!iter->second.seg->seek(id)) {
-                        return;
-                    }
-                    ++next;
-                    ++iter;
-                }
-            }
             while (next < end_ 
                 && iter != segments_.end()
                 && iter->first == next 
-                && iter->second.meta
-                && (iter->second.saved || (iter->second.seg && iter->second.seg->full()))) {
+                && iter->second.meta 
+                && (iter->second.saved 
+                    || (iter->second.seg 
+                        && (iter->second.seg->full()
+                            || iter->second.seg->seek(id))))) {
                     ++next;
                     ++iter;
+                    id.block_piece = 0;
             }
-            id.block_piece = 0;
             if (next >= end_) {
                 id.top_segment = MAX_SEGMENT;
             } else {
                 id.top_segment = next;
-                if (iter != segments_.end() && iter->first == next && iter->second.meta && iter->second.seg)
-                    iter->second.seg->seek(id);
             }
         }
 
@@ -313,7 +360,7 @@ namespace trip
             return modify_segment(id).map_block(id, path);
         }
 
-        ResourceData::Segment2 const * ResourceData::get_segment2(
+        Segment2 const * ResourceData::get_segment2(
             DataId id) const
         {
             boost::uint64_t index = id.segment;
@@ -325,7 +372,7 @@ namespace trip
             return &iter->second;
         }
 
-        ResourceData::Segment2 & ResourceData::modify_segment2(
+        Segment2 & ResourceData::modify_segment2(
             DataId id)
         {
             boost::uint64_t index = id.segment;
@@ -363,7 +410,7 @@ namespace trip
             return segment->meta;
         }
 
-        ResourceData::Segment2 const * ResourceData::prepare_segment(
+        Segment2 const * ResourceData::prepare_segment(
             DataId id)
         {
             boost::uint64_t index = id.segment;

@@ -69,7 +69,7 @@ namespace trip
                     assert(pic > r.e);
                     if (r.e > r.b) {
                         ranges_.push_back(r);
-                        range.add_range(r.b.block_piece * PIECE_SIZE, r.e.block_piece * PIECE_SIZE);
+                        range.put(r.b.block_piece * PIECE_SIZE, r.e.block_piece * PIECE_SIZE);
                     }
                     r.b = pic;
                     pic.inc_piece();
@@ -78,11 +78,11 @@ namespace trip
             }
             if (r.e > r.b) {
                 ranges_.push_back(r);
-                range.add_range(r.b.block_piece * PIECE_SIZE, r.e.block_piece * PIECE_SIZE);
+                range.put(r.b.block_piece * PIECE_SIZE, r.e.block_piece * PIECE_SIZE);
             }
 
             Url url(url_);
-            url.path(url.path() + framework::string::format(seg));
+            url.path(url.path() + framework::string::format(seg) + resource_.meta()->file_extension);
             util::protocol::HttpRequestHead head;
             head.host = url.host_svc();
             head.path = url.path_all();
@@ -119,9 +119,10 @@ namespace trip
         void CdnSource::handle_open(
             boost::system::error_code ec)
         {
-            LOG_DEBUG("[handle_open] ec=" << ec.message());
-            if (ec)
+            if (ec) {
+                LOG_WARN("[handle_open] ec=" << ec.message());
                 return;
+            }
 
             //http_.response().head().get_content(std::cout);
 
@@ -146,6 +147,7 @@ namespace trip
             piece_.reset();
 
             if (ec && ec != boost::asio::error::eof) {
+                LOG_WARN("[handle_read] ec=" << ec.message());
                 http_.close(ec);
                 on_ready();
                 return;

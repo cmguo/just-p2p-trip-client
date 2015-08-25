@@ -23,7 +23,7 @@ namespace trip
             MessageRequestBind req;
             req.rid = resource.id();
             req.sid = id();
-            push(new Message(req));
+            send_msg(new Message(req));
         }
 
         P2pSource::~P2pSource()

@@ -62,7 +62,7 @@ namespace trip
             std::string option_;
             boost::uint64_t segment_;
             HttpSession * session_;
-            RangeUnit unit_;
+            Range range_;
         };
 
     } // namespace client

@@ -29,8 +29,6 @@ namespace trip
             , rmgr_(util::daemon::use_module<ResourceManager>(daemon))
             , tmgr_(util::daemon::use_module<TimerManager>(daemon))
         {
-            //config().register_module("DownloadManager")
-            //    << CONFIG_PARAM_NAME_NOACC("path", path_);
             Finder * f = NULL;
             f = util::daemon::use_module<CdnManager>(daemon).finder();
             finders_[f->proto()] = f;
@@ -78,7 +76,7 @@ namespace trip
             if (iter == finders_.end())
                 return;
             iter->second->find(downloader.resource(), count, boost::bind(
-                    &DownloadManager::handle_find, this, _1, downloader.resource().id(), boost::ref(*iter->second), _2));
+                    &DownloadManager::handle_find, this, downloader.resource().id(), boost::ref(*iter->second), _1));
         }
 
         void DownloadManager::on_event(
@@ -128,12 +126,11 @@ namespace trip
         }
 
         void DownloadManager::handle_find(
-            boost::system::error_code const & ec, 
             Uuid const & rid, 
             Finder & finder, 
             std::vector<Url> const & urls)
         {
-            std::map<Uuid, Downloader *>::iterator iter = downloaders_.begin();
+            std::map<Uuid, Downloader *>::iterator iter = downloaders_.find(rid);
             if (iter == downloaders_.end())
                 return;
             iter->second->on_sources(finder, urls);

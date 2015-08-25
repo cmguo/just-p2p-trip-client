@@ -19,6 +19,13 @@ namespace trip
             set_size(size);
         }
 
+        Segment::~Segment()
+        {
+            for (size_t i = 0; i < blocks_.size() - 1; ++i) {
+                delete blocks_[i];
+            }
+        }
+
         boost::uint32_t Segment::size() const
         {
             return BLOCK_SIZE * block_count_ - BLOCK_SIZE + last_block_size_;
@@ -49,7 +56,8 @@ namespace trip
             return block->get_piece(id);
         }
 
-        void Segment::get_stat(
+        void Segment::get_status(
+            DataId from, 
             boost::dynamic_bitset<boost::uint32_t> & map) const
         {
             for (size_t i = 0; i < blocks_.size() - 1; ++i) {
@@ -57,20 +65,20 @@ namespace trip
             }
         }
 
-        md5_bytes Segment::cache_md5sum() const
+        Md5Sum Segment::cache_md5sum() const
         {
             framework::string::Md5 md5;
             for (size_t i = 0; i < blocks_.size(); ++i) {
                 std::vector<Piece::pointer> const & pieces(blocks_[i]->pieces());
-                for (size_t j = 0; i < pieces.size(); ++j) {
+                for (size_t j = 0; j < pieces.size(); ++j) {
                     md5.update(pieces[j]->data(), pieces[j]->size());
                 }
             }
             md5.final();
-            return md5.to_bytes();
+            return md5;
         }
 
-        md5_bytes Segment::file_md5sum(
+        Md5Sum Segment::file_md5sum(
             boost::filesystem::path const & path)
         {
             framework::string::Md5 md5;
@@ -82,19 +90,19 @@ namespace trip
             while ((bytes_read = file.read_some(boost::asio::buffer(buf), ec)))
                 md5.update(&buf[0], bytes_read);
             md5.final();
-            return md5.to_bytes();
+            return md5;
         }
 
         bool Segment::save(
-            boost::filesystem::path const & path) const
+            boost::filesystem::path const & path, 
+            boost::system::error_code & ec) const
         {
             framework::filesystem::File file;
-            boost::system::error_code ec;
-            if (!file.open(path, file.f_write, ec))
+            if (!file.open(path, file.f_write | file.f_create, ec))
                 return false;
             for (size_t i = 0; i < blocks_.size(); ++i) {
                 std::vector<Piece::pointer> const & pieces(blocks_[i]->pieces());
-                for (size_t j = 0; i < pieces.size(); ++j) {
+                for (size_t j = 0; j < pieces.size(); ++j) {
                     if (!file.write_some(boost::asio::buffer(pieces[j]->data(), pieces[j]->size()), ec))
                         return false;
                 }
@@ -127,14 +135,6 @@ namespace trip
                 blocks_.back()->set_size(last_block_size_);
         }
 
-        bool Segment::load_block_stat(
-            DataId id, 
-            boost::dynamic_bitset<boost::uint32_t> & map)
-        {
-            modify_block(id).get_stat(map);
-            return true;
-        }
-
         bool Segment::seek(
             DataId & id)
         {
@@ -144,6 +144,8 @@ namespace trip
                     if (!blocks_[next]->seek(id))
                         return false;
                     ++next;
+                } else {
+                    return false;
                 }
             }
             while (next < blocks_.size() && blocks_[next] && blocks_[next]->full())
@@ -176,19 +178,16 @@ namespace trip
             boost::filesystem::path const & path)
         {
             boost::uint16_t index = id.block;
-            assert(index < blocks_.size() && blocks_[index] == NULL);
-            if (index >= blocks_.size() || blocks_[index]) {
-                return NULL;
-            }
             boost::uint32_t offset = BLOCK_SIZE * index;
             size_t size = BLOCK_SIZE;
             if (index == blocks_.size() - 1) {
                 size = last_block_size_;
             }
-            BlockData * data = BlockData::alloc(path, offset, size);
-            blocks_[index] = new Block(data);
+            boost::intrusive_ptr<BlockData> data = BlockData::alloc(path, offset, size);
+            Block & block(modify_block(id));
+            block.set_data(data);
             --left_;
-            return blocks_[index];
+            return &block;
         }
 
         Block & Segment::modify_block(

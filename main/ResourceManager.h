@@ -59,7 +59,6 @@ namespace trip
                 size_t level);
 
         private:
-            boost::filesystem::path path_;
             std::map<Uuid, Resource *> resources_;
             std::vector<Resource *> other_resources_;
             ResourceMapping mapping_;

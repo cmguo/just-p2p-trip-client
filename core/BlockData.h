@@ -42,7 +42,7 @@ namespace trip
             friend void intrusive_ptr_release(
                 BlockData * p)
             {
-                if (--p->nref_) {
+                if (--p->nref_ == 0) {
                     BlockData::free(p);
                 }
             }

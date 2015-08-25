@@ -3,7 +3,7 @@
 #ifndef _TRIP_CLIENT_P2P_P2P_FINDER_H_
 #define _TRIP_CLIENT_P2P_P2P_FINDER_H_
 
-#include "trip/client/udp/UdpSession.h"
+#include "trip/client/proto/Message.h"
 #include "trip/client/core/Finder.h"
 
 namespace trip
@@ -11,24 +11,29 @@ namespace trip
     namespace client
     {
 
-        class UdpManager;
+        class P2pManager;
+        struct MessageResponseFind;
 
-        struct UdpPeer;
+        struct P2pPeer;
 
         class P2pFinder
             : public Finder
-            , UdpSession
         {
         public:
             P2pFinder(
-                UdpManager & manager);
+                P2pManager & manager);
 
             virtual ~P2pFinder();
 
         public:
+            void open();
+
+            void close();
+
+        public:
             virtual std::string proto() const;
 
-        private:
+        public:
             virtual void find(
                 Resource & resource, 
                 size_t count);
@@ -37,12 +42,19 @@ namespace trip
                 Resource & resource, 
                 Url const & url);
             
-        private:
-            virtual void on_msg(
-                Message * msg);
+        protected:
+            virtual void send_msg(
+                Message const & msg) = 0;
+
+            bool handle_msg(
+                Message const & msg);
 
         private:
-            UdpManager & umgr_;
+            void handle_find(
+                MessageResponseFind const & find);
+
+        private:
+            P2pManager & pmgr_;
         };
 
     } // namespace client

@@ -5,10 +5,12 @@
 #include "trip/client/cdn/CdnSource.h"
 #include "trip/client/cdn/CdnManager.h"
 #include "trip/client/cdn/Error.h"
-#include "trip/client/proto/MessageIndex.h"
+#include "trip/client/utils/Serialize.h"
 #include "trip/client/core/Resource.h"
 
 #include <util/archive/XmlIArchive.h>
+#include <util/serialization/NVPair.h>
+#include <util/serialization/stl/vector.h>
 
 #include <framework/logger/Logger.h>
 #include <framework/logger/StreamRecord.h>
@@ -49,7 +51,7 @@ namespace trip
             }
             url.param("count", framework::string::format(count));
             http_.async_fetch(url, 
-                boost::bind(&CdnFinder::handle_fetch, this, _1, boost::ref(resource)));
+                boost::bind(&CdnFinder::handle_fetch, this, _1));
         }
 
         Source * CdnFinder::create(
@@ -61,10 +63,11 @@ namespace trip
         }
 
         void CdnFinder::handle_fetch(
-            boost::system::error_code ec, 
-            Resource & resource)
+            boost::system::error_code ec)
         {
-             LOG_INFO("[handle_fetch] rid=" << resource.id() << ", ec=" << ec.message());
+            Url url("http://jump.trip.com" + http_.request_head().path);
+            LOG_INFO("[handle_fetch] rid=" << url.param("rid") << ", ec=" << ec.message());
+            Uuid rid(url.param("rid"));
             std::vector<Url> urls;
             if (!ec) {
                 util::archive::XmlIArchive<> ia(http_.response_data());
@@ -73,7 +76,7 @@ namespace trip
                     ec = cdn_error::xml_format_error;
                 }
             }
-            found(ec, resource, urls);
+            found(rid, urls);
         }
 
     } // namespace client

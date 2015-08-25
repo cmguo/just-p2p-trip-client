@@ -16,7 +16,7 @@ namespace trip
             void * map_addr, 
             boost::uint32_t offset,
             boost::uint32_t size)
-            : nref_(1)
+            : nref_(0)
             , map_addr_(map_addr)
             , offset_(offset)
             , size_(size)

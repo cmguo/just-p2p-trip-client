@@ -24,8 +24,6 @@ namespace trip
             , mapping_(io_svc())
         {
             PoolPiece::set_oom_handler(oom_handler, this);
-            config().register_module("ResourceManager")
-                << CONFIG_PARAM_NAME_NOACC("path", path_);
         }
 
         ResourceManager::~ResourceManager()
@@ -54,8 +52,8 @@ namespace trip
                 Resource * r = new Resource;
                 iter = resources_.insert(std::make_pair(rid, r)).first;
                 resource_added.resource = r;
-                raise(resource_added);
                 r->set_id(rid);
+                raise(resource_added);
             }
             return *iter->second;
         }

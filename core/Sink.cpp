@@ -20,9 +20,6 @@ namespace trip
         Sink::Sink(
             Resource & resource)
             : resource_(&resource)
-            , beg_(resource.iterator_at(0))
-            , pos_(beg_)
-            , end_(beg_)
             , off_(0)
             , off2_(0)
             , lock_(NULL)
@@ -54,10 +51,11 @@ namespace trip
                 iend.inc_segment();
             }
             DataId pos = pos_.id();
+            beg_ = resource_->iterator_at(ibegin);
+            end_ = resource_->iterator_at(iend, false);
+            pos_ = beg_; 
             off_ = begin % PIECE_SIZE;
             off2_ = end % PIECE_SIZE;
-            pos_ = resource_->iterator_at(ibegin); 
-            end_ = resource_->iterator_at(iend);
             if (pos != ibegin) {
                 resource_->update_sink(this);
             }
@@ -81,7 +79,7 @@ namespace trip
                 p = *pos_;
             }
             if (p) {
-                //LOG_INFO("[read] pos=" << pos_.id().block_piece);
+                //LOG_DEBUG("[read] pos=" << pos_.id().block_piece);
                 ++pos_;
                 if (off_) {
                     p = PartPiece::alloc(p, off_, p->size() - off_);
@@ -120,13 +118,18 @@ namespace trip
                 on_segment_meta(resource_->seg_meta_ready.id.segment, *resource_->seg_meta_ready.meta);
             } else if (event == resource_->merged) {
                 LOG_INFO("[on_event] merged, id=" << resource_->merged.resource->id());
+                resource_->del_sink(this);
                 resource_->merged.un(
                     boost::bind(&Sink::on_event, this, _2));
                 resource_->seg_meta_ready.un(
                     boost::bind(&Sink::on_event, this, _2));
+                resource_->release_lock(lock_);
                 resource_ = resource_->merged.resource;
+                DataId id;
+                lock_ = resource_->alloc_lock(id, id);
                 resource_->seg_meta_ready.on(
                     boost::bind(&Sink::on_event, this, _2));
+                resource_->add_sink(this);
             } else if (event == resource_->data_seek) {
                 LOG_INFO("[on_event] data_seek, id=" << resource_->data_seek.id);
                 //if (!at_end() && resource_->data_seek.id == beg_.id()) {

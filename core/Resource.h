@@ -15,6 +15,7 @@ namespace trip
         struct ResourceMeta
         {
             boost::uint64_t duration;
+            boost::uint64_t bytesize;
             boost::uint32_t interval;
             std::string file_extension;
         };

@@ -19,13 +19,17 @@ namespace trip
             : Downloader(mgr, resource)
             , lock_(NULL)
         {
-            find_sources("http", 10);
+            //find_sources("http", 10);
+            find_sources("p2p", 10);
             lock_ = resource.alloc_lock(win_beg_, win_end_);
+            full_seg_ = new SegmentInfo();
+            full_seg_->meta_ready = true;
         }
 
         CdnDownloader::~CdnDownloader()
         {
             resource().release_lock(lock_);
+            delete full_seg_;
         }
 
         void CdnDownloader::add_source(
@@ -129,7 +133,8 @@ namespace trip
                 for (size_t i = 0; i < sources_.size(); ++i) {
                     Source * src = sources_[i];
                     if (src->context() == sinfo) {
-                        src->context(NULL);
+                        //src->cancel();
+                        src->context(full_seg_);
                     }
                 }
                 delete sinfo;
@@ -148,7 +153,7 @@ namespace trip
             for (size_t i = 0; i < seg_count; ++i) {
                 SegmentInfo * sinfo = segments_[i];
                 if (sinfo == NULL) {
-                    Resource::Segment2 const * seg = resource().prepare_segment(play_pos);
+                    Segment2 const * seg = resource().prepare_segment(play_pos);
                     if (seg == NULL) {
 
                         win_end_ = play_beg;

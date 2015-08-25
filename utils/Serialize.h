@@ -7,6 +7,8 @@
 
 #include <util/serialization/Collection.h>
 #include <util/serialization/Uuid.h>
+#include <util/serialization/Md5.h>
+#include <util/serialization/Url.h>
 
 namespace boost
 {

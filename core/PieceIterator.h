@@ -13,6 +13,7 @@ namespace trip
     {
 
         class ResourceData;
+        class Segment2;
         class Segment;
         class Block;
 
@@ -23,12 +24,22 @@ namespace trip
                 boost::forward_traversal_tag
               >
         {
+        public:
+            PieceIterator()
+                : resource_(NULL)
+                , segment2_(NULL)
+                , segment_(NULL)
+                , block_(NULL)
+            {
+            }
+
         private:
             PieceIterator(
                 ResourceData & resource, 
                 DataId id)
                 : resource_(&resource)
                 , id_(id)
+                , segment2_(NULL)
                 , segment_(NULL)
                 , block_(NULL)
             {
@@ -62,8 +73,9 @@ namespace trip
 
             ResourceData * resource_;
             DataId id_;
-            Segment const * segment_;
-            Block const * block_;
+            Segment2 * segment2_;
+            Segment * segment_;
+            Block * block_;
             Piece::pointer piece_;
         };
 
