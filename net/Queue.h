@@ -16,11 +16,13 @@ namespace trip
             virtual bool push(
                 void * p) = 0;
 
-            virtual void * first() = 0;
+            virtual void * first() const = 0;
 
             virtual void pop() = 0;
 
             virtual void on_timer() {};
+            
+            virtual bool empty() const { return first() == NULL; }
         };
 
     } // namespace client

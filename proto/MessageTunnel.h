@@ -11,14 +11,15 @@ namespace trip
     namespace client
     {
 
-        struct MessageRequestConnect
-            : MessageData<MessageRequestConnect, REQ_Connect>
+        struct MessageRequestProbe
+            : MessageData<MessageRequestProbe, REQ_Probe>
         {
-            Uuid pid;
-            boost::uint16_t cid;
+            boost::uint16_t index;
+            boost::uint16_t rand;
 
-            MessageRequestConnect()
-                : cid(0)
+            MessageRequestProbe()
+                : index(0)
+                , rand(::rand())
             {
             }
 
@@ -26,18 +27,56 @@ namespace trip
             void serialize(
                 Archive & ar)
             {
-                ar & pid
-                    & cid;
+                ar & index & rand;
+            }
+        };
+
+        struct MessageResponseProbe
+            : MessageData<MessageResponseProbe, RSP_Probe>
+        {
+            boost::uint16_t index;
+            boost::uint16_t rand;
+
+            MessageResponseProbe()
+                : index(0)
+                , rand(0)
+            {
+            }
+
+            template <typename Archive>
+            void serialize(
+                Archive & ar)
+            {
+                ar & index & rand;
+            }
+        };
+
+        struct MessageRequestConnect
+            : MessageData<MessageRequestConnect, REQ_Connect>
+        {
+            boost::uint16_t tid;
+            Uuid uid;
+
+            MessageRequestConnect()
+                : tid(0)
+            {
+            }
+
+            template <typename Archive>
+            void serialize(
+                Archive & ar)
+            {
+                ar & tid & uid;
             }
         };
 
         struct MessageResponseConnect
             : MessageData<MessageResponseConnect, RSP_Connect>
         {
-            boost::uint16_t cid;
+            boost::uint16_t tid;
 
             MessageResponseConnect()
-                : cid(0)
+                : tid(0)
             {
             }
 
@@ -45,7 +84,7 @@ namespace trip
             void serialize(
                 Archive & ar)
             {
-                ar & cid;
+                ar & tid;
             }
         };
 
@@ -100,7 +139,7 @@ namespace trip
         };
 
         struct MessageResponseDisconnect
-            : MessageData<MessageRequestDisconnect, RSP_Disconnect>
+            : MessageData<MessageResponseDisconnect, RSP_Disconnect>
         {
             MessageResponseDisconnect()
             {

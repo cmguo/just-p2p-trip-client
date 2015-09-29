@@ -3,6 +3,7 @@
 #ifndef _TRIP_UDP_UDP_MANAGER_H_
 #define _TRIP_UDP_UDP_MANAGER_H_
 
+#include "trip/client/udp/UdpEndpoint.h"
 #include "trip/client/proto/Message.h"
 
 #include <util/daemon/Module.h>
@@ -20,7 +21,6 @@ namespace trip
         class UdpSocket;
         class UdpTunnel;
         class UdpSession;
-        struct UdpPeer;
 
         class TimerManager;
 
@@ -35,7 +35,7 @@ namespace trip
 
         public:
             typedef boost::function<
-                UdpSession & (UdpTunnel &, Message const &)> service_t;
+                UdpSession * (UdpTunnel &, Message &)> service_t;
 
             void register_service(
                 boost::uint32_t type, 
@@ -47,15 +47,20 @@ namespace trip
                 return *socket_;
             }
 
-            UdpTunnel & get_tunnel(
-                Uuid const & pid);
+            UdpEndpoint & local_endpoint()
+            {
+                return local_endpoint_;
+            }
+
+            UdpTunnel * get_tunnel(
+                Uuid const & uid);
 
             UdpTunnel & get_tunnel(
-                UdpPeer const & peer);
+                UdpEndpoint const & endpoint);
 
-            UdpSession & get_session(
+            UdpSession * get_session(
                 UdpTunnel & tunnel, 
-                Message const & msg);
+                Message & msg);
 
         private:
             virtual bool startup(
@@ -72,6 +77,7 @@ namespace trip
         private:
             TimerManager & tmgr_;
             framework::network::Endpoint addr_;
+            UdpEndpoint local_endpoint_;
             size_t parallel_;
             UdpSocket * socket_;
             std::map<boost::uint32_t, service_t> services_;

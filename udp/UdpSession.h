@@ -23,6 +23,9 @@ namespace trip
             virtual ~UdpSession();
 
         public:
+            UdpTunnel & tunnel();
+
+        public:
             virtual void on_send(
                 void * head, 
                 NetBuffer & buf);
@@ -42,7 +45,7 @@ namespace trip
             virtual void on_msg(
                 Message * msg);
 
-        private:
+        protected:
             boost::uint16_t sid_; // id of remote seesion
         };
 

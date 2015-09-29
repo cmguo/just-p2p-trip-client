@@ -6,8 +6,9 @@
 #include "trip/client/p2p/P2pManager.h"
 #include "trip/client/udp/UdpTunnel.h"
 #include "trip/client/udp/UdpManager.h"
-#include "trip/client/udp/UdpPeer.h"
+#include "trip/client/udp/UdpEndpoint.h"
 #include "trip/client/proto/MessageTracker.h"
+#include "trip/client/proto/Message.hpp"
 #include "trip/client/core/Resource.h"
 
 namespace trip
@@ -18,7 +19,7 @@ namespace trip
         P2pUdpFinder::P2pUdpFinder(
            P2pManager & manager)
             : P2pFinder(manager)
-            , UdpSession(manager.get_tunnel(Uuid()))
+            , UdpSession(*manager.get_tunnel(Uuid()))
         {
         }
 
@@ -29,8 +30,9 @@ namespace trip
         void P2pUdpFinder::send_msg(
             Message const & msg)
         {
-            Message copy(msg);
-            send_msg(copy);
+            Message * copy = alloc_message();
+            *copy = msg;
+            UdpSession::send_msg(copy);
         }
 
         void P2pUdpFinder::on_msg(

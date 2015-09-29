@@ -4,9 +4,10 @@
 #define _TRIP_CLIENT_PROTO_MESSAGE_SESSION_H_
 
 #include "trip/client/proto/MessageData.h"
+#include "trip/client/proto/Packet.h"
 #include "trip/client/utils/Serialize.h"
 #include "trip/client/core/Segment.h"
-#include "trip/client/core/Piece.h"
+#include "trip/client/core/PoolPiece.h"
 
 #include <util/serialization/Collection.h>
 
@@ -22,8 +23,8 @@ namespace trip
         struct MessageRequestBind
             : MessageData<MessageRequestBind, REQ_Bind>
         {
-            Uuid rid;
             boost::uint16_t sid;
+            Uuid rid;
 
             MessageRequestBind()
                 : sid(0)
@@ -34,8 +35,8 @@ namespace trip
             void serialize(
                 Archive & ar)
             {
-                ar & rid
-                    & sid;
+                ar & sid
+                    & rid;
             }
         };
 
@@ -82,8 +83,8 @@ namespace trip
 
         template <typename Archive>
         void serialize(
-            SegmentMeta & meta, 
-            Archive & ar)
+            Archive & ar, 
+            SegmentMeta & meta)
         {
             ar & meta.duration
                 & meta.bytesize
@@ -148,7 +149,7 @@ namespace trip
             void serialize(
                 Archive & ar)
             {
-                ar & start
+                ar & start 
                     & map;
             }
         };
@@ -159,6 +160,7 @@ namespace trip
             : MessageData<MessageRequestData, REQ_Data>
         {
             boost::uint64_t index; // start index
+            std::vector<boost::int16_t> offsets;
 
             MessageRequestData()
                 : index(0)
@@ -169,7 +171,8 @@ namespace trip
             void serialize(
                 Archive & ar)
             {
-                ar & index;
+                ar & index
+                    & make_sized<boost::uint8_t>(offsets);
             }
         };
 
@@ -181,6 +184,7 @@ namespace trip
 
             MessageResponseData()
                 : index(0)
+                , piece(PoolPiece::alloc())
             {
             }
 
@@ -189,6 +193,9 @@ namespace trip
                 Archive & ar)
             {
                 ar & index;
+                Packet * pkt = static_cast<Packet *>(ar.rdbuf());
+                if (!pkt->swap_body(piece, Archive::is_loading::value))
+                    ar.fail();
             }
         };
 

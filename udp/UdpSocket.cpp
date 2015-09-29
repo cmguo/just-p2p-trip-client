@@ -4,6 +4,7 @@
 #include "trip/client/udp/UdpSocket.h"
 #include "trip/client/udp/UdpPacket.h"
 #include "trip/client/udp/UdpTunnel.h"
+#include "trip/client/udp/UdpEndpoint.h"
 #include "trip/client/udp/Error.h"
 #include "trip/client/proto/PacketBuffers.h"
 #include "trip/client/proto/TunnelHeader.h"
@@ -17,12 +18,12 @@
 
 #include <boost/bind.hpp>
 
-FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("trip.client.UdpSocket", framework::logger::Debug);
-
 namespace trip
 {
     namespace client
     {
+
+        FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("trip.client.UdpSocket", framework::logger::Debug);
 
         UdpSocket::UdpSocket(
             boost::asio::io_service & io_svc)
@@ -65,6 +66,13 @@ namespace trip
             return !ec;
         }
 
+        void UdpSocket::get_endpoint(
+            UdpEndpoint & endpoint)
+        {
+            endpoint.endpoints[0] = rcv_pkt_->endp;
+            endpoint.num_ep = 1;
+        }
+
         void UdpSocket::handle_recv(
             UdpPacket * pkt, 
             boost::system::error_code ec, 
@@ -77,15 +85,16 @@ namespace trip
             }
 
             if (!ec && pkt->decode()) {
-                PacketBufferIterator beg(pkt);
-                PacketBuffers buf(beg, bytes_recved);
-                Bus::on_recv(pkt, buf);
-                TunnelIArchive ar(buf);
+                LOG_DEBUG("[handle_recv] bytes=" << bytes_recved);
+                pkt->commit(bytes_recved);
+                TunnelIArchive ar(*pkt);
                 boost::uint16_t ver;
                 boost::uint16_t tid;
                 ar >> ver >> tid;
                 ar.seekg(0, std::ios::beg);
-                Bus::on_recv(tid, pkt, buf);
+                rcv_pkt_ = pkt;
+                Bus::on_recv(tid, pkt, *pkt);
+                pkt->reset();
             } else if (!ec) {
                 ec = udp_error::chksum_error;
                 LOG_ERROR("[handle_recv] failed, ec:" << ec.message());
@@ -101,10 +110,24 @@ namespace trip
 
         void UdpSocket::send()
         {
+            if (Bus::empty())
+                return;
             UdpPacket pkt;
-            TunnelHeader th;
-            while (true) {
-
+            while (!Bus::empty()) {
+                Bus::on_send(&pkt, pkt);
+                assert(pkt.in_avail());
+                LOG_DEBUG("[send] bytes=" << pkt.in_avail());
+                if (pkt.encode()) {
+                    if (pkt.sender) {
+                        pkt.sender(socket_, pkt, pkt.sendctx);
+                    } else {
+                        boost::system::error_code ec;
+                        socket_.send_to(pkt.data(), pkt.endp, 0, ec);
+                        if (ec)
+                            LOG_WARN("[send] ec=" << ec.message());
+                    }
+                    pkt.reset();
+                }
             }
         }
 
@@ -112,6 +135,7 @@ namespace trip
             Time const & now)
         {
             on_timer(now);
+            send();
         }
 
     } // namespace client

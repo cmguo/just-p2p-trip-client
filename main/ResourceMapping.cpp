@@ -25,7 +25,7 @@ namespace trip
         void ResourceMapping::find(
             Resource & resource)
         {
-            Url url("http://index.trip.com/test.xml");
+            Url url("http://index.trip.com/resource.xml");
             http_.async_fetch(url, 
                 boost::bind(&ResourceMapping::handle_fetch, this, _1, boost::ref(resource)));
         }

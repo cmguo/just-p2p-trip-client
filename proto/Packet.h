@@ -14,6 +14,7 @@ namespace trip
     {
 
         class Packet
+            : public PacketBuffers
         {
         public:
             typedef PacketBufferIterator const_iterator;
@@ -47,6 +48,10 @@ namespace trip
                 prio_ = n;
             }
 
+            bool swap_body(
+                Piece::pointer & piece, 
+                bool read);
+
         public:
             boost::uint16_t size() const
             {
@@ -58,15 +63,19 @@ namespace trip
                 return prio_;
             }
 
+            static size_t const HEAD_SIZE = 24;
+            static size_t const TAIL_SIZE = 48;
+            static size_t const MAX_SIZE = HEAD_SIZE + PIECE_SIZE + TAIL_SIZE;
+
         protected:
             friend class PacketBufferIterator;
 
             boost::uint16_t size_;
             boost::uint16_t prio_;      // Priority
             /* for udp, mtu = 1472 */
-            boost::uint8_t head_[16];   // TunnelHeader:8, MessageHeader: 8
+            boost::uint8_t head_[24];   // TunnelHeader:8, MessageHeader: 8, piece index: 8
             Piece::pointer body_;           // Piece size: 1400
-            boost::uint8_t tail_[56];
+            boost::uint8_t tail_[48];
         };
 
     } // namespace client

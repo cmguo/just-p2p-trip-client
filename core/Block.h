@@ -5,6 +5,8 @@
 
 #include "trip/client/core/Piece.h"
 
+#include <framework/container/Array.h>
+
 #include <boost/dynamic_bitset/dynamic_bitset.hpp>
 
 namespace trip
@@ -17,6 +19,13 @@ namespace trip
         class Block
         {
         public:
+            static Block * alloc(
+                boost::uint32_t size = 0);
+
+            static void free(
+                Block * p);
+
+        public:
             Block(
                 boost::uint32_t size = 0);
 
@@ -26,9 +35,16 @@ namespace trip
                 return left_ == 0;
             }
 
-            std::vector<Piece::pointer> const & pieces() const
+            typedef framework::container::Array<Piece::pointer const> piece_array_t;
+
+            piece_array_t pieces() const
             {
-                return pieces_;
+                return framework::container::make_array(pieces_, piece_count_);
+            }
+
+            boost::uint16_t piece_count() const
+            {
+                return piece_count_;
             }
 
             boost::uint32_t get_size() const;
@@ -64,7 +80,7 @@ namespace trip
             mutable boost::uint16_t touched_;
             boost::uint16_t piece_count_;
             boost::uint16_t last_piece_size_;
-            std::vector<Piece::pointer> pieces_;
+            Piece::pointer pieces_[PIECE_PER_BLOCK];
         };
 
     } // namespace client

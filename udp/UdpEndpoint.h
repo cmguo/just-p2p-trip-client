@@ -1,7 +1,7 @@
-// UdpPeer.h
+// UdpEndpoint.h
 
-#ifndef _TRIP_P2P_UDP_PEER_H_
-#define _TRIP_P2P_UDP_PEER_H_
+#ifndef _TRIP_UDP_UDP_ENDPOINT_H_
+#define _TRIP_UDP_UDP_ENDPOINT_H_
 
 #include <framework/network/Endpoint.h>
 
@@ -12,13 +12,13 @@ namespace trip
 
         using framework::network::Endpoint;
 
-        struct UdpPeer
+        struct UdpEndpoint
         {
             Uuid id;
             boost::uint16_t num_ep;
             Endpoint endpoints[4];
 
-            UdpPeer()
+            UdpEndpoint()
                 : num_ep(0)
             {
             }
@@ -27,4 +27,4 @@ namespace trip
     } // namespace client
 } // namespace trip
 
-#endif // _TRIP_P2P_UDP_PEER_H_
+#endif // _TRIP_UDP_UDP_ENDPOINT_H_

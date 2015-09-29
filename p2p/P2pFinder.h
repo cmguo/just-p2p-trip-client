@@ -14,7 +14,7 @@ namespace trip
         class P2pManager;
         struct MessageResponseFind;
 
-        struct P2pPeer;
+        struct P2pEndpoint;
 
         class P2pFinder
             : public Finder

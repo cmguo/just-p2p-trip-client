@@ -25,13 +25,17 @@ namespace trip
 
         void P2pFinder::open()
         {
+            UdpEndpoint & endp(pmgr_.local_endpoint());
             MessageRequestRegister reg;
+            reg.endpoint = endp;
+            //reg.rids;
             send_msg(reg);
         }
 
         void P2pFinder::close()
         {
             MessageRequestUnregister unreg;
+            unreg.pid = pmgr_.local_endpoint().id;
             send_msg(unreg);
         }
 
@@ -55,8 +59,9 @@ namespace trip
             Url const & url)
         {
             Uuid pid(url.param("pid"));
-            UdpTunnel & tunnel = pmgr_.get_tunnel(pid);
-            return new P2pSource(resource, tunnel, url);
+            UdpTunnel * tunnel = pmgr_.get_tunnel(pid);
+            assert(tunnel);
+            return new P2pSource(resource, *tunnel, url);
         }
 
         bool P2pFinder::handle_msg(
@@ -81,10 +86,10 @@ namespace trip
         {
             std::vector<Url> urls;
             Url url("p2p:///");
-            for (size_t i = 0; i < find.peers.size(); ++i) {
-                P2pPeer const & peer = find.peers[i];
-                pmgr_.get_tunnel(peer);
-                url.param("pid", format(peer.id));
+            for (size_t i = 0; i < find.endpoints.size(); ++i) {
+                UdpEndpoint const & endpoint = find.endpoints[i];
+                pmgr_.get_tunnel(endpoint);
+                url.param("pid", format(endpoint.id));
                 urls.push_back(url);
             }
             found(find.rid, urls);

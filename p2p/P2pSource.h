@@ -46,7 +46,13 @@ namespace trip
             virtual bool request(
                 std::vector<DataId> const & pieces);
             
+            virtual void seek(
+                DataId id);
+
         private:
+            void req_map(
+                DataId id);
+
             static UdpTunnel & get_tunnel(
                 boost::asio::io_service & io_svc,
                 Url const & url);
@@ -61,7 +67,7 @@ namespace trip
         private:
             void on_map(
                 DataId id,
-                boost::dynamic_bitset<> & map);
+                boost::dynamic_bitset<boost::uint32_t> & map);
 
             void on_data(
                 DataId id, 
@@ -79,10 +85,12 @@ namespace trip
 
         private:
             DataId map_id_;
-            boost::dynamic_bitset<> map_;
+            boost::dynamic_bitset<boost::uint32_t> map_;
             Duration delta_;
             Duration rtt_;
+            Request map_req_; // timer for map request
             std::deque<Request> requests_;
+            boost::uint32_t req_count_;
         };
 
     } // namespace client

@@ -23,8 +23,43 @@ namespace trip
 
 #define MAKE_ID(s, b, p) (((s) << (PIECE_BIT + BLOCK_BIT)) | ((b) << PIECE_BIT) | (p))
 
+        struct DataDiff
+            : boost::additive<DataDiff>
+        {
+            DataDiff(
+                boost::int64_t d)
+                : d(d)
+            {
+            }
+
+            DataDiff(
+                boost::uint64_t segment, 
+                boost::uint32_t block, 
+                boost::uint32_t piece)
+            {
+                this->d = (boost::int64_t)MAKE_ID(segment, block, piece);
+            }
+
+            DataDiff & operator+=(
+                DataDiff const & r)
+            {
+                d += r.d;
+                return *this;
+            }
+
+            DataDiff & operator-=(
+                DataDiff const & r)
+            {
+                d -= r.d;
+                return *this;
+            }
+
+            boost::int64_t d;
+        };
+
         struct DataId
             : boost::totally_ordered<DataId>
+            , boost::additive<DataId, DataDiff>
         {
             union {
 #ifdef BOOST_BIG_ENDIAN
@@ -117,6 +152,38 @@ namespace trip
                 DataId const & r)
             {
                 return l.id == r.id;
+            }
+
+            static DataDiff segments(
+                boost::int64_t n)
+            {
+                return DataDiff(n << (PIECE_BIT + BLOCK_BIT));
+            }
+
+            static DataDiff blocks(
+                boost::int64_t n)
+            {
+                return DataDiff(n << PIECE_BIT);
+            }
+
+            static DataDiff pieces(
+                boost::int64_t n)
+            {
+                return DataDiff(n);
+            }
+
+            DataId & operator+=(
+                DataDiff const & r)
+            {
+                id += r.d;
+                return *this;
+            }
+
+            DataId & operator-=(
+                DataDiff const & r)
+            {
+                id -= r.d;
+                return *this;
             }
         };
 

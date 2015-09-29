@@ -21,9 +21,11 @@ namespace trip
             bool push(
                 void * pkt);
 
-            void * first();
+            void * first() const;
 
             void pop();
+
+            bool empty() const;
 
         protected:
             size_t limit_;

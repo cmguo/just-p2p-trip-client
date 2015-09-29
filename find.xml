@@ -1,0 +1,12 @@
+<root>
+    <rid>0123456789ABCDEF0123456789ABCDEF</rid>
+    <endpoints>
+        <item>
+            <id>10000000000000000000000000000001</id>
+            <num_ep>1</num_ep>
+            <endpoints>
+                <item>192.168.14.205:6666</item>
+            </endpoints>
+        </item>
+    </endpoints>
+</root>

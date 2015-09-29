@@ -8,6 +8,12 @@ namespace trip
     namespace client
     {
 
+        UdpPacket::UdpPacket()
+            : sender(NULL)
+            , sendctx(NULL)
+        {
+        }
+
         bool UdpPacket::decode()
         {
             return true;

@@ -15,6 +15,10 @@ namespace trip
 
         typedef util::protocol::Message<MessageTraits> Message;
 
+        Message * alloc_message();
+
+        void free_message(Message * msg);
+
     } // namespace client
 } // namespace trip
 

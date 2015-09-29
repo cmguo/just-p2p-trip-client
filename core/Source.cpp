@@ -63,12 +63,19 @@ namespace trip
             return scheduler_ != NULL;
         }
 
+        void Source::seek(
+            DataId id)
+        {
+        }
+
         void Source::on_ready()
         {
             LOG_TRACE("[on_ready]");
             std::vector<DataId> pieces;
             if (scheduler_->get_task(*this, pieces)) {
                 request(pieces);
+            } else {
+                LOG_INFO("[on_ready] no task");
             }
         }
 

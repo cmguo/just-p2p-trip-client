@@ -50,6 +50,11 @@ namespace trip
             return true;
         }
 
+        bool Bus::empty() const
+        {
+            return Cell::empty() && signal_slots_ == NULL;
+        }
+
         void Bus::on_send(
             boost::uint16_t id, 
             void * head, 
@@ -88,12 +93,30 @@ namespace trip
             void * head, 
             NetBuffer & buf)
         {
+            if (signal_slots_ == NULL)
+                return;
+            Slot * slot = signal_slots_;
+            signal_slots_ = signal_slots_->next;
+            if (signal_slots_ == NULL)
+                signal_slots_tail_ = &signal_slots_;
+            slot->cell->on_send(head, buf);
+            if (!slot->cell->empty()) {
+                *signal_slots_tail_ = slot;
+                signal_slots_tail_ = &slot->next;
+            } else {
+                slot->flags &= ~Slot::sfSignal;
+            }
         }
 
         void Bus::on_recv(
             void * head, 
             NetBuffer & buf)
         {
+        }
+
+        bool Bus::is_signal() const
+        {
+            return signal_slots_ != NULL;
         }
 
         void Bus::on_timer(

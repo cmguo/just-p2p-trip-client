@@ -5,8 +5,11 @@
 
 #include "trip/client/proto/MessageData.h"
 #include "trip/client/utils/Serialize.h"
+#include "trip/client/udp/UdpEndpoint.h"
 
+#include <util/serialization/NVPair.h>
 #include <util/serialization/Collection.h>
+#include <util/serialization/Array.h>
 
 namespace trip
 {
@@ -14,13 +17,26 @@ namespace trip
     {
 
         using util::serialization::make_sized;
+        using framework::container::make_array;
+
+        /* UdpEndpoint */
+
+        template <typename Archive>
+        void serialize(
+            Archive & ar, 
+            UdpEndpoint & endpoint)
+        {
+            ar & SERIALIZATION_NVP_NAME("id", endpoint.id)
+                & SERIALIZATION_NVP_NAME("num_ep", endpoint.num_ep);
+            ar & SERIALIZATION_NVP_NAME("endpoints", make_array(endpoint.endpoints, endpoint.num_ep));
+        }
 
         /* Register */
 
         struct MessageRequestRegister
             : MessageData<MessageRequestRegister, REQ_Register>
         {
-            Uuid pid;
+            UdpEndpoint endpoint;
             std::vector<Uuid> rids;
 
             MessageRequestRegister()
@@ -31,8 +47,8 @@ namespace trip
             void serialize(
                 Archive & ar)
             {
-                ar & pid
-                    & make_sized<boost::uint32_t>(rids);
+                ar & SERIALIZATION_NVP(endpoint)
+                    & SERIALIZATION_NVP_NAME("rids", make_sized<boost::uint32_t>(rids));
             }
         };
 
@@ -66,8 +82,8 @@ namespace trip
             void serialize(
                 Archive & ar)
             {
-                ar & pid
-                    & rid;
+                ar & SERIALIZATION_NVP(pid)
+                    & SERIALIZATION_NVP(rid);
             }
         };
 
@@ -85,7 +101,7 @@ namespace trip
             void serialize(
                 Archive & ar)
             {
-                ar & timestamp;
+                ar & SERIALIZATION_NVP(timestamp);
             }
         };
 
@@ -94,6 +110,9 @@ namespace trip
         struct MessageRequestFind
             : MessageData<MessageRequestFind, REQ_Find>
         {
+            Uuid rid;
+            boost::uint16_t count;
+
             MessageRequestFind()
             {
             }
@@ -102,6 +121,8 @@ namespace trip
             void serialize(
                 Archive & ar)
             {
+                ar & SERIALIZATION_NVP(rid)
+                    & SERIALIZATION_NVP(count);
             }
         };
 
@@ -109,6 +130,7 @@ namespace trip
             : MessageData<MessageResponseFind, RSP_Find>
         {
             Uuid rid;
+            std::vector<UdpEndpoint> endpoints;
 
             MessageResponseFind()
             {
@@ -118,6 +140,8 @@ namespace trip
             void serialize(
                 Archive & ar)
             {
+                ar & SERIALIZATION_NVP(rid)
+                    & SERIALIZATION_NVP_NAME("endpoints", make_sized<boost::uint32_t>(endpoints));
             }
         };
 

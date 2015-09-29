@@ -1,10 +1,15 @@
 // P2pManager.cpp
 
 #include "trip/client/Common.h"
+#include "trip/client/proto/MessageSession.h"
 #include "trip/client/p2p/P2pManager.h"
 #include "trip/client/p2p/P2pHttpFinder.h"
-#include "trip/client/p2p/P2pPeer.h"
+#include "trip/client/p2p/P2pSink.h"
 #include "trip/client/udp/UdpManager.h"
+#include "trip/client/udp/UdpEndpoint.h"
+#include "trip/client/main/ResourceManager.h"
+
+#include <boost/bind.hpp>
 
 namespace trip
 {
@@ -14,9 +19,12 @@ namespace trip
         P2pManager::P2pManager(
             util::daemon::Daemon & daemon)
             : util::daemon::ModuleBase<P2pManager>(daemon, "P2pManager")
+            , rmgr_(util::daemon::use_module<ResourceManager>(daemon))
             , umgr_(util::daemon::use_module<UdpManager>(daemon))
             , finder_(new P2pHttpFinder(*this))
         {
+            umgr_.register_service(REQ_Bind, 
+                boost::bind(&P2pSink::create_session, boost::ref(rmgr_), _1, _2));
         }
 
         P2pManager::~P2pManager()
@@ -38,22 +46,21 @@ namespace trip
             return true;
         }
 
-        P2pTunnel & P2pManager::get_tunnel(
-            P2pPeer const & peer)
+        UdpEndpoint & P2pManager::local_endpoint()
         {
-            std::map<Uuid, UdpTunnel *>::iterator iter = tunnels_.find(peer.id);
-            if (iter == tunnels_.end()) {
-                iter = tunnels_.insert(std::make_pair(peer.id, &umgr_.alloc_tunnel(peer))).first;
-            }
-            return *iter->second;
+            return umgr_.local_endpoint();
         }
 
         P2pTunnel & P2pManager::get_tunnel(
+            UdpEndpoint const & endpoint)
+        {
+            return umgr_.get_tunnel(endpoint);
+        }
+
+        P2pTunnel * P2pManager::get_tunnel(
             Uuid const & pid)
         {
-            std::map<Uuid, UdpTunnel *>::iterator iter = tunnels_.find(pid);
-            assert(iter != tunnels_.end());
-            return *iter->second;
+            return umgr_.get_tunnel(pid);
         }
 
     } // namespace client

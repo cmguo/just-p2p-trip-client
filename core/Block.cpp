@@ -26,8 +26,8 @@ namespace trip
             DataId id) const
         {
             boost::uint16_t index = id.piece;
-            assert(index < pieces_.size());
-            if (index < pieces_.size()) {
+            assert(index < piece_count_);
+            if (index < piece_count_) {
                 touched_ = true;
                 return pieces_[index];
             } else {
@@ -45,7 +45,7 @@ namespace trip
         void Block::get_stat(
             boost::dynamic_bitset<boost::uint32_t> & map) const
         {
-            for (size_t i = 0; i < pieces_.size() - 1; ++i) {
+            for (boost::uint16_t i = 0; i < piece_count_ - 1; ++i) {
                 map.push_back(pieces_[i]);
             }
         }
@@ -60,9 +60,8 @@ namespace trip
             } else {
                 last_piece_size_ = PIECE_SIZE;
             }
-            pieces_.resize(piece_count_);
             left_ = 0;
-            for (size_t i = 0; i < pieces_.size(); ++i) {
+            for (boost::uint16_t i = 0; i < piece_count_; ++i) {
                 if (!pieces_[i])
                     ++left_;
             }
@@ -72,9 +71,9 @@ namespace trip
             DataId & id)
         {
             boost::uint16_t next = id.piece;
-            while (next < pieces_.size() && pieces_[next])
+            while (next < piece_count_ && pieces_[next])
                 ++next;
-            if (next >= pieces_.size()) {
+            if (next >= piece_count_) {
                 id.piece = 0;
                 return true;
             } else {
@@ -88,9 +87,9 @@ namespace trip
             Piece::pointer piece)
         {
             boost::uint16_t index = id.piece;
-            assert(index < pieces_.size());
+            assert(index < piece_count_);
             assert(pieces_[index] == NULL);
-            if (index < pieces_.size() && pieces_[index] == NULL) {
+            if (index < piece_count_ && pieces_[index] == NULL) {
                 pieces_[index].swap(piece);
                 --left_;
             }
@@ -102,7 +101,7 @@ namespace trip
         {
             assert(get_size() == data->size_);
             boost::uint8_t * addr = (boost::uint8_t *)data->map_addr_;
-            for (size_t i = 0; i < pieces_.size() - 1; ++i) {
+            for (boost::uint16_t i = 0; i < piece_count_ - 1; ++i) {
                 pieces_[i] = BlockPiece::alloc(data, addr, PIECE_SIZE);
                 addr += PIECE_SIZE;
             }
@@ -115,7 +114,7 @@ namespace trip
             DataId to)
         {
             boost::uint32_t picf = from.piece;
-            boost::uint32_t pict = to.piece ? to.piece : pieces_.size();
+            boost::uint32_t pict = to.piece ? to.piece : piece_count_;
             while (picf < pict) {
                 pieces_[picf].reset();
                 ++picf;

@@ -9,6 +9,7 @@
 #include "trip/client/utils/Format.h"
 #include "trip/client/timer/TimerManager.h"
 #include "trip/client/core/Resource.h"
+#include "trip/client/core/Memory.h"
 
 #include <framework/logger/Logger.h>
 #include <framework/logger/StreamRecord.h>
@@ -56,7 +57,7 @@ namespace trip
                 boost::bind(&CacheManager::on_event, this, _1, _2));
             rmgr_.resource_deleting.on(
                 boost::bind(&CacheManager::on_event, this, _1, _2));
-            rmgr_.out_of_memory.on(
+            Memory::inst().out_of_memory.on(
                 boost::bind(&CacheManager::on_event, this, _1, _2));
             tmgr_.t_1_s.on(
                 boost::bind(&CacheManager::on_event, this, _1, _2));
@@ -126,11 +127,6 @@ namespace trip
                         delete iter->second;
                         rcaches_.erase(iter);
                     }
-                } else if (event == rmgr_.out_of_memory) {
-                    LOG_INFO("[on_event] out_of_memory, level=" << rmgr_.out_of_memory.level);
-                    // for level 0, delete blocks not visited in current 30 seconds
-                    // for level 5, delete blocks not visited in current 05 seconds
-                    memory_cache_->reclaim_caches((6 - rmgr_.out_of_memory.level) * 5);
                 }
             } else if (observable == tmgr_) {
                 if (event == tmgr_.t_1_s) {
@@ -143,6 +139,11 @@ namespace trip
                         iter->second->save_status();
                     }
                 }
+            } else if (observable == Memory::inst()) {
+                    LOG_INFO("[on_event] out_of_memory, level=" << Memory::inst().out_of_memory.level);
+                    // for level 0, delete blocks not visited in current 30 seconds
+                    // for level 5, delete blocks not visited in current 05 seconds
+                    memory_cache_->reclaim_caches((6 - Memory::inst().out_of_memory.level) * 5);
             } else {
                 Resource const & r = (Resource const &)observable;
                 ResourceCache * rcache = rcaches_[r.id()];

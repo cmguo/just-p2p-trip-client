@@ -30,6 +30,11 @@ namespace trip
                     increment();
             }
 
+            Packet * packet()
+            {
+                return pkt_;
+            }
+
         private:
             friend class boost::iterator_core_access;
 

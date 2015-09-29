@@ -56,21 +56,28 @@ namespace trip
             return p;
         }
 
-        void ResourceData::get_segment_status(
+        void ResourceData::get_segment_map(
             DataId from, 
+            boost::uint16_t count, 
             boost::dynamic_bitset<boost::uint32_t> & map) const
         {
+            boost::uint64_t start = from.top_segment;
+            boost::uint64_t end = start + count;
+            if (end > end_) end = end_;
+            map.resize(end - start, false);
+            std::map<boost::uint64_t, Segment2>::const_iterator iter = 
+                segments_.lower_bound(start);
+            while (iter != segments_.end() && iter->first < end) {
+                map[iter->first - start] = iter->second.saved;
+                ++iter;
+            }
         }
 
-        bool ResourceData::get_block_status(
+        void ResourceData::get_block_map(
             DataId id, 
+            boost::uint16_t count, 
             boost::dynamic_bitset<boost::uint32_t> & map) const
         {
-            Segment const * segment(get_segment(id));
-            if (segment == NULL)
-                return false;
-            segment->get_status(id, map);
-            return true;
         }
 
         bool ResourceData::meta_dirty() const
@@ -112,11 +119,11 @@ namespace trip
         {
             assert(iterator.piece_);
             iterator.piece_.reset();
-            if ((size_t)iterator.id_.piece + 1 < iterator.block_->pieces().size()) {
+            if ((size_t)iterator.id_.piece + 1 < iterator.block_->piece_count()) {
                 iterator.id_.inc_piece();
             } else {
                 iterator.block_ = NULL;
-                if ((size_t)iterator.id_.block + 1 < iterator.segment_->blocks().size()) {
+                if ((size_t)iterator.id_.block + 1 < iterator.segment_->block_count()) {
                     iterator.id_.inc_block();
                 } else {
                     iterator.segment_ = NULL;
@@ -137,15 +144,15 @@ namespace trip
         {
             DataId & id = iterator.id_;
             iterator.piece_.reset();
-            if ((size_t)id.piece + 1 < iterator.block_->pieces().size()) {
+            if ((size_t)id.piece + 1 < iterator.block_->piece_count()) {
                 id.inc_piece();
             } else {
                 iterator.block_ = NULL;
-                if ((size_t)id.block + 1 < iterator.segment_->blocks().size()) {
+                if ((size_t)id.block + 1 < iterator.segment_->block_count()) {
                     id.inc_block();
                 } else {
                     if (!iterator.segment2_->meta) {
-                        assert((size_t)id.block < iterator.segment_->blocks().size());
+                        assert((size_t)id.block < iterator.segment_->block_count());
                         id.inc_block();
                         return;
                     }
@@ -419,7 +426,7 @@ namespace trip
             }
             Segment2 & segment(modify_segment2(id));
             if (segment.seg == NULL) {
-                segment.seg = new Segment(segment.meta ? segment.meta->bytesize : BLOCK_SIZE * 2);
+                segment.seg = Segment::alloc(segment.meta ? segment.meta->bytesize : BLOCK_SIZE * 2);
             }
             return &segment;
         }
@@ -429,7 +436,7 @@ namespace trip
         {
             Segment2 & segment(modify_segment2(id));
             if (segment.seg == NULL) {
-                segment.seg = new Segment(segment.meta ? segment.meta->bytesize : BLOCK_SIZE * 2);
+                segment.seg = Segment::alloc(segment.meta ? segment.meta->bytesize : BLOCK_SIZE * 2);
             }
             return *segment.seg;
         }
@@ -452,7 +459,7 @@ namespace trip
             }
             for (; segf < segt; ++segf) {
                 if (iter != segments_.end() && iter->first == segf && iter->second.seg) {
-                    delete iter->second.seg;
+                    Segment::free(iter->second.seg);
                     iter->second.seg = NULL;
                     ++iter;
                 }

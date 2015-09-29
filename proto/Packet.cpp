@@ -11,12 +11,33 @@ namespace trip
     {
 
         Packet::Packet()
+            : PacketBuffers(*this)
         {
-            body_ = PoolPiece::alloc(PIECE_SIZE);
+            body_ = PoolPiece::alloc();
         }
 
         Packet::~Packet()
         {
+        }
+
+        bool Packet::swap_body(
+            Piece::pointer & piece, 
+            bool read)
+        {
+            if (read) {
+                if (in_position() != HEAD_SIZE)
+                    return false;
+                boost::uint16_t size = 
+                    (boost::uint16_t)in_avail();
+                body_->set_size(size);
+                consume(size);
+            } else {
+                if (out_position() != HEAD_SIZE)
+                    return false;
+                commit(piece->size());
+            }
+            piece.swap(body_);
+            return true;
         }
 
         void PacketBufferIterator::increment()

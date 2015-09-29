@@ -46,6 +46,11 @@ namespace trip
         {
         }
 
+        bool Cell::empty() const
+        {
+            return queue_ == NULL || queue_->empty();
+        }
+
         void Cell::signal()
         {
             if (bus_)
@@ -55,7 +60,18 @@ namespace trip
         bool Cell::push(
             void * pkt)
         {
-            return queue_->push(pkt);
+            if (queue_) {
+                if (queue_->push(pkt)) {
+                    signal();
+                    return true;
+                } else {
+                    return false;
+                }
+            } else if (bus_) {
+                return bus_->push(pkt);
+            } else {
+                return false;
+            }
         }
 
         void * Cell::first()

@@ -16,10 +16,12 @@ namespace trip
         {
             // Tunnel Messages
  
-            REQ_Connect     = 0, 
-            REQ_Ping        = 1, // RTT
-            REQ_Disconnect  = 2, 
+            REQ_Probe       = 0, 
+            REQ_Connect     = 1, 
+            REQ_Ping        = 2, // RTT
+            REQ_Disconnect  = 3, 
 
+            RSP_Probe       = 0x0100 | REQ_Probe, 
             RSP_Connect     = 0x0100 | REQ_Connect, 
             RSP_Ping        = 0x0100 | REQ_Ping,
             RSP_Disconnect  = 0x0100 | REQ_Disconnect,
@@ -60,6 +62,9 @@ namespace trip
             : util::protocol::MessageData<MessageTraits, T, id>
         {
         };
+
+        extern char const * msg_type_str(
+            boost::uint16_t type);
 
     } // namespace client
 } // namespace trip

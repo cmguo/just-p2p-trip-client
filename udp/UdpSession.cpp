@@ -6,10 +6,15 @@
 #include "trip/client/proto/MessageTunnel.h"
 #include "trip/client/proto/Message.hpp"
 
+#include <framework/logger/Logger.h>
+#include <framework/logger/StreamRecord.h>
+
 namespace trip
 {
     namespace client
     {
+
+        FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("trip.client.UdpSession", framework::logger::Debug);
 
         UdpSession::UdpSession(
             UdpTunnel & tunnel)
@@ -22,18 +27,16 @@ namespace trip
         {
         }
 
+        UdpTunnel & UdpSession::tunnel()
+        {
+            return *(UdpTunnel *)bus_;
+        }
+
         void UdpSession::on_send(
             void * head, 
             NetBuffer & buf)
         {
-            Message * msg = NULL;
-            MessageTraits::o_archive_t ar(buf);
-            while ((msg = (Message *)first())) {
-                ar << *msg;
-                pop();
-                delete msg;
-            }
-            Cell::on_send(head, buf);
+            assert(false);
         }
 
         void UdpSession::on_recv(
@@ -42,16 +45,16 @@ namespace trip
         {
             Cell::on_recv(head, buf);
             MessageTraits::i_archive_t ar(buf);
-            while (buf.in_avail()) {
-                Message * msg = new Message;
-                ar >> *msg;
-                on_msg(msg);
-            }
+            Message * msg = alloc_message();
+            ar >> *msg;
+            //LOG_DEBUG("[on_msg] type=" << msg_type_str(msg->type));
+            on_msg(msg);
         }
 
         bool UdpSession::send_msg(
             Message * msg)
         {
+            //LOG_DEBUG("[send_msg] type=" << msg_type_str(msg->type));
             msg->sid = sid_;
             return push(msg);
         }

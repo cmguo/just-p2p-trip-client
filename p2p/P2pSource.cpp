@@ -8,10 +8,17 @@
 #include "trip/client/core/Scheduler.h"
 #include "trip/client/core/Resource.h"
 
+#include <framework/logger/Logger.h>
+#include <framework/logger/StreamRecord.h>
+
+#define PREPARE_MAP_RANGE 32
+
 namespace trip
 {
     namespace client
     {
+
+        FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("trip.client.P2pSource", framework::logger::Debug);
 
         P2pSource::P2pSource(
             Resource & resource,
@@ -19,11 +26,12 @@ namespace trip
             Url const & url)
             : Source(resource, url)
             , UdpSession(tunnel)
+            , map_id_(0)
+            , delta_(Duration::milliseconds(10))
+            , rtt_(Duration::milliseconds(100))
+            , map_req_(0, Time())
+            , req_count_(0)
         {
-            MessageRequestBind req;
-            req.rid = resource.id();
-            req.sid = id();
-            send_msg(new Message(req));
         }
 
         P2pSource::~P2pSource()
@@ -33,7 +41,12 @@ namespace trip
         bool P2pSource::open(
             Url const & url)
         {
-            return false;
+            Message * msg = alloc_message();
+            MessageRequestBind & req = 
+                msg->get<MessageRequestBind>();
+            req.rid = resource_.id();
+            req.sid = id();
+            return send_msg(msg);
         }
 
         bool P2pSource::close()
@@ -44,20 +57,42 @@ namespace trip
         bool P2pSource::request(
             std::vector<DataId> const & pieces)
         {
+            assert(!pieces.empty());
             Time now;
-            for (size_t i = 0; i < pieces.size(); ++i) {
+            Message * msg = alloc_message();
+            MessageRequestData & req = 
+                msg->get<MessageRequestData>();
+            LOG_DEBUG("[request] id=" << pieces[0]);
+            requests_.push_back(Request(pieces[0], now));
+            boost::uint64_t index = pieces[0].id;
+            req.index = index;
+            for (size_t i = 1; i < pieces.size(); ++i) {
+                LOG_DEBUG("[request] id=" << pieces[i]);
                 requests_.push_back(Request(pieces[i], now));
                 now += delta_;
+                if (i > 0) {
+                    req.offsets.push_back(pieces[i].id - index);
+                }
+                index = pieces[i].id;
             }
-            return true;
+            req_count_ += (boost::uint32_t)pieces.size();
+            return send_msg(msg);
+        }
+
+        void P2pSource::seek(
+            DataId id)
+        {
+            if (sid_ == 0)
+                return;
+            req_map(id);
         }
 
         bool P2pSource::has_segment(
-            DataId sid) const
+            DataId id) const
         {
-            if (sid < map_id_)
+            if (id < map_id_)
                 return false;
-            boost::uint64_t index = sid.segment - map_id_.segment;
+            boost::uint64_t index = id.segment - map_id_.segment;
             return index < map_.size() && map_[(size_t)index];
         }
 
@@ -74,7 +109,27 @@ namespace trip
 
         boost::uint32_t P2pSource::window_left() const
         {
-            return window_size() - requests_.size();
+            return window_size() - req_count_;
+        }
+
+
+        void P2pSource::req_map(
+            DataId id)
+        {
+            if (id.top)
+                id = resource_.data_ready.id;
+            id.inc_segment(0);
+            if (map_.empty() || id < map_id_ 
+                || id > map_id_ + DataId::segments(PREPARE_MAP_RANGE / 2)) {
+                map_req_.id = id;
+                map_req_.time = Time();
+                Message * msg = alloc_message();
+                MessageRequestMap & req = 
+                    msg->get<MessageRequestMap>();
+                req.start = map_id_.id;
+                req.count = PREPARE_MAP_RANGE;
+                send_msg(msg);
+            }
         }
 
         void P2pSource::on_data(
@@ -82,10 +137,17 @@ namespace trip
             Piece::pointer piece)
         {
             Time now;
+            LOG_DEBUG("[on_data] id=" << id);
             std::deque<Request>::iterator iter = 
                 std::find(requests_.begin(), requests_.end(), Request(id, now));
-            if (iter == requests_.end())
+            if (iter == requests_.end()) {
+                LOG_INFO("[on_data] unexpet piece, id=" << id);
                 return;
+            }
+            if (iter->id.top) {
+                LOG_INFO("[on_data] repeat piece, id=" << id);
+                return;
+            }
             if (iter == requests_.begin()) {
                 ++iter;
                 while (iter != requests_.end() && iter->id == DataId(MAX_SEGMENT, 0, 0)) 
@@ -94,29 +156,47 @@ namespace trip
             } else {
                 iter->id = DataId(MAX_SEGMENT, 0, 0);
             }
+            --req_count_;
             Source::on_data(id, piece);
             Source::on_ready();
         }
 
         void P2pSource::on_map(
             DataId id, 
-            boost::dynamic_bitset<> & map)
+            boost::dynamic_bitset<boost::uint32_t> & map)
         {
-            map_id_ = id;
-            map_.swap(map);
+            if (id == map_req_.id || map_.empty()) {
+                map_id_ = id;
+                map_.swap(map);
+                if (requests_.empty())
+                    Source::on_ready();
+            }
+            map_req_.id.top = 1;
+            map_req_.time += Duration::seconds(10);
         }
 
         void P2pSource::on_timer(
             Time const & now)
         {
             Time time = now - rtt_;
+
+            if (time < map_req_.time) {
+                req_map(map_req_.id);
+            }
+
             std::deque<Request>::iterator iter = requests_.begin();
             while (iter != requests_.end() && iter->time < time) {
-                if (iter->id.top == 0)
+                if (iter->id.top == 0) {
+                    LOG_INFO("[on_timer] timeout piece, id=" << iter->id);
+                    --req_count_;
                     on_timeout(iter->id);
+                }
                 ++iter;
             }
-            requests_.erase(requests_.begin(), iter);
+            if (iter != requests_.begin()) {
+                requests_.erase(requests_.begin(), iter);
+                Source::on_ready();
+            }
         }
 
         void P2pSource::on_msg(
@@ -124,17 +204,43 @@ namespace trip
         {
             switch (msg->type) {
             case RSP_Data:
+                {
+                    MessageResponseData & resp =
+                        msg->as<MessageResponseData>();
+                    on_data(resp.index, resp.piece);
+                    free_message(msg);
+                }
                 break;
             case RSP_Map:
+                {
+                    MessageResponseMap & resp =
+                        msg->as<MessageResponseMap>();
+                    on_map(resp.start, resp.map);
+                    //free_message(msg);
+                }
                 break;
             case RSP_Meta:
+                {
+                    free_message(msg);
+                }
                 break;
             case RSP_Bind:
+                {
+                    MessageResponseBind & resp =
+                        msg->as<MessageResponseBind>();
+                    UdpSession::sid_ = resp.sid;
+                    req_map(resource_.data_ready.id);
+                    free_message(msg);
+                }
                 break;
             case RSP_Unbind:
+                {
+                    free_message(msg);
+                }
                 break;
             default:
                 assert(false);
+                free_message(msg);
             }
         }
 

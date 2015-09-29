@@ -3,6 +3,8 @@
 #ifndef _TRIP_P2P_P2P_MANAGER_H_
 #define _TRIP_P2P_P2P_MANAGER_H_
 
+#include "trip/client/proto/Message.h"
+
 #include <util/daemon/Module.h>
 
 namespace trip
@@ -10,8 +12,9 @@ namespace trip
     namespace client
     {
 
-        struct P2pPeer;
+        struct UdpEndpoint;
 
+        class ResourceManager;
         class UdpManager;
         class Finder;
         class UdpTunnel;
@@ -34,11 +37,13 @@ namespace trip
             }
 
         public:
-            P2pTunnel & get_tunnel(
+            UdpEndpoint & local_endpoint();
+
+            P2pTunnel * get_tunnel(
                 Uuid const & pid);
 
             P2pTunnel & get_tunnel(
-                P2pPeer const & peer);
+                UdpEndpoint const & endpoint);
 
         private:
             virtual bool startup(
@@ -48,9 +53,9 @@ namespace trip
                 boost::system::error_code & ec);
 
         private:
+            ResourceManager & rmgr_;
             UdpManager & umgr_;
             Finder * finder_;
-            std::map<Uuid, P2pTunnel *> tunnels_;
         };
 
     } // namespace client

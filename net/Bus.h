@@ -40,6 +40,8 @@ namespace trip
             virtual void on_timer(
                 Time const & now);
 
+            virtual bool empty() const;
+
         protected:
             struct Slot;
             struct Node;
@@ -95,6 +97,8 @@ namespace trip
 
             Slot * slot_at(
                 boost::uint16_t id);
+
+            bool is_signal() const;
 
         private:
             Slot * slot_alloc();

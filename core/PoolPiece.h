@@ -17,20 +17,6 @@ namespace trip
             static void set_capacity(
                 size_t capacity);
 
-            void set_size(
-                boost::uint16_t size)
-            {
-                Piece::set_size(size);
-            }
-
-            typedef void (*oom_handler_t)(
-                void * data, 
-                size_t level);
-
-            static void set_oom_handler(
-                oom_handler_t handler, 
-                void * data);
-
         public:
             static PoolPiece * alloc(
                 boost::uint16_t size = PIECE_SIZE);

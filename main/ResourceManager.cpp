@@ -23,7 +23,7 @@ namespace trip
             : util::daemon::ModuleBase<ResourceManager>(daemon, "ResourceManager")
             , mapping_(io_svc())
         {
-            PoolPiece::set_oom_handler(oom_handler, this);
+            LOG_INFO("[sizeof] Block:" << sizeof(Block) << ", Segment:" << sizeof(Segment));
         }
 
         ResourceManager::~ResourceManager()
@@ -41,6 +41,18 @@ namespace trip
         {
             mapping_.close();
             return true;
+        }
+
+        Resource * ResourceManager::find(
+            Uuid const & rid)
+        {
+            std::map<Uuid, Resource *>::iterator iter = 
+                resources_.find(rid);
+            if (iter == resources_.end()) {
+                return NULL;
+            } else {
+                return iter->second;
+            }
         }
 
         Resource & ResourceManager::get(
@@ -102,15 +114,6 @@ namespace trip
             other_resources_.erase(
                 std::remove(other_resources_.begin(), other_resources_.end(), &r), 
                 other_resources_.end());
-        }
-
-        void ResourceManager::oom_handler(
-            void * data,
-            size_t level)
-        {
-            ResourceManager * inst = (ResourceManager *)data;
-            inst->out_of_memory.level = level;
-            inst->raise(inst->out_of_memory);
         }
 
     } // namespace client

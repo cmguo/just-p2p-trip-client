@@ -38,6 +38,13 @@ namespace trip
                 return size_;
             }
 
+            void set_size(
+                boost::uint16_t size)
+            {
+                assert(size <= size_);
+                size_ = size;
+            }
+
         protected:
             Piece(
                 boost::uint8_t type,
@@ -51,13 +58,6 @@ namespace trip
             }
 
             ~Piece() {}
-
-            void set_size(
-                boost::uint16_t size)
-            {
-                assert(size <= size_);
-                size_ = size;
-            }
 
         private:
             static void free(

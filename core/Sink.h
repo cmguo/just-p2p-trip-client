@@ -47,13 +47,13 @@ namespace trip
 
         private:
             virtual void on_meta(
-                ResourceMeta const & meta) = 0;
+                ResourceMeta const & meta) {};
 
             virtual void on_segment_meta(
                 boost::uint64_t seg,  
-                SegmentMeta const & meta) = 0;
+                SegmentMeta const & meta) {};
 
-            virtual void on_data() = 0;
+            virtual void on_data() {};
 
         private:
             void on_event(

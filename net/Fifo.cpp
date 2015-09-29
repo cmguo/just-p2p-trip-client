@@ -27,7 +27,7 @@ namespace trip
             }
         }
 
-        void * Fifo::first()
+        void * Fifo::first() const
         {
             return pkts_.empty() ? NULL : pkts_.front();
         }
@@ -36,6 +36,11 @@ namespace trip
         {
             assert(!pkts_.empty());
             pkts_.pop_front();
+        }
+
+        bool Fifo::empty() const
+        {
+            return pkts_.empty();
         }
 
     } // namespace client

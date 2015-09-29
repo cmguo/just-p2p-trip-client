@@ -61,6 +61,9 @@ namespace trip
         {
             SegmentInfo * sinfo = (SegmentInfo *)source.context();
             boost::uint32_t need_count = source.window_left();
+            
+            if (need_count == 0)
+                return false;
 
             if (sinfo && sinfo->empty()) {
                 sinfo = NULL;
@@ -98,6 +101,7 @@ namespace trip
                 --need_count;
             }
 
+            assert(!pieces.empty());
             return true;
         }
 

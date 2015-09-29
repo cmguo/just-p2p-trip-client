@@ -33,10 +33,11 @@ namespace trip
 
             ResourceChangedEvent resource_deleting;
 
-            OutOfMemoryEvent out_of_memory;
-
         public:
             Resource & get(
+                Uuid const & rid);
+
+            Resource * find(
                 Uuid const & rid);
 
             Resource & get(
@@ -53,10 +54,6 @@ namespace trip
             void on_event(
                 util::event::Observable const & observable, 
                 util::event::Event const & event);
-
-            static void oom_handler(
-                void * data, 
-                size_t level);
 
         private:
             std::map<Uuid, Resource *> resources_;

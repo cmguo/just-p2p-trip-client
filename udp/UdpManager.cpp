@@ -4,10 +4,15 @@
 #include "trip/client/udp/UdpManager.h"
 #include "trip/client/udp/UdpSocket.h"
 #include "trip/client/udp/UdpTunnel.h"
-#include "trip/client/udp/UdpListener.h"
-#include "trip/client/udp/UdpMainSession.h"
-#include "trip/client/udp/UdpPeer.h"
+#include "trip/client/udp/UdpPacket.h"
+#include "trip/client/udp/UdpTunnelListener.h"
+#include "trip/client/udp/UdpSessionListener.h"
 #include "trip/client/timer/TimerManager.h"
+
+#include <framework/logger/Logger.h>
+#include <framework/logger/StreamRecord.h>
+#include <framework/network/Interface.h>
+using namespace framework::network;
 
 #include <boost/bind.hpp>
 
@@ -16,18 +21,23 @@ namespace trip
     namespace client
     {
 
+        FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("trip.client.UdpManager", framework::logger::Debug);
+
         UdpManager::UdpManager(
             util::daemon::Daemon & daemon)
-            : util::daemon::ModuleBase<UdpManager>(daemon, "UdpManager")
+            : util::daemon::ModuleBase<UdpManager>(daemon, "trip.client.UdpManager")
             , tmgr_(util::daemon::use_module<TimerManager>(daemon))
-            , addr_(":6666")
+            , addr_("0.0.0.0:6666")
             , parallel_(10)
             , socket_(new UdpSocket(io_svc()))
         {
-            config().register_module("UdpManager")
+            module_config()
                 << CONFIG_PARAM_NAME_NOACC("addr", addr_)
-                << CONFIG_PARAM_NAME_NOACC("parallel", parallel_);
-            new UdpListener(*this);
+                << CONFIG_PARAM_NAME_NOACC("parallel", parallel_)
+                << CONFIG_PARAM_NAME_NOACC("uid", local_endpoint_.id);
+            UdpTunnel * tunnel = new UdpTunnel(*socket_);
+            new UdpTunnelListener(*this, *tunnel);
+            LOG_INFO("[sizeof] Message:" << sizeof(Message) << ", UdpPacket:" << sizeof(UdpPacket));
         }
 
         UdpManager::~UdpManager()
@@ -40,6 +50,17 @@ namespace trip
         {
             tmgr_.t_10_ms.on(
                 boost::bind(&UdpManager::on_event, this, _1, _2));
+            if (local_endpoint_.id == Uuid()) {
+                local_endpoint_.id.generate();
+                config().set_force(name(), "uid", local_endpoint_.id.to_string());
+            }
+            std::vector<Interface> interfaces;
+            enum_interface(interfaces);
+            for (size_t i = 0; i < interfaces.size() && local_endpoint_.num_ep < 4; ++i) {
+                Interface ifc(interfaces[i]);
+                if ((ifc.flags & (ifc.up | ifc.loopback)) == ifc.up)
+                    local_endpoint_.endpoints[local_endpoint_.num_ep++] = Endpoint(ifc.addr.to_string(), addr_.port());
+            }
             return socket_->start(addr_, parallel_, ec);
         }
 
@@ -51,33 +72,43 @@ namespace trip
             return socket_->stop(ec);
         }
 
-        UdpTunnel & UdpManager::get_tunnel(
-            UdpPeer const & peer)
+        void UdpManager::register_service(
+            boost::uint32_t type, 
+            service_t service)
         {
-            UdpTunnel & tunnel = get_tunnel(peer.id);
-            new UdpMainSession(tunnel, peer);
-            return tunnel;
+            services_[type] = service;
         }
 
-        UdpTunnel & UdpManager::get_tunnel(
-            Uuid const & pid)
-        {
-            std::map<Uuid, UdpTunnel *>::iterator iter = tunnels_.find(pid);
-            if (iter == tunnels_.end()) {
-                iter = tunnels_.insert(std::make_pair(pid, new UdpTunnel(*socket_))).first;
-            }
-            UdpTunnel * tunnel = iter->second;
-            return *tunnel;
-        }
-
-        UdpSession & UdpManager::get_session(
+        UdpSession * UdpManager::get_session(
             UdpTunnel & tunnel, 
-            Message const & msg)
+            Message & msg)
         {
             std::map<boost::uint32_t, service_t>::const_iterator iter = services_.find(msg.id());
             if (iter == services_.end())
-                return *new UdpSession(tunnel);
+                return NULL;
             return iter->second(tunnel, msg);
+        }
+
+        UdpTunnel * UdpManager::get_tunnel(
+            Uuid const & uid)
+        {
+            std::map<Uuid, UdpTunnel *>::iterator iter = tunnels_.find(uid);
+            if (iter == tunnels_.end()) {
+                return NULL;
+            }
+            return iter->second;
+        }
+
+        UdpTunnel & UdpManager::get_tunnel(
+            UdpEndpoint const & endpoint)
+        {
+            std::map<Uuid, UdpTunnel *>::iterator iter = tunnels_.find(endpoint.id);
+            if (iter == tunnels_.end()) {
+                UdpTunnel * tunnel = new UdpTunnel(*socket_);
+                new UdpSessionListener(*this, *tunnel, endpoint);
+                iter = tunnels_.insert(std::make_pair(endpoint.id, tunnel)).first;
+            }
+            return *iter->second;
         }
 
         void UdpManager::on_event(

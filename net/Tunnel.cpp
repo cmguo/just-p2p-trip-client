@@ -30,7 +30,7 @@ namespace trip
             void * head, 
             NetBuffer & buf)
         {
-            Bus::on_send(head, buf);
+            Bus::on_recv(head, buf);
         }
 
     } // namespace client

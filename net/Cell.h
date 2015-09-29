@@ -48,16 +48,18 @@ namespace trip
             virtual void on_timer(
                 Time const & now);
 
-        protected:
-            void signal();
+            virtual bool empty() const;
 
             bool push(
                 void * ptk);
 
+        protected:
+            void signal();
+
             void * first();
 
             void pop();
-            
+
         protected:
             boost::uint16_t id_;
             Bus * bus_;

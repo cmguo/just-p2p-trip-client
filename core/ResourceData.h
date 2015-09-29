@@ -50,12 +50,14 @@ namespace trip
             Piece::pointer get_piece(
                 DataId id);
 
-            void get_segment_status(
+            void get_segment_map(
                 DataId from, 
+                boost::uint16_t count, 
                 boost::dynamic_bitset<boost::uint32_t> & map) const;
 
-            bool get_block_status(
+            void get_block_map(
                 DataId id, 
+                boost::uint16_t count, 
                 boost::dynamic_bitset<boost::uint32_t> & map) const;
 
             bool meta_dirty() const;

@@ -4,7 +4,7 @@
 #include "trip/client/p2p/P2pHttpFinder.h"
 #include "trip/client/p2p/P2pSource.h"
 #include "trip/client/p2p/P2pManager.h"
-#include "trip/client/udp/UdpPeer.h"
+#include "trip/client/udp/UdpEndpoint.h"
 #include "trip/client/proto/MessageTracker.h"
 #include "trip/client/core/Resource.h"
 

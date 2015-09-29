@@ -16,6 +16,7 @@ namespace trip
 
         class UdpTunnel;
         class UdpPacket;
+        struct UdpEndpoint;
 
         class UdpSocket
             : public Bus
@@ -38,6 +39,10 @@ namespace trip
             void handle_timer(
                 Time const & now);
 
+        public:
+            void get_endpoint(
+                UdpEndpoint & endpoint);
+
         private:
             void handle_recv(
                 UdpPacket * pkt, 
@@ -49,6 +54,7 @@ namespace trip
         private:
             boost::asio::ip::udp::socket socket_;
             bool stopped_;
+            UdpPacket * rcv_pkt_;
         };
 
     } // namespace client

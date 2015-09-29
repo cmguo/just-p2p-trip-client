@@ -6,6 +6,7 @@
 #include "trip/client/core/Block.h"
 
 #include <framework/string/Md5.h>
+#include <framework/container/Array.h>
 
 #include <boost/filesystem/path.hpp>
 
@@ -32,6 +33,13 @@ namespace trip
         class Segment
         {
         public:
+            static Segment * alloc(
+                boost::uint32_t size = 0);
+
+            static void free(
+                Segment * p);
+
+        public:
             Segment(
                 boost::uint32_t size = 0);
 
@@ -47,9 +55,16 @@ namespace trip
 
             boost::uint32_t piece_count() const;
 
-            std::vector<Block *> const & blocks() const
+            boost::uint16_t block_count() const
             {
-                return blocks_;
+                return block_count_;
+            }
+
+            typedef framework::container::Array<Block * const> block_array_t;
+
+            block_array_t blocks() const
+            {
+                return framework::container::make_array(blocks_, block_count_);
             }
 
             Block const * get_block(
@@ -103,7 +118,7 @@ namespace trip
             boost::uint16_t left_;
             boost::uint16_t block_count_;
             boost::uint32_t last_block_size_;
-            std::vector<Block *> blocks_;
+            Block * blocks_[BLOCK_PER_SEGMENT];
         };
 
         struct Segment2
