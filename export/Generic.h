@@ -25,8 +25,4 @@ TRIP_FUNC_4(PP_err, TRIP_SetConfig, (
     (PP_str, key), 
     (PP_str, value)));
 
-TRIP_FUNC_2(PP_err, TRIP_SubmitMessage, (
-    (PP_str, msg), 
-    (PP_uint, size)));
-
 #endif // _TRIP_EXPORT_GENERIC_H_

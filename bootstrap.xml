@@ -1,0 +1,14 @@
+<root>
+    <item>
+        <first>index</first>
+        <second>http://192.168.14.205/resource.xml</second>
+    </item>
+    <item>
+        <first>jump</first>
+        <second>http://192.168.14.205/jump.xml</second>
+    </item>
+    <item>
+        <first>tracker</first>
+        <second>http://192.168.14.205/tracker/</second>
+    </item>
+</root>

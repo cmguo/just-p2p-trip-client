@@ -5,6 +5,7 @@
 #include "trip/client/cdn/CdnSource.h"
 #include "trip/client/cdn/CdnManager.h"
 #include "trip/client/cdn/Error.h"
+#include "trip/client/main/Bootstrap.h"
 #include "trip/client/utils/Serialize.h"
 #include "trip/client/core/Resource.h"
 
@@ -44,6 +45,7 @@ namespace trip
         {
             LOG_INFO("[find] rid=" << resource.id());
             Url url("http://jump.trip.com/jump.xml");
+            Bootstrap::get(http_.get_io_service(), "jump", url);
             url.param("rid", resource.id().to_string());
             std::vector<Url> const & urls = resource.urls();
             for (size_t i = 0; i < urls.size(); ++i) {

@@ -5,6 +5,7 @@
 #include "trip/client/p2p/P2pSource.h"
 #include "trip/client/p2p/P2pManager.h"
 #include "trip/client/udp/UdpEndpoint.h"
+#include "trip/client/main/Bootstrap.h"
 #include "trip/client/proto/MessageTracker.h"
 #include "trip/client/core/Resource.h"
 
@@ -85,20 +86,24 @@ namespace trip
         };
 
         static char const * const commands[] = {
-            "/register", 
-            "/unregister", 
-            "/find"
+            "register", 
+            "unregister", 
+            "find"
         };
 
         void P2pHttpFinder::send_msg(
             Message const & msg)
         {
+            Url url("http://tracker.trip.com/tracker/");
+            Bootstrap::get(http_.get_io_service(), "tracker", url);
             boost::uint16_t index = msg.type - REQ_Register;
-            LOG_INFO("[send_msg] type=" << commands[index]);
-            req_.head().path = commands[index];
+            url.path(url.path() + commands[index]);
+            req_.head().path = url.path_all();
+            req_.head().host = url.host_svc();
             std::ostream os(&req_.data());
             format_msgs[index](os, msg);
             requests_.push_back(index);
+            LOG_INFO("[send_msg] type=" << commands[index]);
             http_.async_fetch(req_, 
                 boost::bind(&P2pHttpFinder::handle_fetch, this, _1));
         }

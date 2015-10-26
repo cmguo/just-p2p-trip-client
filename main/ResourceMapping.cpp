@@ -2,6 +2,7 @@
 
 #include "trip/client/Common.h"
 #include "trip/client/main/ResourceMapping.h"
+#include "trip/client/main/Bootstrap.h"
 #include "trip/client/proto/MessageIndex.h"
 #include "trip/client/core/Resource.h"
 
@@ -26,6 +27,7 @@ namespace trip
             Resource & resource)
         {
             Url url("http://index.trip.com/resource.xml");
+            Bootstrap::get(http_.get_io_service(), "index", url);
             http_.async_fetch(url, 
                 boost::bind(&ResourceMapping::handle_fetch, this, _1, boost::ref(resource)));
         }
