@@ -5,6 +5,7 @@
 
 #include <util/serialization/Collection.h>
 #include <util/serialization/Uuid.h>
+#include <util/serialization/Array.h>
 
 #include <framework/network/Endpoint.h>
 
@@ -22,7 +23,17 @@ namespace framework
             Archive & ar, 
             Endpoint const & ep)
         {
-            ar << ep.to_string();
+            boost::uint8_t protocol = ep.protocol();
+            boost::uint8_t family = ep.family();
+            boost::uint16_t port = ep.port();
+            ar << protocol << family << port;
+            if (family == ep.v4) {
+                boost::uint32_t ipv4 = ep.ip_v4();
+                ar << ipv4;
+            } else {
+                Endpoint::ip_v6_bytes_type ipv6 = ep.ip_v6();
+                ar << framework::container::make_array(ipv6.elems);
+            }
         }
 
         template <typename Archive>

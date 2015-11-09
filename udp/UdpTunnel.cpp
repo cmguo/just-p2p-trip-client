@@ -39,7 +39,7 @@ namespace trip
         }
 
         void UdpTunnel::set_endpoint(
-            Endpoint const & ep)
+            framework::network::Endpoint const & ep)
         {
             endpoint_ = ep;
         }

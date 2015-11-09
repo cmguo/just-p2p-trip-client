@@ -19,6 +19,17 @@ namespace trip
         using util::serialization::make_sized;
         using framework::container::make_array;
 
+        /* Endpoint */
+
+        template <typename Archive>
+        void serialize(
+            Archive & ar, 
+            Endpoint & endpoint)
+        {
+            ar & SERIALIZATION_NVP_NAME("type", endpoint.type);
+            ar & SERIALIZATION_NVP_NAME("endp", endpoint.endp);
+        }
+
         /* UdpEndpoint */
 
         template <typename Archive>
@@ -26,9 +37,8 @@ namespace trip
             Archive & ar, 
             UdpEndpoint & endpoint)
         {
-            ar & SERIALIZATION_NVP_NAME("id", endpoint.id)
-                & SERIALIZATION_NVP_NAME("num_ep", endpoint.num_ep);
-            ar & SERIALIZATION_NVP_NAME("endpoints", make_array(endpoint.endpoints, endpoint.num_ep));
+            ar & SERIALIZATION_NVP_NAME("id", endpoint.id);
+            ar & SERIALIZATION_NVP_NAME("endpoints", make_sized<boost::uint32_t>(endpoint.endpoints));
         }
 
         /* Register */

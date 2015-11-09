@@ -50,7 +50,7 @@ namespace trip
             boost::uint16_t msg_recv_;
             boost::uint16_t probe_rand_[4];
             boost::uint16_t status_; // 0 - probing, 1 - connecting, 2 - connected
-            Endpoint pkt_ep_;
+            framework::network::Endpoint pkt_ep_;
             boost::uint16_t seq_;
             UdpSession * recent_;
         };

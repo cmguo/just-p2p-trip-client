@@ -56,10 +56,14 @@ namespace trip
             }
             std::vector<Interface> interfaces;
             enum_interface(interfaces);
-            for (size_t i = 0; i < interfaces.size() && local_endpoint_.num_ep < 4; ++i) {
+            Endpoint ep;
+            ep.endp.port(addr_.port());
+            for (size_t i = 0; i < interfaces.size(); ++i) {
                 Interface ifc(interfaces[i]);
-                if ((ifc.flags & (ifc.up | ifc.loopback)) == ifc.up)
-                    local_endpoint_.endpoints[local_endpoint_.num_ep++] = Endpoint(ifc.addr.to_string(), addr_.port());
+                if ((ifc.flags & (ifc.up | ifc.loopback)) == ifc.up) {
+                    ep.endp.ip(ifc.addr);
+                    local_endpoint_.endpoints.push_back(ep);
+                }
             }
             return socket_->start(addr_, parallel_, ec);
         }

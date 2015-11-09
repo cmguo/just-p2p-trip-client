@@ -10,16 +10,25 @@ namespace trip
     namespace client
     {
 
-        using framework::network::Endpoint;
+        struct Endpoint
+        {
+            enum Type {
+                local, 
+                nat, 
+                turn, 
+                reflex, 
+            };
+            boost::uint32_t type;
+            framework::network::Endpoint endp;
+            Endpoint() : type(local) {}
+        };
 
         struct UdpEndpoint
         {
             Uuid id;
-            boost::uint16_t num_ep;
-            Endpoint endpoints[4];
+            std::vector<Endpoint> endpoints;
 
             UdpEndpoint()
-                : num_ep(0)
             {
             }
         };

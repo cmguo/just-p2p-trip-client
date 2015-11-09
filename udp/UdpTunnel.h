@@ -27,7 +27,7 @@ namespace trip
             UdpSession * main_session();
 
             void set_endpoint(
-                Endpoint const & ep);
+                framework::network::Endpoint const & ep);
 
         public:
             virtual void on_send(
@@ -44,7 +44,7 @@ namespace trip
             friend class UdpSessionListener;
             boost::uint16_t tid_; // id of remote tunnel point
             boost::uint16_t seq_;
-            boost::asio::ip::udp::endpoint endpoint_;
+            framework::network::Endpoint endpoint_;
         };
 
     } // namespace client

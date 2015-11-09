@@ -66,13 +66,6 @@ namespace trip
             return !ec;
         }
 
-        void UdpSocket::get_endpoint(
-            UdpEndpoint & endpoint)
-        {
-            endpoint.endpoints[0] = rcv_pkt_->endp;
-            endpoint.num_ep = 1;
-        }
-
         void UdpSocket::handle_recv(
             UdpPacket * pkt, 
             boost::system::error_code ec, 

@@ -28,7 +28,7 @@ namespace trip
             , seq_(0)
             , recent_(NULL)
         {
-            if (endpoint_.num_ep == 0)
+            if (endpoint_.endpoints.empty())
                 status_ = 2; // no need probe & connect
         }
 
@@ -38,7 +38,7 @@ namespace trip
 
         bool UdpSessionListener::empty() const
         {
-            return msg_sent_ < endpoint_.num_ep;
+            return msg_sent_ < endpoint_.endpoints.size();
         }
 
         void UdpSessionListener::on_send(
@@ -46,7 +46,7 @@ namespace trip
             NetBuffer & buf)
         {
             UdpPacket * pkt = (UdpPacket *)head;
-            pkt->endp = endpoint_.endpoints[msg_sent_];
+            pkt->endp = endpoint_.endpoints[msg_sent_].endp;
             Message msg;
             MessageRequestProbe & req = 
                 msg.get<MessageRequestProbe>();
@@ -169,7 +169,7 @@ namespace trip
                 } else {
                     for (boost::uint16_t i = 0; i < msg_sent_; ++i) {
                         if (msg_recv_ & (1 << i)) {
-                            tunnel().set_endpoint(endpoint_.endpoints[i]);
+                            tunnel().set_endpoint(endpoint_.endpoints[i].endp);
                             break;
                         }
                     }
