@@ -16,25 +16,23 @@ namespace trip
         {
             // Tunnel Messages
  
-            REQ_Probe       = 0, 
-            REQ_Connect     = 1, 
-            REQ_Ping        = 2, // RTT
-            REQ_Disconnect  = 3, 
+            REQ_Connect     = 0x00, 
+            REQ_Ping        = 0x01, // RTT
+            REQ_Disconnect  = 0x02, 
 
-            RSP_Probe       = 0x0100 | REQ_Probe, 
             RSP_Connect     = 0x0100 | REQ_Connect, 
             RSP_Ping        = 0x0100 | REQ_Ping,
             RSP_Disconnect  = 0x0100 | REQ_Disconnect,
 
             // Session Messages
  
-            REQ_Bind        = 16, // Bind a resource, create a session
-            REQ_Meta        = 17, 
-            REQ_Map         = 18, 
-            REQ_Data        = 19, 
-            REQ_Unbind      = 20, 
+            REQ_Bind        = 0x10, // Bind a resource, create a session
+            REQ_Meta        = 0x11, 
+            REQ_Map         = 0x12, 
+            REQ_Data        = 0x13, 
+            REQ_Unbind      = 0x14, 
 
-            NTF_Map         = 24, // Notify map changed
+            NTF_Map         = 0x18, // Notify map changed
 
             RSP_Bind        = 0x0100 | REQ_Bind,
             RSP_Meta        = 0x0100 | REQ_Meta,
@@ -44,13 +42,21 @@ namespace trip
 
             // Tracker Messages
  
-            REQ_Register    = 32, 
-            REQ_Unregister  = 33, 
-            REQ_Find        = 34, 
+            REQ_Login       = 0x20, 
+            REQ_Sync        = 0x21, 
+            REQ_Port        = 0x22, // Alloc NAT Port, with help of tracker
+            REQ_Logout      = 0x23, 
 
-            RSP_Register    = 0x0100 | REQ_Register, 
-            RSP_Unregister  = 0x0100 | REQ_Unregister, 
+            REQ_Find        = 0x28, 
+            REQ_Pass        = 0x29, // Help pass through
+
+            RSP_Login       = 0x0100 | REQ_Login, 
+            RSP_Sync        = 0x0100 | REQ_Sync, 
+            RSP_Port        = 0x0100 | REQ_Port, 
+            RSP_Logout      = 0x0100 | REQ_Logout, 
+
             RSP_Find        = 0x0100 | REQ_Find, 
+            RSP_Pass        = 0x0100 | REQ_Pass, 
 
         };
 

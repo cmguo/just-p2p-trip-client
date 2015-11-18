@@ -41,15 +41,16 @@ namespace trip
             ar & SERIALIZATION_NVP_NAME("endpoints", make_sized<boost::uint32_t>(endpoint.endpoints));
         }
 
-        /* Register */
+        /* Login */
 
-        struct MessageRequestRegister
-            : MessageData<MessageRequestRegister, REQ_Register>
+        struct MessageRequestLogin
+            : MessageData<MessageRequestLogin, REQ_Login>
         {
+            boost::uint16_t sid;
             UdpEndpoint endpoint;
-            std::vector<Uuid> rids;
 
-            MessageRequestRegister()
+            MessageRequestLogin()
+                : sid(0)
             {
             }
 
@@ -57,15 +58,52 @@ namespace trip
             void serialize(
                 Archive & ar)
             {
-                ar & SERIALIZATION_NVP(endpoint)
+                ar & SERIALIZATION_NVP(sid)
+                    & SERIALIZATION_NVP(endpoint);
+            }
+        };
+
+        struct MessageResponseLogin
+            : MessageData<MessageResponseLogin, RSP_Login>
+        {
+            boost::uint16_t sid;
+
+            MessageResponseLogin()
+            {
+            }
+
+            template <typename Archive>
+            void serialize(
+                Archive & ar)
+            {
+            }
+        };
+
+        /* Sync */
+
+        struct MessageRequestSync
+            : MessageData<MessageRequestSync, REQ_Sync>
+        {
+            boost::uint32_t type; // 0 -- full, 1 -- add, 2 -- delete
+            std::vector<Uuid> rids;
+
+            MessageRequestSync()
+            {
+            }
+
+            template <typename Archive>
+            void serialize(
+                Archive & ar)
+            {
+                ar & SERIALIZATION_NVP(type)
                     & SERIALIZATION_NVP_NAME("rids", make_sized<boost::uint32_t>(rids));
             }
         };
 
-        struct MessageResponseRegister
-            : MessageData<MessageResponseRegister, RSP_Register>
+        struct MessageResponseSync
+            : MessageData<MessageResponseSync, RSP_Sync>
         {
-            MessageResponseRegister()
+            MessageResponseSync()
             {
             }
 
@@ -76,15 +114,12 @@ namespace trip
             }
         };
 
-        /* Unregister */
+        /* Port */
 
-        struct MessageRequestUnregister
-            : MessageData<MessageRequestUnregister, REQ_Unregister>
+        struct MessageRequestPort
+            : MessageData<MessageRequestPort, REQ_Port>
         {
-            Uuid pid;
-            Uuid rid;
-
-            MessageRequestUnregister()
+            MessageRequestPort()
             {
             }
 
@@ -92,18 +127,15 @@ namespace trip
             void serialize(
                 Archive & ar)
             {
-                ar & SERIALIZATION_NVP(pid)
-                    & SERIALIZATION_NVP(rid);
             }
         };
 
-        struct MessageResponseUnregister
-            : MessageData<MessageResponseUnregister, RSP_Unregister>
+        struct MessageResponsePort
+            : MessageData<MessageResponsePort, RSP_Port>
         {
-            boost::uint32_t timestamp;
+            Endpoint endpoint;
 
-            MessageResponseUnregister()
-                : timestamp(0)
+            MessageResponsePort()
             {
             }
 
@@ -111,7 +143,37 @@ namespace trip
             void serialize(
                 Archive & ar)
             {
-                ar & SERIALIZATION_NVP(timestamp);
+                ar & endpoint;
+            }
+        };
+
+        /* Logout */
+
+        struct MessageRequestLogout
+            : MessageData<MessageRequestLogout, REQ_Logout>
+        {
+            MessageRequestLogout()
+            {
+            }
+
+            template <typename Archive>
+            void serialize(
+                Archive & ar)
+            {
+            }
+        };
+
+        struct MessageResponseLogout
+            : MessageData<MessageResponseLogout, RSP_Logout>
+        {
+            MessageResponseLogout()
+            {
+            }
+
+            template <typename Archive>
+            void serialize(
+                Archive & ar)
+            {
             }
         };
 
@@ -152,6 +214,42 @@ namespace trip
             {
                 ar & SERIALIZATION_NVP(rid)
                     & SERIALIZATION_NVP_NAME("endpoints", make_sized<boost::uint32_t>(endpoints));
+            }
+        };
+
+        /* Pass */
+
+        struct MessageRequestPass
+            : MessageData<MessageRequestPass, REQ_Pass>
+        {
+            UdpEndpoint endpoint;
+
+            MessageRequestPass()
+            {
+            }
+
+            template <typename Archive>
+            void serialize(
+                Archive & ar)
+            {
+                ar & SERIALIZATION_NVP(endpoint);
+            }
+        };
+
+        struct MessageResponsePass
+            : MessageData<MessageResponsePass, RSP_Pass>
+        {
+            UdpEndpoint endpoint;
+
+            MessageResponsePass()
+            {
+            }
+
+            template <typename Archive>
+            void serialize(
+                Archive & ar)
+            {
+                ar & SERIALIZATION_NVP(endpoint);
             }
         };
 

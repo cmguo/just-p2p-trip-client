@@ -32,12 +32,12 @@ namespace trip
         }
 
         static char const * const msg_type_str1[][16] = {
-            {"REQ_Probe", "REQ_Connect", "REQ_Ping", "REQ_Disconnect"}, 
+            {"REQ_Connect", "REQ_Ping", "REQ_Disconnect"}, 
             {"REQ_Bind", "REQ_Meta", "REQ_Map", "REQ_Data", "REQ_Unbind"}, 
-            {"REQ_Register", "REQ_Unregister", "REQ_Find"},
-            {"RSP_Probe", "RSP_Connect", "RSP_Ping", "RSP_Disconnect"}, 
+            {"REQ_Login", "REQ_Sync", "REQ_Port", "REQ_Logout", "REQ_Find", "REQ_Pass"},
+            {"RSP_Connect", "RSP_Ping", "RSP_Disconnect"}, 
             {"RSP_Bind", "RSP_Meta", "RSP_Map", "RSP_Data", "RSP_Unbind"}, 
-            {"RSP_Register", "RSP_Unregister", "RSP_Find"},
+            {"RSP_Login", "RSP_Sync", "RSP_Port", "RSP_Logout", "RSP_Find", "RSP_Pass"},
         };
 
         static size_t msg_type_str2[][16] = {
