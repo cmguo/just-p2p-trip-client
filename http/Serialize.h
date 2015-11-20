@@ -18,8 +18,10 @@ namespace util
             trip::client::ResourceMeta & meta)
         {
             ar & SERIALIZATION_NVP_1(meta, duration);
+            ar & SERIALIZATION_NVP_1(meta, interval);
+            ar & SERIALIZATION_NVP_1(meta, interval);
+            ar & SERIALIZATION_NVP_1(meta, bitrate);
             ar & SERIALIZATION_NVP_1(meta, file_extension);
-            //ar & SERIALIZATION_NVP_1(meta, type);
         }
 
         template <

@@ -7,6 +7,7 @@
 #include "trip/client/udp/UdpPacket.h"
 #include "trip/client/udp/UdpTunnelListener.h"
 #include "trip/client/udp/UdpSessionListener.h"
+#include "trip/client/udp/UdpSessionListener2.h"
 #include "trip/client/timer/TimerManager.h"
 
 #include <framework/logger/Logger.h>
@@ -113,6 +114,15 @@ namespace trip
                 iter = tunnels_.insert(std::make_pair(endpoint.id, tunnel)).first;
             }
             return *iter->second;
+        }
+
+        UdpTunnel & UdpManager::get_tunnel(
+            UdpEndpoint const & endpoint, 
+            UdpSession * session)
+        {
+            UdpTunnel * tunnel = new UdpTunnel(*socket_);
+            new UdpSessionListener2(*this, *tunnel, endpoint, session);
+            return *tunnel;
         }
 
         void UdpManager::on_event(

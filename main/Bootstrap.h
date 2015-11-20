@@ -6,6 +6,9 @@
 #include <util/protocol/http/HttpClient.h>
 #include <util/daemon/Module.h>
 
+#include <util/event/Event.h>
+#include <util/event/Observable.h>
+
 namespace trip
 {
     namespace client
@@ -15,7 +18,11 @@ namespace trip
 
         class Bootstrap
             : public util::daemon::ModuleBase<Bootstrap>
+            , public util::event::Observable
         {
+        public:
+            struct Event : util::event::Event {} ready;
+
         public:
             Bootstrap(
                  util::daemon::Daemon & daemon);
@@ -27,10 +34,12 @@ namespace trip
                 std::string const & name, 
                 Url & url);
             
-            static bool get(
-                boost::asio::io_service & io_svc, 
+            bool get(
                 std::string const & name, 
-                Url & url);
+                std::vector<Url> & urls);
+            
+            static Bootstrap & instance(
+                boost::asio::io_service & io_svc);
 
         private:
             virtual bool startup(
@@ -45,7 +54,7 @@ namespace trip
 
         private:
             util::protocol::HttpClient http_;
-            std::map<std::string, Url> urls_;
+            std::map<std::string, std::vector<Url> > urls_;
         };
 
     } // namespace client

@@ -20,10 +20,10 @@ namespace trip
             util::daemon::Daemon & daemon)
             : util::daemon::ModuleBase<P2pManager>(daemon, "P2pManager")
             , rmgr_(util::daemon::use_module<ResourceManager>(daemon))
-            , umgr_(util::daemon::use_module<UdpManager>(daemon))
             , finder_(new P2pHttpFinder(*this))
         {
-            umgr_.register_service(REQ_Bind, 
+            UdpManager & umgr(util::daemon::use_module<UdpManager>(io_svc()));
+            umgr.register_service(REQ_Bind, 
                 boost::bind(&P2pSink::create_session, boost::ref(rmgr_), _1, _2));
         }
 
@@ -35,32 +35,18 @@ namespace trip
         bool P2pManager::startup(
             boost::system::error_code & ec)
         {
-            ((P2pFinder *)finder_)->open();
             return true;
         }
 
         bool P2pManager::shutdown(
             boost::system::error_code & ec)
         {
-            ((P2pFinder *)finder_)->close();
             return true;
         }
 
-        UdpEndpoint & P2pManager::local_endpoint()
+        Finder * P2pManager::finder()
         {
-            return umgr_.local_endpoint();
-        }
-
-        P2pTunnel & P2pManager::get_tunnel(
-            UdpEndpoint const & endpoint)
-        {
-            return umgr_.get_tunnel(endpoint);
-        }
-
-        P2pTunnel * P2pManager::get_tunnel(
-            Uuid const & pid)
-        {
-            return umgr_.get_tunnel(pid);
+            return finder_;
         }
 
     } // namespace client

@@ -1,7 +1,7 @@
 // MessageIndex.h
 
-#ifndef _TRIP_CLIENT_PROTO_MESSAGE_INDEX_H_
-#define _TRIP_CLIENT_PROTO_MESSAGE_INDEX_H_
+#ifndef _TRIP_CLIENT_PROTO_MESSAGE_RESOURCE_H_
+#define _TRIP_CLIENT_PROTO_MESSAGE_RESOURCE_H_
 
 #include "trip/client/core/Resource.h"
 #include "trip/client/utils/Serialize.h"
@@ -25,6 +25,7 @@ namespace trip
             ar & SERIALIZATION_NVP_NAME("duration", meta.duration)
                 & SERIALIZATION_NVP_NAME("bytesize", meta.bytesize)
                 & SERIALIZATION_NVP_NAME("interval", meta.interval)
+                & SERIALIZATION_NVP_NAME("bitrate", meta.bitrate)
                 & SERIALIZATION_NVP_NAME("file_extension", meta.file_extension);
         }
 
@@ -37,6 +38,25 @@ namespace trip
                 & SERIALIZATION_NVP_NAME("bytesize", meta.bytesize)
                 & SERIALIZATION_NVP_NAME("md5sum", meta.md5sum);
         }
+
+        struct ResourceBasicInfo
+            : ResourceMeta
+        {
+            boost::uint64_t segcount;
+
+            ResourceBasicInfo()
+                : segcount(0)
+            {
+            }
+            
+            template <typename Archive>
+            void serialize(
+                Archive & ar)
+            {
+                trip::client::serialize(ar, (ResourceMeta &)(*this));
+                ar & SERIALIZATION_NVP(segcount);
+            }
+        };
 
         struct ResourceInfo
         {
@@ -56,6 +76,15 @@ namespace trip
                     & SERIALIZATION_NVP(segments);
             }
         };
+
+        template <
+            typename Archive
+        >
+        void serialize(
+            Archive & ar, 
+            trip::client::ResourceStat & stat)
+        {
+        }
 
     } // namespace client
 } // namespace trip

@@ -22,12 +22,19 @@ namespace trip
             virtual ~P2pUdpFinder();
 
         private:
+            virtual void init();
+
             virtual void send_msg(
                 Message const & msg);
+
+            virtual boost::uint16_t get_id();
 
         private:
             virtual void on_msg(
                 Message * msg);
+
+        private:
+            std::vector<UdpTunnel *> tunnels_;
         };
 
     } // namespace client

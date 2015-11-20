@@ -58,6 +58,11 @@ namespace trip
             UdpTunnel & get_tunnel(
                 UdpEndpoint const & endpoint);
 
+            // tunnel with only one session, stateless
+            UdpTunnel & get_tunnel(
+                UdpEndpoint const & endpoint, 
+                UdpSession * session);
+
             UdpSession * get_session(
                 UdpTunnel & tunnel, 
                 Message & msg);

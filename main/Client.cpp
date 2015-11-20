@@ -3,6 +3,7 @@
 #include "trip/client/Common.h"
 
 #include "trip/client/main/ResourceManager.h"
+#include "trip/client/main/Bootstrap.h"
 #include "trip/client/cache/CacheManager.h"
 #include "trip/client/udp/UdpManager.h"
 #include "trip/client/cdn/CdnManager.h"
@@ -41,6 +42,7 @@ namespace trip
     
                 util::daemon::use_module<ResourceManager>(*this);
                 util::daemon::use_module<CacheManager>(*this);
+                util::daemon::use_module<Bootstrap>(*this);
                 util::daemon::use_module<UdpManager>(*this);
                 util::daemon::use_module<CdnManager>(*this);
                 util::daemon::use_module<P2pManager>(*this);

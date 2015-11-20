@@ -4,7 +4,7 @@
 #include "trip/client/http/HttpServer.h"
 #include "trip/client/http/HttpManager.h"
 #include "trip/client/http/HttpSession.h"
-#include "trip/client/http/Serialize.h"
+#include "trip/client/proto/MessageResource.h"
 
 #include <util/serialization/ErrorCode.h>
 #include <util/archive/XmlOArchive.h>
@@ -220,8 +220,11 @@ namespace trip
             ResourceMeta const * meta = 
                 session_->resource().meta();
             if (meta) {
+                ResourceBasicInfo info;
+                (ResourceMeta &)info = *meta;
+                info.segcount = session_->resource().get_segment_count();
                 util::archive::XmlOArchive<> oa(response_data());
-                oa << *meta;
+                oa << info;
             }
         }
 

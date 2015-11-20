@@ -3,7 +3,7 @@
 #include "trip/client/Common.h"
 #include "trip/client/main/ResourceMapping.h"
 #include "trip/client/main/Bootstrap.h"
-#include "trip/client/proto/MessageIndex.h"
+#include "trip/client/proto/MessageResource.h"
 #include "trip/client/core/Resource.h"
 
 #include <util/archive/XmlIArchive.h>
@@ -15,19 +15,26 @@ namespace trip
 
         ResourceMapping::ResourceMapping(
              boost::asio::io_service & io_svc)
-            : http_(io_svc)
+            : url_("http://index.trip.com/resource.xml")
+            , http_(io_svc)
         {
+            Bootstrap::instance(io_svc).ready.on(
+                boost::bind(&ResourceMapping::on_event, this));
         }
 
         ResourceMapping::~ResourceMapping()
         {
         }
 
+        void ResourceMapping::on_event()
+        {
+            Bootstrap::instance(http_.get_io_service()).get("index", url_);
+        }
+
         void ResourceMapping::find(
             Resource & resource)
         {
-            Url url("http://index.trip.com/resource.xml");
-            Bootstrap::get(http_.get_io_service(), "index", url);
+            Url url(url_);
             http_.async_fetch(url, 
                 boost::bind(&ResourceMapping::handle_fetch, this, _1, boost::ref(resource)));
         }

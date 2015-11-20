@@ -42,6 +42,7 @@ namespace trip
 
         protected:
             friend class UdpSessionListener;
+            friend class UdpSessionListener2;
             boost::uint16_t tid_; // id of remote tunnel point
             boost::uint16_t seq_;
             framework::network::Endpoint endpoint_;

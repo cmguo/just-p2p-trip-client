@@ -11,6 +11,7 @@ namespace trip
     namespace client
     {
 
+        /*
         struct MessageRequestProbe
             : MessageData<MessageRequestProbe, REQ_Probe>
         {
@@ -50,6 +51,7 @@ namespace trip
                 ar & index & rand;
             }
         };
+        */
 
         struct MessageRequestConnect
             : MessageData<MessageRequestConnect, REQ_Connect>

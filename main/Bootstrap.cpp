@@ -38,23 +38,31 @@ namespace trip
             return !ec;
         }
 
-        bool Bootstrap::get(
-            boost::asio::io_service & io_svc, 
-            std::string const & name,
-            Url & url)
+        Bootstrap & Bootstrap::instance(
+            boost::asio::io_service & io_svc)
         {
-            Bootstrap & bs(util::daemon::use_module<Bootstrap>(io_svc));
-            return bs.get("index", url);
+            return util::daemon::use_module<Bootstrap>(io_svc);
         }
 
         bool Bootstrap::get(
             std::string const & name,
             Url & url)
         {
-            std::map<std::string, Url>::const_iterator iter = urls_.find(name);
+            std::map<std::string, std::vector<Url> >::const_iterator iter = urls_.find(name);
+            if (iter == urls_.end() || iter->second.empty())
+                return false;
+            url = iter->second[0];
+            return true;
+        }
+
+        bool Bootstrap::get(
+            std::string const & name,
+            std::vector<Url> & urls)
+        {
+            std::map<std::string, std::vector<Url> >::const_iterator iter = urls_.find(name);
             if (iter == urls_.end())
                 return false;
-            url = iter->second;
+            urls = iter->second;
             return true;
         }
 
@@ -66,6 +74,7 @@ namespace trip
 
             util::archive::XmlIArchive<> ia(http_.response_data());
             ia >> urls_;
+            raise(ready);
         }
 
     } // namespace client

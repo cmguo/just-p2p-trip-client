@@ -38,6 +38,11 @@ namespace trip
             DataEvent segment_full;
 
         public:
+            boost::uint64_t get_segment_count() const
+            {
+                return end_;
+            }
+
             void get_segments(
                 std::vector<SegmentMeta> & metas);
 

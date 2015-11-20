@@ -17,6 +17,7 @@ namespace trip
         class ResourceManager;
         class UdpManager;
         class Finder;
+        class P2pFinder;
         class UdpTunnel;
 
         typedef UdpTunnel P2pTunnel;
@@ -31,19 +32,7 @@ namespace trip
             ~P2pManager();
 
         public:
-            Finder * finder()
-            {
-                return finder_;
-            }
-
-        public:
-            UdpEndpoint & local_endpoint();
-
-            P2pTunnel * get_tunnel(
-                Uuid const & pid);
-
-            P2pTunnel & get_tunnel(
-                UdpEndpoint const & endpoint);
+            Finder * finder();
 
         private:
             virtual bool startup(
@@ -54,8 +43,7 @@ namespace trip
 
         private:
             ResourceManager & rmgr_;
-            UdpManager & umgr_;
-            Finder * finder_;
+            P2pFinder * finder_;
         };
 
     } // namespace client

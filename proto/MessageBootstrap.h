@@ -1,4 +1,4 @@
-// MessageIndex.h
+// MessageBootstrap.h
 
 #ifndef _TRIP_CLIENT_PROTO_MESSAGE_BOOTSTRAP_H_
 #define _TRIP_CLIENT_PROTO_MESSAGE_BOOTSTRAP_H_
@@ -8,6 +8,7 @@
 
 #include <util/serialization/NVPair.h>
 #include <util/serialization/stl/map.h>
+#include <util/serialization/stl/vector.h>
 
 namespace trip
 {

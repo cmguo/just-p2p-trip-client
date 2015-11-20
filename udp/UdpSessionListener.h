@@ -41,6 +41,10 @@ namespace trip
             virtual void on_timer(
                 Time const & now);
 
+        private:
+            void set_remote(
+                boost::uint16_t id);
+
         protected:
             UdpManager & umgr_;
             UdpEndpoint endpoint_;

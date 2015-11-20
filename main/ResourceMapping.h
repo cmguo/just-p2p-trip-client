@@ -27,11 +27,14 @@ namespace trip
             bool close();
 
         private:
+            void on_event();
+
             void handle_fetch(
                 boost::system::error_code ec, 
                 Resource & resource);
 
         private:
+            Url url_;
             util::protocol::HttpClient http_;
         };
 

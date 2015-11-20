@@ -16,6 +16,11 @@ namespace trip
 
         FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("trip.client.UdpSession", framework::logger::Debug);
 
+        UdpSession::UdpSession()
+            : sid_(0)
+        {
+        }
+
         UdpSession::UdpSession(
             UdpTunnel & tunnel)
             : Cell(&tunnel)

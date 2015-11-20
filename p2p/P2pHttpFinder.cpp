@@ -37,11 +37,15 @@ namespace trip
             HttpRequestHead & head = req_.head();
             head.method = head.post;
             head.connection = Connection::keep_alive;
-            head.host = "track.trip.com";
         }
 
         P2pHttpFinder::~P2pHttpFinder()
         {
+        }
+
+        void P2pHttpFinder::init()
+        {
+            Bootstrap::instance(http_.get_io_service()).get("tracker", urls_);
         }
 
         template <class T>
@@ -72,31 +76,33 @@ namespace trip
         static bool (* format_msgs[]) (
             std::ostream & os, 
             Message const & msg) = {
-            &format_msg<MessageRequestRegister>, 
-            &format_msg<MessageRequestUnregister>, 
+            &format_msg<MessageRequestLogin>, 
+            &format_msg<MessageRequestSync>, 
+            &format_msg<MessageRequestLogout>, 
             &format_msg<MessageRequestFind>, 
         };
 
         static bool (* parse_msgs[]) (
             std::istream & is, 
             Message & msg) = {
-            &parse_msg<MessageResponseRegister>, 
-            &parse_msg<MessageResponseUnregister>, 
+            &parse_msg<MessageResponseLogin>, 
+            &parse_msg<MessageResponseSync>, 
+            &parse_msg<MessageResponseLogout>, 
             &parse_msg<MessageResponseFind>, 
         };
 
         static char const * const commands[] = {
-            "register", 
-            "unregister", 
+            "login", 
+            "sync", 
+            "logout", 
             "find"
         };
 
         void P2pHttpFinder::send_msg(
             Message const & msg)
         {
-            Url url("http://tracker.trip.com/tracker/");
-            Bootstrap::get(http_.get_io_service(), "tracker", url);
-            boost::uint16_t index = msg.type - REQ_Register;
+            Url url(urls_.at(0));
+            boost::uint16_t index = msg.type - REQ_Sync;
             url.path(url.path() + commands[index]);
             req_.head().path = url.path_all();
             req_.head().host = url.host_svc();
@@ -106,6 +112,11 @@ namespace trip
             LOG_INFO("[send_msg] type=" << commands[index]);
             http_.async_fetch(req_, 
                 boost::bind(&P2pHttpFinder::handle_fetch, this, _1));
+        }
+
+        boost::uint16_t P2pHttpFinder::get_id()
+        {
+            return 0;
         }
 
         void P2pHttpFinder::handle_fetch(

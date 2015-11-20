@@ -25,9 +25,12 @@ namespace trip
 
         CdnFinder::CdnFinder(
             CdnManager & cmgr)
-            : cmgr_(cmgr)
+            : url_("http://jump.trip.com/jump.xml")
+            , cmgr_(cmgr)
             , http_(cmgr.io_svc())
         {
+            Bootstrap::instance(cmgr.io_svc()).ready.on(
+                boost::bind(&CdnFinder::on_event, this));
         }
 
         CdnFinder::~CdnFinder()
@@ -39,13 +42,17 @@ namespace trip
             return "http";
         }
 
+        void CdnFinder::on_event()
+        {
+            Bootstrap::instance(http_.get_io_service()).get("jump", url_);
+        }
+
         void CdnFinder::find(
             Resource & resource, 
             size_t count)
         {
             LOG_INFO("[find] rid=" << resource.id());
-            Url url("http://jump.trip.com/jump.xml");
-            Bootstrap::get(http_.get_io_service(), "jump", url);
+            Url url(url_);
             url.param("rid", resource.id().to_string());
             std::vector<Url> const & urls = resource.urls();
             for (size_t i = 0; i < urls.size(); ++i) {

@@ -22,14 +22,19 @@ namespace trip
             virtual ~P2pHttpFinder();
 
         private:
+            virtual void init();
+
             virtual void send_msg(
                 Message const & msg);
+
+            virtual boost::uint16_t get_id();
 
         private:
             void handle_fetch(
                 boost::system::error_code ec);
 
         private:
+            std::vector<Url> urls_;
             util::protocol::HttpClient http_;
             util::protocol::HttpRequest req_;
             std::deque<boost::uint16_t> requests_;

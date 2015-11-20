@@ -35,10 +35,13 @@ namespace trip
                 Url const & url);
 
         private:
+            void on_event();
+
             void handle_fetch(
                 boost::system::error_code ec);
 
         private:
+            Url url_;
             CdnManager & cmgr_;
             util::protocol::HttpClient http_;
         };

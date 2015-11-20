@@ -38,9 +38,6 @@ namespace trip
 
         DownloadManager::~DownloadManager()
         {
-            std::map<std::string, Finder *>::const_iterator iter = finders_.begin();
-            for (; iter != finders_.end(); ++iter)
-                delete iter->second;
         }
 
         bool DownloadManager::startup(

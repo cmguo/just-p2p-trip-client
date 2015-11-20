@@ -17,6 +17,8 @@ namespace trip
             : public Cell
         {
         public:
+            UdpSession();
+
             UdpSession(
                 UdpTunnel & tunnel);
 

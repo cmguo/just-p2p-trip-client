@@ -19,11 +19,17 @@ namespace trip
         {
         public:
             Cell(
-                Bus * bus, 
+                Bus * bus = NULL, 
                 Queue * queue = NULL);
 
             virtual ~Cell();
                 
+        public:
+            void attach(
+                Bus * bus);
+
+            void detach();
+
         public:
             boost::uint16_t id() const
             {

@@ -4,7 +4,7 @@
 #include "trip/client/cache/ResourceCache.h"
 #include "trip/client/cache/CacheManager.h"
 #include "trip/client/core/Resource.h"
-#include "trip/client/proto/MessageIndex.h"
+#include "trip/client/proto/MessageResource.h"
 
 #include <util/archive/XmlIArchive.h>
 #include <util/archive/XmlOArchive.h>

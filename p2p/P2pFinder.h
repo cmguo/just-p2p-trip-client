@@ -11,6 +11,7 @@ namespace trip
     namespace client
     {
 
+        class UdpManager;
         class P2pManager;
         struct MessageResponseFind;
 
@@ -26,11 +27,6 @@ namespace trip
             virtual ~P2pFinder();
 
         public:
-            void open();
-
-            void close();
-
-        public:
             virtual std::string proto() const;
 
         public:
@@ -43,18 +39,31 @@ namespace trip
                 Url const & url);
             
         protected:
+            virtual void init() = 0;
+
             virtual void send_msg(
                 Message const & msg) = 0;
 
             bool handle_msg(
                 Message const & msg);
 
+            virtual boost::uint16_t get_id() = 0;
+
+        public:
+            void open();
+
+            void close();
+
         private:
+            void on_event();
+
             void handle_find(
                 MessageResponseFind const & find);
 
-        private:
+        protected:
             P2pManager & pmgr_;
+            UdpManager & umgr_;
+            bool inited_;
         };
 
     } // namespace client

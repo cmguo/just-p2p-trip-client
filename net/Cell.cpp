@@ -14,19 +14,32 @@ namespace trip
             Bus * bus, 
             Queue * queue)
             : id_(0)
-            , bus_(bus)
+            , bus_(NULL)
             , queue_(queue)
         {
-            if (bus_)
-                bus_->add(this);
+            attach(bus);
         }
 
         Cell::~Cell()
         {
-            if (bus_)
-                bus_->del(this);
+            detach();
             if (queue_)
                 delete queue_;
+        }
+
+        void Cell::attach(
+            Bus * bus)
+        {
+            bus_ = bus;
+            if (bus_)
+                bus_->add(this);
+        }
+
+        void Cell::detach()
+        {
+            if (bus_)
+                bus_->del(this);
+            bus_ = NULL;
         }
 
         void Cell::on_send(
