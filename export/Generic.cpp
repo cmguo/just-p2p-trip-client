@@ -107,6 +107,17 @@ namespace trip
                 return last_error(__FUNCTION__, ec);
             }
 
+            PP_str get_config(
+                PP_str module, 
+                PP_str section, 
+                PP_str key)
+            {
+                static std::string value;
+                value.clear();
+                daemon_.config().get(section, key, value);
+                return value.c_str();
+            }
+
         private:
             util::daemon::Daemon & daemon_;
         };
@@ -162,6 +173,14 @@ extern "C" {
         PP_str value)
     {
         return the_generic().set_config(module, section, key, value);
+    }
+
+    TRIP_DECL PP_str TRIP_GetConfig(
+        PP_str module, 
+        PP_str section, 
+        PP_str key)
+    {
+        return the_generic().get_config(module, section, key);
     }
 
 #if __cplusplus

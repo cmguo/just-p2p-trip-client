@@ -7,6 +7,7 @@
 		TRIP_GetLastError;
 		TRIP_GetLastErrorMsg;
 		TRIP_SetConfig;
+		TRIP_GetConfig;
 
 	local: *;
 };
