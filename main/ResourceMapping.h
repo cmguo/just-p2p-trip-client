@@ -22,7 +22,8 @@ namespace trip
 
         public:
             void find(
-                Resource & resource);
+                Resource & resource, 
+                std::vector<Url> const & urls);
             
             bool close();
 

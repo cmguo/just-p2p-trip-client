@@ -67,7 +67,7 @@ namespace trip
                             r.seek(download_point_);
                             reset();
                         } else { // To stop download.
-
+                            master_ = NULL;
                         }
                     }
                     break;
@@ -120,6 +120,13 @@ namespace trip
         void Downloader::on_timer(
             framework::timer::Time const & now)
         {
+            if (master_ 
+                && master_->position().segment != download_point_.segment
+                && master_->position().top == 0) {
+                LOG_INFO("[on_timer] move download point: " << master_->position());
+                download_point_ = master_->position();
+                reset();
+            }
         }
 
     } // namespace client

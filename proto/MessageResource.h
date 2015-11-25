@@ -10,6 +10,8 @@
 #include <util/serialization/stl/vector.h>
 #include <util/serialization/Optional.h>
 
+#include <framework/string/Digest.hpp>
+
 #include <boost/optional.hpp>
 
 namespace trip
@@ -26,6 +28,7 @@ namespace trip
                 & SERIALIZATION_NVP_NAME("bytesize", meta.bytesize)
                 & SERIALIZATION_NVP_NAME("interval", meta.interval)
                 & SERIALIZATION_NVP_NAME("bitrate", meta.bitrate)
+                & SERIALIZATION_NVP_NAME("segcount", meta.segcount)
                 & SERIALIZATION_NVP_NAME("file_extension", meta.file_extension);
         }
 
@@ -38,25 +41,6 @@ namespace trip
                 & SERIALIZATION_NVP_NAME("bytesize", meta.bytesize)
                 & SERIALIZATION_NVP_NAME("md5sum", meta.md5sum);
         }
-
-        struct ResourceBasicInfo
-            : ResourceMeta
-        {
-            boost::uint64_t segcount;
-
-            ResourceBasicInfo()
-                : segcount(0)
-            {
-            }
-            
-            template <typename Archive>
-            void serialize(
-                Archive & ar)
-            {
-                trip::client::serialize(ar, (ResourceMeta &)(*this));
-                ar & SERIALIZATION_NVP(segcount);
-            }
-        };
 
         struct ResourceInfo
         {

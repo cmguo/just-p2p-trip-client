@@ -75,13 +75,12 @@ namespace trip
         {
             LOG_INFO("[get] new resource with no rid");
             Resource * r = new Resource;
-            r->set_urls(urls);
             resource_added.resource = r;
             other_resources_.push_back(r);
             //raise(resource_added);
             r->meta_changed.on(
                 boost::bind(&ResourceManager::on_event, this, _1, _2));
-            mapping_.find(*r);
+            mapping_.find(*r, urls);
             return *r;
         }
 

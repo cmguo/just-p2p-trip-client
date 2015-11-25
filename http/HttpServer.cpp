@@ -220,9 +220,16 @@ namespace trip
             ResourceMeta const * meta = 
                 session_->resource().meta();
             if (meta) {
-                ResourceBasicInfo info;
-                (ResourceMeta &)info = *meta;
-                info.segcount = session_->resource().get_segment_count();
+                ResourceInfo info;
+                info.meta = *meta;
+                info.urls.reset(std::vector<Url>());
+                info.urls.get().resize(2);
+                Url & url = info.urls.get().at(0);
+                url.from_string("http://" + url_.host_svc() + "/fetch/");
+                url.param("session", url_.param("session"));
+                Url & url2 = info.urls.get().at(1);
+                url2.from_string("http://" + url_.host_svc() + "/null/");
+                url2.param("session", "close" + url_.param("session"));
                 util::archive::XmlOArchive<> oa(response_data());
                 oa << info;
             }

@@ -16,8 +16,8 @@ namespace trip
             : left_(0)
             , block_count_(0)
         {
+            memset(blocks_, 0, sizeof(blocks_));
             set_size(size);
-            memset(blocks_, sizeof(blocks_), 0);
         }
 
         Segment::~Segment()

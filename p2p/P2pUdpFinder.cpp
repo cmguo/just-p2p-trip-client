@@ -32,6 +32,8 @@ namespace trip
         {
             std::vector<Url> urls;
             Bootstrap::instance(pmgr_.io_svc()).get("tracker", urls);
+            if (urls.empty())
+                urls.push_back(Url("http://tracker.trip.com/"));
             UdpEndpoint ep;
             ep.endpoints.resize(1);
             framework::network::Endpoint & ep2 = ep.endpoints[0].endp;

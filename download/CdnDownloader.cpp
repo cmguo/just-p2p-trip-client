@@ -8,10 +8,15 @@
 #include "trip/client/core/Finder.h"
 #include "trip/client/core/Sink.h"
 
+#include <framework/logger/Logger.h>
+#include <framework/logger/StreamRecord.h>
+
 namespace trip
 {
     namespace client
     {
+
+        FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("trip.client.CdnDownloader", framework::logger::Debug);
 
         CdnDownloader::CdnDownloader(
             DownloadManager & mgr, 
@@ -19,8 +24,8 @@ namespace trip
             : Downloader(mgr, resource)
             , lock_(NULL)
         {
-            //find_sources("http", 10);
-            find_sources("p2p", 10);
+            find_sources("http", 10);
+            //find_sources("p2p", 10);
             lock_ = resource.alloc_lock(win_beg_, win_end_);
             full_seg_ = new SegmentInfo();
             full_seg_->meta_ready = true;
@@ -173,6 +178,7 @@ namespace trip
                         sinfo->pos = sinfo->end;
                     } else {
                         seg->seg->seek(sinfo->pos);
+                        LOG_INFO("[prepare_taskwindow] segment=" << seg->seg << ", pos=" << sinfo->pos);
                     }
                     segments_[i] = sinfo;
                 } else {

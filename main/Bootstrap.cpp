@@ -6,16 +6,25 @@
 
 #include <util/archive/XmlIArchive.h>
 
+#include <framework/logger/Logger.h>
+#include <framework/logger/StreamRecord.h>
+
 namespace trip
 {
     namespace client
     {
 
+        FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("trip.client.Bootstrap", framework::logger::Debug);
+
         Bootstrap::Bootstrap(
             util::daemon::Daemon & daemon)
-            : util::daemon::ModuleBase<Bootstrap>(daemon, "Bootstrap")
+            : util::daemon::ModuleBase<Bootstrap>(daemon, "trip.client.Bootstrap")
+            , url_("http://boot.trip.com/trip/bootstrap.xml")
             , http_(io_svc())
         {
+            module_config()
+                << CONFIG_PARAM_NAME_NOACC("url", url_)
+                ;
         }
 
         Bootstrap::~Bootstrap()
@@ -25,8 +34,7 @@ namespace trip
         bool Bootstrap::startup(
             boost::system::error_code & ec)
         {
-            Url url("http://boot.trip.com/bootstrap.xml");
-            http_.async_fetch(url, 
+            http_.async_fetch(url_, 
                 boost::bind(&Bootstrap::handle_fetch, this, _1));
             return true;
         }
@@ -69,8 +77,10 @@ namespace trip
         void Bootstrap::handle_fetch(
             boost::system::error_code ec)
         {
-            if (ec)
+            if (ec) {
+                LOG_WARN("[handle_fetch] ec=" << ec.message());
                 return;
+            }
 
             util::archive::XmlIArchive<> ia(http_.response_data());
             ia >> urls_;

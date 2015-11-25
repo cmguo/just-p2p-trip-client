@@ -53,6 +53,7 @@ namespace trip
                 boost::system::error_code ec);
 
         private:
+            Url url_;
             util::protocol::HttpClient http_;
             std::map<std::string, std::vector<Url> > urls_;
         };

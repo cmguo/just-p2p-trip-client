@@ -15,7 +15,7 @@ namespace trip
 
         ResourceMapping::ResourceMapping(
              boost::asio::io_service & io_svc)
-            : url_("http://index.trip.com/resource.xml")
+            : url_("http://index.trip.com/trip/resource.xml")
             , http_(io_svc)
         {
             Bootstrap::instance(io_svc).ready.on(
@@ -32,9 +32,13 @@ namespace trip
         }
 
         void ResourceMapping::find(
-            Resource & resource)
+            Resource & resource, 
+            std::vector<Url> const & urls)
         {
             Url url(url_);
+            for (size_t i = 0; i < urls.size(); ++i) {
+                url.param("url", urls[i].to_string());
+            }
             http_.async_fetch(url, 
                 boost::bind(&ResourceMapping::handle_fetch, this, _1, boost::ref(resource)));
         }

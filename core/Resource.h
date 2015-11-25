@@ -18,6 +18,7 @@ namespace trip
             boost::uint64_t bytesize;
             boost::uint32_t interval;
             boost::uint32_t bitrate;
+            boost::uint64_t segcount;
             std::string file_extension;
         };
 

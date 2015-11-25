@@ -46,6 +46,8 @@ namespace trip
         void P2pHttpFinder::init()
         {
             Bootstrap::instance(http_.get_io_service()).get("tracker", urls_);
+            if (urls_.empty())
+                urls_.push_back(Url("http://tracker.trip.com/tracker/"));
         }
 
         template <class T>
@@ -68,8 +70,6 @@ namespace trip
             T & t = msg.get<T>();
             XmlIArchive<> ia(is);
             ia >> t;
-            if (!ia)
-                LOG_WARN("[parse_msg] failed, path=" << ia.failed_item_path());
             return !!ia;
         }
 
@@ -78,8 +78,11 @@ namespace trip
             Message const & msg) = {
             &format_msg<MessageRequestLogin>, 
             &format_msg<MessageRequestSync>, 
+            &format_msg<MessageRequestPort>, 
             &format_msg<MessageRequestLogout>, 
+            NULL, NULL, NULL, NULL,
             &format_msg<MessageRequestFind>, 
+            &format_msg<MessageRequestPass>, 
         };
 
         static bool (* parse_msgs[]) (
@@ -87,23 +90,29 @@ namespace trip
             Message & msg) = {
             &parse_msg<MessageResponseLogin>, 
             &parse_msg<MessageResponseSync>, 
+            &parse_msg<MessageResponsePort>, 
             &parse_msg<MessageResponseLogout>, 
+            NULL, NULL, NULL, NULL,
             &parse_msg<MessageResponseFind>, 
+            &parse_msg<MessageResponsePass>, 
         };
 
         static char const * const commands[] = {
             "login", 
             "sync", 
+            "port", 
             "logout", 
+            NULL, NULL, NULL, NULL,
             "find"
+            "pass"
         };
 
         void P2pHttpFinder::send_msg(
             Message const & msg)
         {
             Url url(urls_.at(0));
-            boost::uint16_t index = msg.type - REQ_Sync;
-            url.path(url.path() + commands[index]);
+            boost::uint16_t index = msg.type - REQ_Login;
+            url.path(url.path() + commands[index] + ".xml");
             req_.head().path = url.path_all();
             req_.head().host = url.host_svc();
             std::ostream os(&req_.data());

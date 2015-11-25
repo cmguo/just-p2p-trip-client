@@ -25,7 +25,7 @@ namespace trip
 
         CdnFinder::CdnFinder(
             CdnManager & cmgr)
-            : url_("http://jump.trip.com/jump.xml")
+            : url_("http://jump.trip.com/trip/jump.xml")
             , cmgr_(cmgr)
             , http_(cmgr.io_svc())
         {
@@ -51,16 +51,19 @@ namespace trip
             Resource & resource, 
             size_t count)
         {
-            LOG_INFO("[find] rid=" << resource.id());
-            Url url(url_);
-            url.param("rid", resource.id().to_string());
-            std::vector<Url> const & urls = resource.urls();
-            for (size_t i = 0; i < urls.size(); ++i) {
-                url.param_add("url", urls[i].to_string());
+            std::vector<Url> urls;
+            resource.set_urls(urls); // swap
+            if (urls.empty()) {
+                LOG_INFO("[find] rid=" << resource.id());
+                Url url(url_);
+                url.param("rid", resource.id().to_string());
+                url.param("count", framework::string::format(count));
+                http_.async_fetch(url, 
+                    boost::bind(&CdnFinder::handle_fetch, this, _1));
+            } else {
+                http_.get_io_service().post(
+                    boost::bind(&CdnFinder::found, this, resource.id(), urls));
             }
-            url.param("count", framework::string::format(count));
-            http_.async_fetch(url, 
-                boost::bind(&CdnFinder::handle_fetch, this, _1));
         }
 
         Source * CdnFinder::create(

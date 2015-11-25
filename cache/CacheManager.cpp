@@ -26,7 +26,7 @@ namespace trip
 
         CacheManager::CacheManager(
             util::daemon::Daemon & daemon)
-            : util::daemon::ModuleBase<CacheManager>(daemon, "CacheManager")
+            : util::daemon::ModuleBase<CacheManager>(daemon, "trip.client.CacheManager")
             , rmgr_(util::daemon::use_module<ResourceManager>(daemon))
             , tmgr_(util::daemon::use_module<TimerManager>(daemon))
             , capacity_(0)
@@ -34,7 +34,7 @@ namespace trip
             , memory_cache_(NULL)
             , disk_cache_(NULL)
         {
-            config().register_module("trip.client.CacheManager")
+            module_config()
                 << CONFIG_PARAM_NAME_NOACC("path", path_)
                 << CONFIG_PARAM_NAME_NOACC("capacity", capacity_)
                 << CONFIG_PARAM_NAME_NOACC("cache_memory", cache_memory_)
@@ -64,9 +64,7 @@ namespace trip
             tmgr_.t_10_s.on(
                 boost::bind(&CacheManager::on_event, this, _1, _2));
 
-            if (disk_cache_) {
-                io_svc().post(boost::bind(&CacheManager::load_cache, this));
-            }
+            io_svc().post(boost::bind(&CacheManager::load_cache, this));
 
             return true;
         }
@@ -87,7 +85,12 @@ namespace trip
 
         void CacheManager::load_cache()
         {
-            boost::filesystem::directory_iterator iter(path_);
+            boost::system::error_code ec;
+            boost::filesystem::directory_iterator iter(path_, ec);
+            if (ec) {
+                LOG_WARN("[load_cache] ec=" << ec.message());
+                return;
+            }
             boost::filesystem::directory_iterator end;
             Uuid id;
             for (; iter != end; ++iter) {

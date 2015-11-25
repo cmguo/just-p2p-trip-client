@@ -3,6 +3,8 @@
 #include "trip/client/Common.h"
 #include "trip/client/proto/Message.h"
 
+#include <util/protocol/Message.hpp>
+
 #include <framework/memory/BigFixedPool.h>
 #include <framework/memory/PrivateMemory.h>
 

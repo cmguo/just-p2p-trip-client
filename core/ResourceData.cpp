@@ -252,7 +252,7 @@ namespace trip
         void ResourceData::set_meta(
             ResourceMeta const & meta)
         {
-            end_ = meta.duration / meta.interval;
+            end_ = meta.segcount;
             meta_dirty_ = true;
         }
 
