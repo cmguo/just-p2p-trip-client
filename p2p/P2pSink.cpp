@@ -63,7 +63,7 @@ namespace trip
                 {
                     MessageRequestData req =
                         msg->as<MessageRequestData>();
-                    Piece::pointer piece = resource_.get_piece(req.index);
+                    Piece::pointer piece = resource_.get_piece(req.index, 1);
                     if (piece) {
                         LOG_DEBUG("[on_msg] index=" << req.index);
                         MessageResponseData & resp(
@@ -78,7 +78,7 @@ namespace trip
                     for (size_t i = 0; i < req.offsets.size(); ++i) {
                         req.index += req.offsets[i];
                         LOG_DEBUG("[on_msg] index=" << req.index);
-                        Piece::pointer piece = resource_.get_piece(req.index);
+                        Piece::pointer piece = resource_.get_piece(req.index, 1);
                         if (piece) {
                             msg = alloc_message();
                             MessageResponseData & resp(

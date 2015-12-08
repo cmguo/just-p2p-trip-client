@@ -18,6 +18,7 @@ namespace trip
             : util::event::Event
         {
             Resource * resource;
+            ResourceChangedEvent() : resource(NULL) {}
         };
 
         struct ResourceMeta;
@@ -26,12 +27,15 @@ namespace trip
             : util::event::Event
         {
             ResourceMeta const * meta;
+            MetaChangedEvent() : meta(NULL) {}
         };
 
         struct DataEvent
             : util::event::Event
         {
             DataId id;
+            size_t degree;
+            DataEvent() : degree(0) {}
         };
 
         struct SegmentMeta;
@@ -41,6 +45,7 @@ namespace trip
         {
             DataId id;
             SegmentMeta const * meta;
+            SegmentMetaEvent() : meta(NULL) {}
         };
 
         struct Source;
@@ -50,6 +55,7 @@ namespace trip
         {
             boost::uint32_t type; // 0 - add, 1 - del, 2 - modify
             Source const * source;
+            SourceChangedEvent() : type(-1), source(NULL) {}
         };
 
         struct Sink;
@@ -59,6 +65,7 @@ namespace trip
         {
             boost::uint32_t type;
             Sink const * sink;
+            SinkChangedEvent() : type(-1), sink(NULL) {}
         };
 
     } // namespace client

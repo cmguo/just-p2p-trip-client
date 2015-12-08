@@ -18,14 +18,23 @@ namespace trip
             ResourceCache * rcache;
             union {
                 void const * data;
-                Block const * block;
-                Segment2 const * segment;
+                Block const * block; // memory cache
+                Segment2 const * segment; // disk cache
             };
             union {
-                Resource::lock_t lock;
-                boost::uint64_t seg_num;
+                Resource::lock_t lock; // memory cache
+                boost::uint64_t segid; // disk cache, segment, use block_piece from block count 
             };
             size_t lru;
+
+            Cache()
+                : next(NULL)
+                , rcache(NULL)
+                , data(NULL)
+                , lock(NULL)
+                , lru(0)
+            {
+            }
         };
 
         class CachePool
@@ -39,7 +48,8 @@ namespace trip
         public:
             bool alloc_cache(
                 ResourceCache * rcache, 
-                DataId const & block);
+                DataId const & block, 
+                size_t level);
 
             void free_cache(
                 ResourceCache * rcache);
@@ -50,13 +60,19 @@ namespace trip
                 size_t limit);
 
         protected:
-            Cache ** alloc_cache();
+            Cache ** alloc_cache(
+                size_t level);
 
             void free_cache(
                 Cache ** cache);
 
             void free_cache(
                 Cache * cache);
+
+            bool cache_empty() const
+            {
+                return free_caches_ == NULL;
+            }
 
         protected:
             virtual void const * alloc(

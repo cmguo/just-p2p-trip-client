@@ -6,8 +6,9 @@
 #include "trip/client/core/Resource.h"
 
 #include <util/event/Event.h>
-
 #include <util/daemon/Module.h>
+
+#include <framework/system/HumanNumber.h>
 
 namespace trip
 {
@@ -46,8 +47,8 @@ namespace trip
             ResourceManager & rmgr_;
             TimerManager & tmgr_;
             boost::filesystem::path path_;
-            boost::uint64_t capacity_;
-            boost::uint64_t cache_memory_;
+            framework::system::HumanNumber<boost::uint64_t> capacity_;
+            framework::system::HumanNumber<boost::uint32_t> cache_memory_;
             std::map<Uuid, ResourceCache *> rcaches_;
             CachePool * memory_cache_;
             CachePool * disk_cache_;

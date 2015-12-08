@@ -62,7 +62,9 @@ namespace trip
             }
         }
 
-        bool CdnDownloader::get_task( Source & source, std::vector<DataId> & pieces )
+        bool CdnDownloader::get_task(
+            Source & source, 
+            std::vector<DataId> & pieces)
         {
             SegmentInfo * sinfo = (SegmentInfo *)source.context();
             boost::uint32_t need_count = source.window_left();
@@ -142,7 +144,7 @@ namespace trip
                 for (size_t i = 0; i < sources_.size(); ++i) {
                     Source * src = sources_[i];
                     if (src->context() == sinfo) {
-                        //src->cancel();
+                        src->cancel();
                         src->context(full_seg_);
                     }
                 }
@@ -159,12 +161,13 @@ namespace trip
                 win_end_ = play_end;
             }
 
+            resource().modify_lock(lock_, win_beg_, win_end_);
+
             for (size_t i = 0; i < seg_count; ++i) {
                 SegmentInfo * sinfo = segments_[i];
                 if (sinfo == NULL) {
                     Segment2 const * seg = resource().prepare_segment(play_pos);
                     if (seg == NULL) {
-
                         win_end_ = play_beg;
                         segments_.erase(segments_.begin() + i, segments_.end());
                         break;

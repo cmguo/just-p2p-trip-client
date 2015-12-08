@@ -23,7 +23,8 @@ namespace trip
         Segment::~Segment()
         {
             for (boost::uint16_t i = 0; i < block_count_ - 1; ++i) {
-                Block::free(blocks_[i]);
+                if (blocks_[i])
+                    Block::free(blocks_[i]);
             }
         }
 
@@ -124,6 +125,7 @@ namespace trip
             assert(block_count_ <= BLOCK_PER_SEGMENT);
             assert(block_count_ <= block_count_);
             for (boost::uint16_t i = block_count_; i < block_count_; ++i) {
+                assert(false);
                 Block::free(blocks_[i]);
             }
             left_ = 0;
@@ -227,18 +229,19 @@ namespace trip
                         --left_;
                 }
                 ++blkp;
+                from.inc_block();
             }
             for (; blkf < blkt; ++blkf, ++blkp) {
                 if (*blkp) {
+                    if ((*blkp)->full())
+                        ++left_;
                     Block::free(*blkp); 
-                    *blkp = NULL;
-                    ++left_;
                 }
             } 
             if (to.piece && *blkp) {
                 if ((*blkp)->full())
                     ++left_;
-                (*blkp)->release(DataId(0, blkf, 0), to);
+                (*blkp)->release(from, to);
             }
         }
 

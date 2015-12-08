@@ -17,10 +17,12 @@ namespace trip
 
         DiskCachePool::DiskCachePool(
             boost::asio::io_service & io_svc, 
-            size_t size)
-            : CachePool(size)
+            boost::uint64_t size)
+            : CachePool((size_t)(size / SEGMENT_SIZE * 2))
             , queue_(new WorkQueue(io_svc))
         {
+            total_ = size / BLOCK_SIZE;
+            used_ = 0;
         }
 
         DiskCachePool::~DiskCachePool()
@@ -39,10 +41,12 @@ namespace trip
             for (size_t i = 0; i < map.size(); ++i) {
                 if (map[i]) {
                     LOG_INFO("[load_cache] found segment, rid=" << res.id().to_string() << ", segment=" << i);
-                    p = alloc_cache();
+                    p = alloc_cache(0);
                     if (p && *p) {
                         (*p)->rcache = rcache;
-                        (*p)->seg_num = i;
+                        sid.block_piece = res.get_segment2(sid)->block_count();
+                        (*p)->segid = sid.id;
+                        used_ += sid.block_piece;
                     }
                     res.set_segment_status(sid, true);
                 }
@@ -56,10 +60,21 @@ namespace trip
             DataId & to)
         {
             Segment2 const * seg = cache->rcache->resource().get_segment2(from);
+            if (total_ < used_ + seg->seg->block_count())
+                seg = NULL;
             if (seg) {
                 from.inc_segment(0);
                 to = from;
                 to.inc_segment();
+                used_ += seg->block_count();
+                if (cache_empty() && caches2_.empty()) {
+                    if (used_ < total_) {
+                        caches2_.resize(total_ / SEGMENT_SIZE * 2 * (total_ - used_) / used_);
+                        for (size_t i = 0; i < caches2_.size(); ++i) {
+                            free_cache(&caches2_[i]);
+                        }
+                    }
+                }
                 queue_->post(
                     boost::bind(&DiskCachePool::do_save, this, cache, from), 
                     boost::bind(&DiskCachePool::on_save, this, cache, from, _1));
@@ -76,6 +91,7 @@ namespace trip
         bool DiskCachePool::free(
             Cache * cache)
         {
+            used_ -= cache->segment->block_count();
             return true;
         }
 
@@ -95,7 +111,9 @@ namespace trip
                 cache->data = NULL;
                 cache->rcache->resource().set_segment_status(sid, true);
                 cache->rcache->resource().release_lock(cache->lock);
-                cache->seg_num = sid.segment;
+                Resource & res(cache->rcache->resource());
+                sid.block_piece = res.get_segment2(sid)->block_count();
+                cache->segid = sid.id;
             } else {
                 free_cache(cache);
             }

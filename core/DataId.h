@@ -13,8 +13,8 @@ namespace trip
     {
 
 #define BIT_COUNT 63
-#define PIECE_BIT 6
-#define BLOCK_BIT 6
+#define PIECE_BIT 7
+#define BLOCK_BIT 7
 #define SEGMENT_BIT (BIT_COUNT - PIECE_BIT - BLOCK_BIT)
 
 #define MAX_PIECE boost::uint16_t(1 << PIECE_BIT)

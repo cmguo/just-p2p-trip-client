@@ -22,7 +22,7 @@ namespace trip
         {
         public:
             Tunnel(
-                Bus * bus);
+                Bus * bus = NULL);
 
             virtual ~Tunnel();
 

@@ -49,11 +49,12 @@ namespace trip
             if (event == r.sink_changed) {
                 SinkChangedEvent const & e = (SinkChangedEvent const &)event;
                 LOG_INFO("[on_event] sink_changed, type=" << e.type);
+                LOG_INFO("[on_event] download_point_=" << download_point_);
                 switch(e.type){
                 case 0: // add.
                     if (master_ == NULL) {
                         master_ = e.sink;
-                        download_point_ = master_->position();
+                        play_point_ = download_point_ = master_->position();
                         r.seek(download_point_);
                         reset();
                     }
@@ -63,7 +64,7 @@ namespace trip
                         && master_ == e.sink) {
                         if (r.get_sinks().size() > 0) {
                             master_ = r.get_sinks()[0]; 
-                            download_point_ = master_->position();
+                            play_point_ = download_point_ = master_->position();
                             r.seek(download_point_);
                             reset();
                         } else { // To stop download.
@@ -73,8 +74,8 @@ namespace trip
                     break;
                 case 2: // modify.
                     if (master_ == e.sink) {
-                        if (download_point_ != e.sink->position()) {
-                            download_point_ = master_->position();
+                        if (play_point_ != master_->position() || download_point_ != master_->position()) {
+                            play_point_ = download_point_ = master_->position();
                             r.seek(download_point_);
                             reset();
                         }
@@ -121,10 +122,10 @@ namespace trip
             framework::timer::Time const & now)
         {
             if (master_ 
-                && master_->position().segment != download_point_.segment
+                && master_->position().segment != play_point_.segment
                 && master_->position().top == 0) {
-                LOG_INFO("[on_timer] move download point: " << master_->position());
-                download_point_ = master_->position();
+                LOG_INFO("[on_timer] move play point: " << master_->position());
+                play_point_ = master_->position();
                 reset();
             }
         }

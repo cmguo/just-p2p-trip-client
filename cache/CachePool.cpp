@@ -35,9 +35,10 @@ namespace trip
 
         bool CachePool::alloc_cache(
             ResourceCache * rcache,
-            DataId const & id)
+            DataId const & id, 
+            size_t level)
         {
-            Cache ** p = alloc_cache();
+            Cache ** p = alloc_cache(level);
             if (p == NULL || *p == NULL) {
                 LOG_WARN("[alloc_cache] no cache!");
                 return false;
@@ -73,14 +74,25 @@ namespace trip
         void CachePool::check_caches()
         {
             Cache ** p = &used_caches_;
-            for (; *p; p = &(*p)->next) {
+            Cache * touched = NULL;
+            for (; *p; ) {
                 Cache * c = *p;
                 if (check(c)) {
                     c->lru = 0;
+                    *p = c->next;
+                    c->next = touched;
+                    touched = c;  
                 } else {
                     ++c->lru;
+                    p = &(*p)->next;
                 }
             }
+            while (touched) {
+                *p = touched;
+                p = &touched->next;
+                touched = *p;
+            }
+            used_caches_tail_ = p;
         }
 
         void CachePool::reclaim_caches(
@@ -94,10 +106,11 @@ namespace trip
             }
         }
 
-        Cache ** CachePool::alloc_cache()
+        Cache ** CachePool::alloc_cache(
+            size_t level)
         {
             if (free_caches_ == NULL) {
-                if (used_caches_ && used_caches_->lru > 0) {
+                if (used_caches_ && used_caches_->lru >= level) {
                     free_cache(&used_caches_);
                 }
             }
@@ -105,11 +118,11 @@ namespace trip
                 return NULL;
             }
             Cache * c = free_caches_;
-            free_caches_ = free_caches_->next;
+            free_caches_ = c->next;
+            c->next = NULL;
             Cache ** p = used_caches_tail_;
             *used_caches_tail_ = c;
             used_caches_tail_ = &c->next;
-            *used_caches_tail_ = NULL;
             return p;
         }
 
@@ -117,13 +130,13 @@ namespace trip
             Cache ** cache)
         {
             Cache * c = *cache;
-            free(c);
+            if (c->data) free(c);
             if (c->lock)
                 c->rcache->resource().release_lock(c->lock);
             c->rcache = NULL;
             c->data = NULL;
             c->lru = 0;
-            *cache = (*cache)->next;
+            *cache = c->next;
             if (&c->next == used_caches_tail_)
                 used_caches_tail_ = cache;
             c->next = free_caches_;
@@ -133,13 +146,18 @@ namespace trip
         void CachePool::free_cache(
             Cache * cache)
         {
-            Cache ** p = &used_caches_;
-            while (*p) {
-                if (*p == cache) {
-                    free_cache(p);
-                    return;
+            if (cache->next) {
+                Cache ** p = &used_caches_;
+                while (*p) {
+                    if (*p == cache) {
+                        free_cache(p);
+                        return;
+                    }
+                    p = &(*p)->next;
                 }
-                p = &(*p)->next;
+            } else {
+                Cache ** p = &cache;
+                free_cache(p);
             }
         }
 

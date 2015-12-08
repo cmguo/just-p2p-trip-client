@@ -56,6 +56,8 @@ namespace trip
             virtual bool request(
                 std::vector<DataId> const & pieces) = 0;
 
+            virtual void cancel() = 0;
+
             virtual void seek(
                 DataId id);
 

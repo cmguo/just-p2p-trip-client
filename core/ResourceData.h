@@ -43,8 +43,13 @@ namespace trip
                 return end_;
             }
 
+            bool segments_ready() const
+            {
+                return end_ == meta_ready_;
+            }
+
             void get_segments(
-                std::vector<SegmentMeta> & metas);
+                std::vector<SegmentMeta> & metas) const;
 
             SegmentMeta const * get_segment_meta(
                 DataId id) const;
@@ -53,7 +58,8 @@ namespace trip
                 DataId id) const;
 
             Piece::pointer get_piece(
-                DataId id);
+                DataId id, 
+                size_t degree); // Emergency degree
 
             void get_segment_map(
                 DataId from, 
@@ -92,6 +98,13 @@ namespace trip
 
             void release_lock(
                 lock_t lock);
+
+            void query_lock(
+                lock_t lock, 
+                DataId & from, 
+                DataId & to);
+
+            void dump_locks() const;
 
         public:
             void set_segments(
@@ -171,6 +184,7 @@ namespace trip
                 framework::container::ordered_non_unique_tag
             > locks_;
             mutable bool meta_dirty_;
+            boost::uint64_t meta_ready_;
         };
 
     } // namespace client

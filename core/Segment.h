@@ -37,7 +37,7 @@ namespace trip
                 boost::uint32_t size = 0);
 
             static void free(
-                Segment * p);
+                Segment *& p);
 
         public:
             Segment(
@@ -131,6 +131,11 @@ namespace trip
                   , seg(NULL)
                   , saved(false)
             {
+            }
+
+            boost::uint16_t block_count() const
+            {
+                return boost::uint16_t((meta->bytesize + BLOCK_SIZE - 1) / BLOCK_SIZE);
             }
         };
 

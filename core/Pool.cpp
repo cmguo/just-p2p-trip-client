@@ -28,10 +28,11 @@ namespace trip
         }
 
         void Segment::free(
-            Segment * p)
+            Segment *& p)
         {
             p->~Segment();
             pool.free(p);
+            p = NULL;
         }
 
         Block * Block::alloc(
@@ -47,10 +48,11 @@ namespace trip
         }
 
         void Block::free(
-            Block * p)
+            Block *& p)
         {
             p->~Block();
             pool.free(p);
+            p = NULL;
         }
 
     } // namespace client

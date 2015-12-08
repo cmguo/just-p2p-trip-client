@@ -13,6 +13,7 @@
 
 #include <framework/logger/Logger.h>
 #include <framework/logger/StreamRecord.h>
+#include <framework/system/HumanNumber.hpp>
 
 #include <boost/bind.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -40,9 +41,11 @@ namespace trip
                 << CONFIG_PARAM_NAME_NOACC("cache_memory", cache_memory_)
                 ;
 
-            memory_cache_ = new MemoryCachePool(size_t(cache_memory_ / BLOCK_SIZE));
+            LOG_INFO("capacity=" << capacity_ << ", cache_memory=" << cache_memory_);
+
+            memory_cache_ = new MemoryCachePool(cache_memory_);
             if (capacity_) {
-                disk_cache_ = new DiskCachePool(io_svc(), size_t(capacity_ / SEGMENT_SIZE));
+                disk_cache_ = new DiskCachePool(io_svc(), capacity_);
             }
         }
 
@@ -109,7 +112,7 @@ namespace trip
             if (observable == rmgr_) {
                 Resource & r = *rmgr_.resource_added.resource;
                 if (event == rmgr_.resource_added) {
-                    LOG_INFO("[on_event] resource_added, id=" << r.id());
+                    //LOG_INFO("[on_event] resource_added, id=" << r.id());
                     ResourceCache * rcache = new ResourceCache(r, path_);
                     rcaches_[r.id()] = rcache;
                     ((DiskCachePool *)disk_cache_)->load_cache(rcache);
@@ -118,7 +121,7 @@ namespace trip
                     r.segment_full.on(
                         boost::bind(&CacheManager::on_event, this, _1, _2));
                 } else if (event == rmgr_.resource_deleting) {
-                    LOG_INFO("[on_event] resource_deleting, id=" << r.id());
+                    //LOG_INFO("[on_event] resource_deleting, id=" << r.id());
                     r.segment_full.un(
                         boost::bind(&CacheManager::on_event, this, _1, _2));
                     std::map<Uuid,  ResourceCache *>::iterator iter = 
@@ -152,14 +155,14 @@ namespace trip
                 ResourceCache * rcache = rcaches_[r.id()];
                 if (event == r.segment_full) {
                     DataEvent const & e(r.segment_full);
-                    LOG_INFO("[on_event] segment_full, rid=" << r.id() << ", segment=" << e.id.segment);
+                    //LOG_INFO("[on_event] segment_full, rid=" << r.id() << ", segment=" << e.id.segment);
                     if (disk_cache_) {
-                        disk_cache_->alloc_cache(rcache, e.id);
+                        disk_cache_->alloc_cache(rcache, e.id, 0);
                     }
                 } else if (event == r.data_miss) {
                     DataEvent const & e(r.data_miss);
-                    LOG_INFO("[on_event] data_miss, rid=" << r.id() << ", id=" << e.id);
-                    memory_cache_->alloc_cache(rcache, e.id);
+                    //LOG_INFO("[on_event] data_miss, rid=" << r.id() << ", id=" << e.id);
+                    memory_cache_->alloc_cache(rcache, e.id, e.degree * 5);
                 }
             }
         }

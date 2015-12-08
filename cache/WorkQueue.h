@@ -77,7 +77,7 @@ namespace trip
                 Work const & work, 
                 Callback const & callback)
             {
-                io_svc_.post(WorkCallback<Work, Callback>(io_svc_, work, callback));
+                boost::asio::io_service::post(WorkCallback<Work, Callback>(io_svc_, work, callback));
             }
 
             bool stop();

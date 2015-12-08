@@ -15,7 +15,7 @@ namespace trip
         {
         public:
             MemoryCachePool(
-                size_t size);
+                boost::uint32_t size);
 
         protected:
             virtual void const * alloc(

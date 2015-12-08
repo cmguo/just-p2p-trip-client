@@ -66,6 +66,7 @@ namespace trip
         protected:
             Sink const * master_;
             DataId download_point_;
+            DataId play_point_;
         };
 
     } // namespace client

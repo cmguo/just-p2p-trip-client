@@ -23,7 +23,7 @@ namespace trip
                 boost::uint32_t size = 0);
 
             static void free(
-                Block * p);
+                Block *& p);
 
         public:
             Block(

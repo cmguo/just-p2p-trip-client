@@ -114,8 +114,10 @@ namespace trip
                     boost::bind(&Sink::on_event, this, _2));
                 on_data();
             } else if (event == resource_->seg_meta_ready) {
-                LOG_INFO("[on_event] seg_meta_ready, segment=" << resource_->seg_meta_ready.id.segment);
-                on_segment_meta(resource_->seg_meta_ready.id.segment, *resource_->seg_meta_ready.meta);
+                if (pos_.id().segment == resource_->seg_meta_ready.id.segment) {
+                    LOG_INFO("[on_event] seg_meta_ready, segment=" << resource_->seg_meta_ready.id.segment);
+                    on_segment_meta(resource_->seg_meta_ready.id.segment, *resource_->seg_meta_ready.meta);
+                }
             } else if (event == resource_->merged) {
                 LOG_INFO("[on_event] merged, id=" << resource_->merged.resource->id());
                 resource_->del_sink(this);

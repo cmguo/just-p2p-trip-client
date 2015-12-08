@@ -79,6 +79,12 @@ namespace trip
             return send_msg(msg);
         }
 
+        void P2pSource::cancel()
+        {
+            requests_.clear();
+            req_count_ = 0;
+        }
+
         void P2pSource::seek(
             DataId id)
         {

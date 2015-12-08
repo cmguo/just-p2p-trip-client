@@ -17,6 +17,7 @@ namespace trip
         ResourceData::ResourceData()
             : end_(0)
             , meta_dirty_(false)
+            , meta_ready_(0)
         {
         }
 
@@ -25,7 +26,7 @@ namespace trip
         }
 
         void ResourceData::get_segments(
-            std::vector<SegmentMeta> & metas)
+            std::vector<SegmentMeta> & metas) const
         {
             metas.resize(end_);
             DataId id;
@@ -37,7 +38,8 @@ namespace trip
         }
 
         Piece::pointer ResourceData::get_piece(
-            DataId id)
+            DataId id, 
+            size_t degree)
         {
             Segment2 const * segment2 = get_segment2(id);
             if (segment2 == NULL || segment2->meta == NULL)
@@ -48,6 +50,7 @@ namespace trip
             }
             if (p == NULL && segment2->saved) {
                 data_miss.id = id;
+                data_miss.degree = degree;
                 raise(data_miss);
                 if (segment2->seg) {
                     p = segment2->seg->get_piece(id);
@@ -100,6 +103,7 @@ namespace trip
                 iterator.block_ = &iterator.segment_->modify_block(id);
                 if (iterator.segment2_->saved) {
                     data_miss.id = id;
+                    data_miss.degree = 0;
                     raise(data_miss);
                 }
                 iterator.piece_ = iterator.block_->get_piece(iterator.id_);
@@ -172,6 +176,7 @@ namespace trip
                 iterator.block_ = &iterator.segment_->modify_block(id);
                 if (iterator.segment2_->saved) {
                     data_miss.id = id;
+                    data_miss.degree = 0;
                     raise(data_miss);
                 }
             }
@@ -214,17 +219,34 @@ namespace trip
             delete l;
         }
 
+        void ResourceData::query_lock(
+            lock_t  lock, 
+            DataId & from, 
+            DataId & to)
+        {
+            Lock * l = (Lock * )lock;
+            from = l->from;
+            to = l->to;
+        }
+
+        void ResourceData::dump_locks() const
+        {
+            for (Lock const * p = locks_.first(); p; p = locks_.next(p)) {
+                LOG_INFO("[dump_locks] lock: " << (void *)p << " from: " << p->from << " to: " << p->to);
+            }
+        }
+
         void ResourceData::insert_lock(
             Lock * l)
         {
-            LOG_INFO("[insert_lock] from: " << l->from << " to: " << l->to);
+            LOG_TRACE("[insert_lock] from: " << l->from << " to: " << l->to);
             locks_.insert(l);
         }
 
         void ResourceData::remove_lock(
             Lock * l)
         {
-            LOG_INFO("[remove_lock] from: " << l->from << " to: " << l->to);
+            LOG_TRACE("[remove_lock] from: " << l->from << " to: " << l->to);
             if (l->from == l->to) return;
             for (Lock * p = locks_.first(); p; p = locks_.next(p)) {
                 if (p->from <= l->from) {
@@ -259,10 +281,19 @@ namespace trip
         void ResourceData::set_segments(
             std::vector<SegmentMeta> const & metas)
         {
+            if (end_)
+                return;
             DataId id(0);
+            end_ = metas.size();
+            meta_ready_ = 0;
             for (size_t i = 0; i < metas.size(); ++i) {
-                if (metas[i].bytesize != 0)
-                    set_segment_meta(id, metas[i]);
+                if (metas[i].bytesize != 0) {
+                    Segment2 & segment(modify_segment2(id));
+                    assert(segment.meta == NULL);
+                    assert(segment.seg == NULL);
+                    segment.meta = new SegmentMeta(metas[i]);
+                    ++meta_ready_;
+                }
                 id.inc_segment();
             }
             meta_dirty_ = true;
@@ -287,6 +318,7 @@ namespace trip
                         raise(data_ready);
                     }
                 }
+                ++meta_ready_;
                 meta_dirty_ = true;
             }
         }
@@ -445,27 +477,29 @@ namespace trip
             DataId from,
             DataId to)
         {
-            LOG_INFO("[release] from: " << from << " to: " << to);
+            LOG_TRACE("[release] from: " << from << " to: " << to);
             boost::uint64_t segf = from.top_segment;
             boost::uint64_t segt = to.top_segment;
             std::map<boost::uint64_t, Segment2>::iterator iter = segments_.lower_bound(segf);
             if (iter == segments_.end())
                 return;
             if (segf < segt && from.block_piece) {
-                if (iter->first == segf++ && iter->second.seg) {
-                    iter->second.seg->release(from, DataId(segf, 0, 0));
+                if (iter->first == segf++) {
+                    if (iter->second.seg)
+                        iter->second.seg->release(from, DataId(segf, 0, 0));
                     ++iter;
                 }
+                from.inc_segment(); // now from is block alignment
             }
             for (; segf < segt; ++segf) {
-                if (iter != segments_.end() && iter->first == segf && iter->second.seg) {
-                    Segment::free(iter->second.seg);
-                    iter->second.seg = NULL;
+                if (iter != segments_.end() && iter->first == segf) {
+                    if (iter->second.seg)
+                        Segment::free(iter->second.seg);
                     ++iter;
                 }
             }
             if (to.block_piece && iter != segments_.end() && iter->first == segf && iter->second.seg)
-                iter->second.seg->release(DataId(segf, 0, 0), to);
+                iter->second.seg->release(from, to); // if from and to is in same segment, from and to is original input value
         }
 
     } // namespace client

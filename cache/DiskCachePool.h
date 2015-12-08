@@ -18,7 +18,7 @@ namespace trip
         public:
             DiskCachePool(
                 boost::asio::io_service & io_svc, 
-                size_t size);
+                boost::uint64_t size);
 
             virtual ~DiskCachePool();
 
@@ -49,6 +49,9 @@ namespace trip
 
         private:
             WorkQueue * queue_;
+            boost::uint64_t total_; // in blocks
+            boost::uint64_t used_;
+            std::vector<Cache> caches2_;
         };
 
     } // namespace client

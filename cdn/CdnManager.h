@@ -4,12 +4,14 @@
 #define _TRIP_CDN_CDN_MANAGER_H_
 
 #include <util/daemon/Module.h>
+#include <util/event/Event.h>
 
 namespace trip
 {
     namespace client
     {
 
+        class TimerManager;
         class Finder;
         class CdnTunnel;
 
@@ -39,6 +41,12 @@ namespace trip
                 boost::system::error_code & ec);
 
         private:
+            void on_event(
+                util::event::Observable const & observable, 
+                util::event::Event const & event);
+
+        private:
+            TimerManager & tmgr_;
             Finder * finder_;
             std::map<std::string, CdnTunnel *> tunnels_;
         };

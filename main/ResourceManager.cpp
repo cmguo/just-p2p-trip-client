@@ -5,6 +5,7 @@
 #include "trip/client/utils/Format.h"
 #include "trip/client/core/Resource.h"
 #include "trip/client/core/PoolPiece.h"
+#include "trip/client/core/BlockData.h"
 
 #include <framework/logger/Logger.h>
 #include <framework/logger/StreamRecord.h>
@@ -24,6 +25,7 @@ namespace trip
             , mapping_(io_svc())
         {
             LOG_INFO("[sizeof] Block:" << sizeof(Block) << ", Segment:" << sizeof(Segment));
+            LOG_INFO("[sizeof] BlockData:" << sizeof(BlockData) << ", BlockPiece:" << sizeof(BlockPiece));
         }
 
         ResourceManager::~ResourceManager()

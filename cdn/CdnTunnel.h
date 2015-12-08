@@ -3,6 +3,8 @@
 #ifndef _TRIP_CLIENT_CDN_CDN_TUNNEL_H_
 #define _TRIP_CLIENT_CDN_CDN_TUNNEL_H_
 
+#include "trip/client/net/Tunnel.h"
+
 namespace trip
 {
     namespace client
@@ -11,6 +13,7 @@ namespace trip
         class CdnSource;
 
         class CdnTunnel
+            : public Tunnel
         {
         public:
             CdnTunnel(

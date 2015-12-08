@@ -45,6 +45,8 @@ namespace trip
             virtual bool request(
                 std::vector<DataId> const & pieces);
             
+            virtual void cancel();
+
         private:
             void handle_open(
                 boost::system::error_code ec);
@@ -54,14 +56,21 @@ namespace trip
                 size_t bytes_read, 
                 Piece::pointer piece);
 
+            // make http range from ranges_, to head.range
+            void make_range(
+                util::protocol::HttpHead & head);
+
         private:
             friend class CdnTunnel;
             void on_timer(
                 Time const & now);
 
         private:
+            CdnTunnel & tunnel_;
             util::protocol::HttpClient http_;
             Piece::pointer piece_;
+            Time next_;
+            boost::uint32_t bytes_; // bytes read from last timer tick
             struct PieceRange
             {
                 DataId b;

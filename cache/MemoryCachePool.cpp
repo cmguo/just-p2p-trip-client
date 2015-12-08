@@ -10,8 +10,8 @@ namespace trip
     {
 
         MemoryCachePool::MemoryCachePool(
-            size_t size)
-            : CachePool(size)
+            boost::uint32_t size)
+            : CachePool(size / BLOCK_SIZE)
         {
         }
 
@@ -32,6 +32,11 @@ namespace trip
         bool MemoryCachePool::check(
             Cache * cache)
         {
+            DataId from, to;
+            Resource & r(cache->rcache->resource());
+            r.query_lock(cache->lock, from, to);
+            Block const * blk = r.get_segment(from)->get_block(from);
+            assert(blk == cache->block);
             return cache->block->touched();
         }
 

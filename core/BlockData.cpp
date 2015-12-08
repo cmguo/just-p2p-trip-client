@@ -7,10 +7,14 @@
 #include <framework/memory/SmallFixedPool.h>
 #include <framework/memory/PrivateMemory.h>
 
+#include <iostream>
+
 namespace trip
 {
     namespace client
     {
+
+        static framework::memory::SmallFixedPool pool(framework::memory::PrivateMemory(), -1, sizeof(BlockPiece));
 
         BlockData::BlockData(
             void * map_addr, 
@@ -39,7 +43,14 @@ namespace trip
             void * addr = file.map(offset, size, file.fm_read, ec);
             if (addr == NULL)
                 return NULL;
-            return new BlockData(addr, offset, size);
+            void * ptr = pool.alloc(sizeof(BlockData));
+            if (ptr) {
+                return new (ptr) BlockData(addr, offset, size);
+            } else {
+                file.unmap(addr, offset, size, ec);
+                assert(false);
+                return NULL;
+            }
         }
 
         void BlockData::free(
@@ -48,21 +59,22 @@ namespace trip
             framework::filesystem::File file;
             boost::system::error_code ec;
             file.unmap(p->map_addr_, p->offset_, p->size_, ec);
-            delete p;
+            p->~BlockData();
+            pool.free(p);
         }
-
-        static framework::memory::SmallFixedPool pool(framework::memory::PrivateMemory(), -1, sizeof(BlockPiece));
 
         BlockPiece * BlockPiece::alloc(
             boost::intrusive_ptr<BlockData> block, 
             boost::uint8_t * data, 
             boost::uint16_t size)
         {
-            void * ptr = pool.alloc(sizeof(BlockData));
-            if (ptr)
+            void * ptr = pool.alloc(sizeof(BlockPiece));
+            if (ptr) {
                 return new (ptr) BlockPiece(block, data, size);
-            else
+            } else {
+                assert(false);
                 return NULL;
+            }
         }
 
         void BlockPiece::free(

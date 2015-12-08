@@ -92,9 +92,9 @@ namespace trip
             ia >> info;
             if (!ia) return false;
 
-            resource_.set_meta(info.meta);
             if (info.segments.is_initialized())
                 resource_.set_segments(info.segments.get());
+            resource_.set_meta(info.meta);
             resource_.meta_dirty(); // clear dirty mark
 
             boost::filesystem::directory_iterator iter(directory_);
@@ -113,7 +113,7 @@ namespace trip
         Block const * ResourceCache::map_block(
             DataId bid)
         {
-            LOG_INFO("[map_block] rid=" << resource_.id() << ", id=" << bid);
+            //LOG_INFO("[map_block] rid=" << resource_.id() << ", id=" << bid);
             return resource_.map_block(bid, seg_path(bid));
         }
 
