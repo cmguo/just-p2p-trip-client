@@ -146,8 +146,9 @@ namespace trip
             }
             iter = std::find_if(fetch_requests_.begin(), fetch_requests_.end(), find_request(server));
             if (iter != fetch_requests_.end()) {
-                Sink::seek_end(iter->segm);
                 bool first = (iter == fetch_requests_.begin());
+                if (first && iter->sink)
+                    Sink::seek_end(iter->segm);
                 if (first && piece_) {
                     iter->sink = NULL;
                 } else {
@@ -243,8 +244,8 @@ namespace trip
             if (r.sink == NULL) {
                 response_t resp;
                 resp.swap(r.resp);
-                resp(boost::asio::error::operation_aborted);
                 fetch_requests_.pop_front();
+                resp(boost::asio::error::operation_aborted);
                 fetch_next();
                 return;
             }

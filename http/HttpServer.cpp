@@ -4,6 +4,7 @@
 #include "trip/client/http/HttpServer.h"
 #include "trip/client/http/HttpManager.h"
 #include "trip/client/http/HttpSession.h"
+#include "trip/client/http/M3u8Protocol.h"
 #include "trip/client/proto/MessageResource.h"
 
 #include <util/serialization/ErrorCode.h>
@@ -53,6 +54,9 @@ namespace trip
             session_ = mgr_.alloc_session(url_, ec);
 
             option_ = url_.path();
+            std::string::size_type pos = option_.rfind('.');
+            if (pos != std::string::npos)
+                option_.erase(pos);
 
             if (option_.compare(0, 7, "/fetch/") == 0) {
                 segment_ = framework::string::parse<boost::uint64_t>(option_.substr(7));
@@ -62,6 +66,7 @@ namespace trip
             if (!ec) {
                 if (option_ != "/meta"
                     && option_ != "/stat"
+                    && option_ != "/hls"
                     && option_ != "/fetch") {
                         ec = http_error::not_found;
                 } else {
@@ -140,13 +145,15 @@ namespace trip
                         resp(ec, (size_t)content_range.size());
                         return;
                     }
-                } else {
+                } else if (option_ == "/meta") {
                     response_head()["Content-Type"] = "application/xml";
-                    if (option_ == "/meta") {
-                        make_meta(ec);
-                    } else if (option_ == "/stat") {
-                        make_stat(ec);
-                    }
+                    make_meta(ec);
+                } else if (option_ == "/stat") {
+                    response_head()["Content-Type"] = "application/xml";
+                    make_stat(ec);
+                } else if (option_ == "/hls") {
+                    response_head()["Content-Type"] = "application/x-mpegURL";
+                    make_hls(ec);
                 }
             }
 
@@ -244,6 +251,22 @@ namespace trip
                 util::archive::XmlOArchive<> oa(response_data());
                 oa << stat;
             }
+        }
+
+        void HttpServer::make_hls(
+            boost::system::error_code& ec)
+        {
+            ResourceMeta const * meta = 
+                session_->resource().meta();
+            M3u8Config conf;
+            conf.interval = meta->interval;
+            conf.url_format = "/fetch/%n" + meta->file_extension + "?session=" + url_.param("session");
+            std::vector<SegmentMeta> segments;
+            if (session_->resource().segments_ready()) {
+                session_->resource().get_segments(segments);
+            }
+            std::ostream os(&response_data());
+            M3u8Protocol::create(os, conf, *meta, segments, ec);
         }
 
     } // namespace client

@@ -56,6 +56,9 @@ namespace trip
             void make_stat(
                 boost::system::error_code& ec);
 
+            void make_hls(
+                boost::system::error_code& ec);
+
         private:
             HttpManager & mgr_;
             framework::string::Url url_;
