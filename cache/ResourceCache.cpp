@@ -30,6 +30,7 @@ namespace trip
             Resource & resource, 
             boost::filesystem::path const & directory)
             : resource_(resource)
+            , is_external_(false)
         {
             boost::system::error_code ec;
             directory_ = directory / resource_.id().to_string();
@@ -39,10 +40,17 @@ namespace trip
                 std::string line;
                 if (std::getline(ifs, line)) {
                     directory_ = line;
+                    is_external_ = true;
                 }
             }
-            if (!boost::filesystem::exists(directory_))
-                boost::filesystem::create_directory(directory_, ec);
+            if (!boost::filesystem::exists(directory_)) {
+                if (!boost::filesystem::create_directory(directory_, ec)) {
+                    if (is_external_) {
+                        directory_ = directory / resource_.id().to_string();
+                        is_external_ = false;
+                    }
+                }
+            }
         }
 
         ResourceCache::~ResourceCache()
@@ -92,16 +100,22 @@ namespace trip
             ia >> info;
             if (!ia) return false;
 
-            if (info.segments.is_initialized())
-                resource_.set_segments(info.segments.get());
+            std::vector<SegmentMeta> const & segments(info.segments.get());
+            resource_.set_segments(segments);
             resource_.set_meta(info.meta);
             resource_.meta_dirty(); // clear dirty mark
 
             boost::filesystem::directory_iterator iter(directory_);
             boost::filesystem::directory_iterator end;
+            boost::system::error_code ec;
             for (; iter != end; ++iter) {
                 if (iter->path().extension() == resource_.meta()->file_extension) {
                     boost::uint64_t segid = strid(iter->path().stem().string());
+                    if (segments[segid].bytesize != boost::filesystem::file_size(iter->path())) {
+                        LOG_WARN("[load_status] size not match (to be deteled), segment=" << segid);
+                        boost::filesystem::remove(iter->path(), ec);
+                        continue;
+                    }
                     if (map.size() <= segid)
                         map.resize(segid + 1);
                     map[segid] = true;
@@ -142,14 +156,25 @@ namespace trip
             DataId sid, 
             SegmentMeta const & segment)
         {
+            LOG_INFO("[load_segment] rid=" << resource_.id() << " segment=" << sid.segment);
             boost::filesystem::path path = seg_path(sid);
             Md5Sum md5 = Segment::file_md5sum(path);
             if (md5 != segment.md5sum) {
+                LOG_WARN("[load_segment] md5sum not match (to be deteled), segment=" << sid.segment);
                 boost::system::error_code ec;
                 boost::filesystem::remove(path, ec);
                 return false;
             }
             return true;
+        }
+
+        bool ResourceCache::free_segment(
+            DataId sid)
+        {
+            boost::filesystem::path path = seg_path(sid);
+            boost::system::error_code ec;
+            boost::filesystem::remove(path, ec);
+            return !ec;
         }
 
         boost::filesystem::path ResourceCache::seg_path(

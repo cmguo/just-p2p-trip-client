@@ -33,6 +33,11 @@ namespace trip
                 return resource_;
             }
 
+            bool is_external() const
+            {
+                return is_external_;
+            }
+
         public:
             bool save_status();
 
@@ -50,6 +55,9 @@ namespace trip
                 DataId sid, 
                 SegmentMeta const & segment);
 
+            bool free_segment(
+                DataId sid);
+
         private:
             boost::filesystem::path seg_path(
                 DataId sid) const;
@@ -57,6 +65,7 @@ namespace trip
         private:
             Resource & resource_;
             boost::filesystem::path directory_;
+            bool is_external_;
         };
 
     } // namespace client

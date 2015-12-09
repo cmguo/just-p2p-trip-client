@@ -35,20 +35,11 @@ namespace trip
         {
             boost::dynamic_bitset<boost::uint32_t> map;
             rcache->load_status(map);
-            Cache ** p = NULL;
             DataId sid;
-            Resource & res(rcache->resource());
+            sid.top = 1;
             for (size_t i = 0; i < map.size(); ++i) {
                 if (map[i]) {
-                    LOG_INFO("[load_cache] found segment, rid=" << res.id().to_string() << ", segment=" << i);
-                    p = alloc_cache(0);
-                    if (p && *p) {
-                        (*p)->rcache = rcache;
-                        sid.block_piece = res.get_segment2(sid)->block_count();
-                        (*p)->segid = sid.id;
-                        used_ += sid.block_piece;
-                    }
-                    res.set_segment_status(sid, true);
+                    alloc_cache(rcache, sid, 0);
                 }
                 sid.inc_segment();
             }
@@ -59,9 +50,12 @@ namespace trip
             DataId & from, 
             DataId & to)
         {
+            // from 
             Segment2 const * seg = cache->rcache->resource().get_segment2(from);
-            if (total_ < used_ + seg->seg->block_count())
+            if (total_ < used_ + seg->block_count() && from.top == 0 && !cache->rcache->is_external()) {
                 seg = NULL;
+            }
+            DataId sid(from);
             if (seg) {
                 from.inc_segment(0);
                 to = from;
@@ -76,8 +70,8 @@ namespace trip
                     }
                 }
                 queue_->post(
-                    boost::bind(&DiskCachePool::do_save, this, cache, from), 
-                    boost::bind(&DiskCachePool::on_save, this, cache, from, _1));
+                    boost::bind(&DiskCachePool::do_save, this, cache, sid), 
+                    boost::bind(&DiskCachePool::on_save, this, cache, sid, _1));
             }
             return seg;
         }
@@ -85,13 +79,18 @@ namespace trip
         bool DiskCachePool::check(
             Cache * cache)
         {
+            if (cache->data != this) // save not finished
+                return true;
             return true;
         }
 
         bool DiskCachePool::free(
             Cache * cache)
         {
-            used_ -= cache->segment->block_count();
+            if (cache->data != this) // save not finished
+                return false;
+            used_ -= DataId(cache->segid).block_piece;
+            cache->rcache->free_segment(cache->segid);
             return true;
         }
 
@@ -99,7 +98,11 @@ namespace trip
             Cache * cache, 
             DataId sid)
         {
-            return cache->rcache->save_segment(sid, *cache->segment);
+            if (sid.top) { // load
+                return cache->rcache->load_segment(sid, *cache->segment->meta);
+            } else {
+                return cache->rcache->save_segment(sid, *cache->segment);
+            }
         }
 
         void DiskCachePool::on_save(
@@ -107,14 +110,18 @@ namespace trip
             DataId sid, 
             bool result)
         {
-            if (result) {
-                cache->data = NULL;
-                cache->rcache->resource().set_segment_status(sid, true);
-                cache->rcache->resource().release_lock(cache->lock);
-                Resource & res(cache->rcache->resource());
-                sid.block_piece = res.get_segment2(sid)->block_count();
+            Resource & res(cache->rcache->resource());
+            Segment2 const * seg = res.get_segment2(sid);
+            sid.top = 0;
+            sid.block_piece = seg->block_count();
+            if (result)
+                res.set_segment_status(sid, true);
+            if (result && !cache->rcache->is_external()) {
+                cache->data = this;
+                res.release_lock(cache->lock);
                 cache->segid = sid.id;
             } else {
+                used_ -= sid.block_piece;
                 free_cache(cache);
             }
         }

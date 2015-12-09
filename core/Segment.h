@@ -87,9 +87,6 @@ namespace trip
                 boost::filesystem::path const & path, 
                 boost::system::error_code & ec) const;
 
-            bool load(
-                boost::filesystem::path const & path);
-
         public:
             void set_size(
                 boost::uint32_t size);

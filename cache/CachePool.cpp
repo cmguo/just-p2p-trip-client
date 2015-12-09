@@ -130,7 +130,8 @@ namespace trip
             Cache ** cache)
         {
             Cache * c = *cache;
-            if (c->data) free(c);
+            if (c->data && !free(c))
+                return;
             if (c->lock)
                 c->rcache->resource().release_lock(c->lock);
             c->rcache = NULL;
