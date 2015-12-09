@@ -43,7 +43,7 @@ namespace trip
         {
             //LOG_INFO("[local_process]");
 
-            request_head().get_content(std::cout);
+            //request_head().get_content(std::cout);
 
             response_head().connection = http_field::Connection::close;
 
@@ -120,7 +120,7 @@ namespace trip
             response_type const & resp,
             boost::system::error_code ec)
         {
-            LOG_INFO( "[handle_open] session:" << session_ << " ec:" << ec.message());
+            LOG_TRACE( "[handle_open] session:" << session_ << " ec:" << ec.message());
 
             if (!ec) {
                 if (option_ == "/fetch") {
@@ -167,7 +167,7 @@ namespace trip
         void HttpServer::transfer_response_data(
             response_type const & resp)
         {
-            response_head().get_content(std::cout);
+            //response_head().get_content(std::cout);
             
             if (response_data().size()) {
                 util::protocol::HttpServer::transfer_response_data(resp);
@@ -184,13 +184,13 @@ namespace trip
             response_type const & resp,
             boost::system::error_code const & ec)
         {
-            LOG_INFO( "[handle_fetch] ec:" << ec.message());
+            LOG_TRACE( "[handle_fetch] ec:" << ec.message());
             resp(ec, Size());
         }
 
         void HttpServer::on_finish()
         {
-            LOG_INFO( "[on_finish] session:"<< session_);
+            LOG_TRACE( "[on_finish] session:"<< session_);
             if (session_) {
                 boost::system::error_code ec;
                 session_->close_request(this, ec);

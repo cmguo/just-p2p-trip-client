@@ -66,10 +66,10 @@ namespace trip
                             master_ = r.get_sinks()[0]; 
                             play_point_ = download_point_ = master_->position();
                             r.seek(download_point_);
-                            reset();
                         } else { // To stop download.
                             master_ = NULL;
                         }
+                        reset();
                     }
                     break;
                 case 2: // modify.
@@ -124,7 +124,7 @@ namespace trip
             if (master_ 
                 && master_->position().segment != play_point_.segment
                 && master_->position().top == 0) {
-                LOG_INFO("[on_timer] move play point: " << master_->position());
+                LOG_TRACE("[on_timer] move play point: " << master_->position());
                 play_point_ = master_->position();
                 reset();
             }

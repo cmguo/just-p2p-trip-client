@@ -10,6 +10,7 @@
 #include <util/event/Observable.h>
 
 #include <framework/container/Ordered.h>
+#include <framework/memory/MemoryPool.h>
 
 namespace trip
 {
@@ -36,6 +37,8 @@ namespace trip
             DataEvent data_seek;
 
             DataEvent segment_full;
+
+            static framework::memory::MemoryPool & mpool();
 
         public:
             boost::uint64_t get_segment_count() const
@@ -177,7 +180,11 @@ namespace trip
         private:
             boost::uint64_t next_;
             boost::uint64_t end_;
-            std::map<boost::uint64_t, Segment2> segments_;
+            typedef framework::container::Ordered<
+                Segment2, 
+                Segment2::idkey
+            > segment_map_t;
+            segment_map_t segments_;
             framework::container::Ordered<Lock, 
                 framework::container::identity<Lock>, 
                 std::less<Lock>, 

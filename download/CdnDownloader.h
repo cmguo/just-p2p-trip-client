@@ -48,6 +48,7 @@ namespace trip
 
         private:
 			void prepare_taskwindow(
+                DataId pos, 
 				size_t seg_count = 4);
 
 			struct SegmentInfo

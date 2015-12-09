@@ -4,6 +4,7 @@
 #include "trip/client/core/Block.h"
 #include "trip/client/core/Segment.h"
 #include "trip/client/core/Memory.h"
+#include "trip/client/core/ResourceData.h"
 
 #include <framework/memory/BigFixedPool.h>
 #include <framework/memory/PrivateMemory.h>
@@ -53,6 +54,11 @@ namespace trip
             p->~Block();
             pool.free(p);
             p = NULL;
+        }
+
+        framework::memory::MemoryPool & ResourceData::mpool()
+        {
+            return pool;
         }
 
     } // namespace client

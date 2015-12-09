@@ -58,7 +58,7 @@ namespace trip
             HttpServer * server, 
             response_t const & resp)
         {
-            LOG_INFO("[async_open] server=" << (void*)server);
+            LOG_TRACE("[async_open] server=" << (void*)server);
             Request r;
             r.server = server;
             r.segm = MAX_SEGMENT;
@@ -77,7 +77,7 @@ namespace trip
             Range const & range, 
             response_t const & resp)
         {
-            LOG_INFO("[async_open] server=" << (void*)server << ", segment=" << segm << ", range=" << range.to_string());
+            LOG_TRACE("[async_open] server=" << (void*)server << ", segment=" << segm << ", range=" << range.to_string());
             Request r;
             r.server = server;
             r.segm = segm;
@@ -113,7 +113,7 @@ namespace trip
             util::stream::Sink * sink,
             response_t const & resp)
         {
-            LOG_INFO("[async_fetch] server=" << (void*)server);
+            LOG_TRACE("[async_fetch] server=" << (void*)server);
             std::list<Request>::iterator iter = 
                 std::find_if(open_requests_.begin(), open_requests_.end(), find_request(server));
             assert(iter != open_requests_.end());
@@ -131,7 +131,7 @@ namespace trip
             HttpServer * server, 
             boost::system::error_code & ec)
         {
-            LOG_INFO("[close_request] server=" << (void*)server);
+            LOG_TRACE("[close_request] server=" << (void*)server);
             std::list<Request>::iterator iter = 
                 std::find_if(open_requests_.begin(), open_requests_.end(), find_request(server));
             if (iter != open_requests_.end()) {
@@ -161,7 +161,7 @@ namespace trip
                 }
                 return true;
             }
-            LOG_WARN("[close_request] no such request");
+            LOG_TRACE("[close_request] no such request");
             return false;
         }
 
@@ -179,7 +179,7 @@ namespace trip
         void HttpSession::on_meta(
             ResourceMeta const & meta)
         {
-            LOG_INFO("[on_meta]");
+            LOG_TRACE("[on_meta]");
             boost::system::error_code ec;
             std::list<Request>::iterator iter = open_requests_.begin();
             for (; iter != open_requests_.end(); ++iter) {
@@ -250,7 +250,7 @@ namespace trip
                 return;
             }
             if (ec) {
-                LOG_INFO("[on_write] at end");
+                LOG_TRACE("[on_write] at end");
                 response_t resp;
                 resp.swap(r.resp);
                 resp(ec);

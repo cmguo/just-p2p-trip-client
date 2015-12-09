@@ -68,10 +68,10 @@ namespace trip
             boost::uint64_t end = start + count;
             if (end > end_) end = end_;
             map.resize(end - start, false);
-            std::map<boost::uint64_t, Segment2>::const_iterator iter = 
+            segment_map_t::const_iterator iter = 
                 segments_.lower_bound(start);
-            while (iter != segments_.end() && iter->first < end) {
-                map[iter->first - start] = iter->second.saved;
+            while (iter != segments_.end() && iter->id < end) {
+                map[iter->id - start] = iter->saved;
                 ++iter;
             }
         }
@@ -348,16 +348,16 @@ namespace trip
             DataId & id)
         {
             boost::uint64_t next = id.top_segment;
-            std::map<boost::uint64_t, Segment2>::const_iterator iter = 
+            segment_map_t::const_iterator iter = 
                 segments_.find(next);
             while (next < end_ 
                 && iter != segments_.end()
-                && iter->first == next 
-                && iter->second.meta 
-                && (iter->second.saved 
-                    || (iter->second.seg 
-                        && (iter->second.seg->full()
-                            || iter->second.seg->seek(id))))) {
+                && iter->id == next 
+                && iter->meta 
+                && (iter->saved 
+                    || (iter->seg 
+                        && (iter->seg->full()
+                            || iter->seg->seek(id))))) {
                     ++next;
                     ++iter;
                     id.block_piece = 0;
@@ -403,12 +403,12 @@ namespace trip
             DataId id) const
         {
             boost::uint64_t index = id.segment;
-            std::map<boost::uint64_t, Segment2>::const_iterator iter = 
+            segment_map_t::const_iterator iter = 
                 segments_.find(index);
             if (iter == segments_.end()) {
                 return NULL;
             }
-            return &iter->second;
+            return &*iter;
         }
 
         Segment2 & ResourceData::modify_segment2(
@@ -416,15 +416,15 @@ namespace trip
         {
             boost::uint64_t index = id.segment;
             if (index < end_) {
-                std::map<boost::uint64_t, Segment2>::iterator iter = 
+                segment_map_t::iterator iter = 
                     segments_.find(index);
                 if (iter == segments_.end()) {
-                    iter = segments_.insert(std::make_pair(index, Segment2())).first;
+                    iter = segments_.insert(new Segment2(index)).first;
                 }
-                return iter->second;
+                return const_cast<Segment2 &>(*iter);
             } else {
                 assert(false);
-                static Segment2 empty_segment;
+                static Segment2 empty_segment(0);
                 return empty_segment;
             }
         }
@@ -480,26 +480,26 @@ namespace trip
             LOG_TRACE("[release] from: " << from << " to: " << to);
             boost::uint64_t segf = from.top_segment;
             boost::uint64_t segt = to.top_segment;
-            std::map<boost::uint64_t, Segment2>::iterator iter = segments_.lower_bound(segf);
+            segment_map_t::iterator iter = segments_.lower_bound(segf);
             if (iter == segments_.end())
                 return;
             if (segf < segt && from.block_piece) {
-                if (iter->first == segf++) {
-                    if (iter->second.seg)
-                        iter->second.seg->release(from, DataId(segf, 0, 0));
+                if (iter->id == segf++) {
+                    if (iter->seg)
+                        iter->seg->release(from, DataId(segf, 0, 0));
                     ++iter;
                 }
                 from.inc_segment(); // now from is block alignment
             }
             for (; segf < segt; ++segf) {
-                if (iter != segments_.end() && iter->first == segf) {
-                    if (iter->second.seg)
-                        Segment::free(iter->second.seg);
+                if (iter != segments_.end() && iter->id == segf) {
+                    if (iter->seg)
+                        Segment::free(const_cast<Segment *&>(iter->seg));
                     ++iter;
                 }
             }
-            if (to.block_piece && iter != segments_.end() && iter->first == segf && iter->second.seg)
-                iter->second.seg->release(from, to); // if from and to is in same segment, from and to is original input value
+            if (to.block_piece && iter != segments_.end() && iter->id == segf && iter->seg)
+                iter->seg->release(from, to); // if from and to is in same segment, from and to is original input value
         }
 
     } // namespace client

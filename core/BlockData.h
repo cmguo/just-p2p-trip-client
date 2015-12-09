@@ -5,6 +5,8 @@
 
 #include "trip/client/core/Piece.h"
 
+#include <framework/memory/MemoryPool.h>
+
 #include <boost/filesystem/path.hpp>
 
 namespace trip
@@ -33,6 +35,8 @@ namespace trip
             static void free(
                 BlockData * p);
 
+            static framework::memory::MemoryPool & mpool();
+
             friend void intrusive_ptr_add_ref(
                 BlockData * p)
             {
@@ -50,10 +54,10 @@ namespace trip
         private:
             friend class Block;
 
-            size_t nref_;
-            void * map_addr_;
-            boost::uint32_t offset_;
+            boost::uint16_t nref_;
+            boost::uint16_t offset_;
             boost::uint32_t size_;
+            void * map_addr_;
         };
 
         class BlockPiece

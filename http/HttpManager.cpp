@@ -9,6 +9,7 @@
 #include <framework/network/TcpSocket.hpp>
 #include <framework/logger/Logger.h>
 #include <framework/logger/StreamRecord.h>
+#include <framework/system/LogicError.h>
 
 FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("trip.client.HttpManager", framework::logger::Debug);
 
@@ -83,6 +84,10 @@ namespace trip
                     if (i->key() == "url") {
                         urls.push_back(Url(i->value()));
                     }
+                }
+                if (urls.empty()) {
+                    ec = framework::system::logic_error::item_not_exist;
+                    return NULL;
                 }
                 session = new HttpSession(io_svc(), mgr.get(urls));
                 if (session_id.empty()) {

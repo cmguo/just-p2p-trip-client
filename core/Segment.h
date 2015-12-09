@@ -7,6 +7,7 @@
 
 #include <framework/string/Md5.h>
 #include <framework/container/Array.h>
+#include <framework/container/Ordered.h>
 
 #include <boost/filesystem/path.hpp>
 
@@ -119,14 +120,37 @@ namespace trip
         };
 
         struct Segment2
+            : framework::container::OrderedHook<Segment2>::type
         {
+            struct idkey
+            {
+                typedef boost::uint64_t value_type;
+                typedef boost::uint64_t result_type;
+                result_type operator () (
+                    Segment2 const & t) const
+                {
+                    return t.id;
+                }
+            };
+
+            union {
+                struct {
+                    boost::uint64_t id : SEGMENT_BIT;
+                    boost::uint64_t saved : 1;
+                    boost::uint64_t external : 1;
+                };
+                boost::uint64_t id2;
+            };
             SegmentMeta * meta;
             Segment * seg;
-            bool saved;
-            Segment2()
-                : meta(NULL)
-                  , seg(NULL)
-                  , saved(false)
+
+            Segment2(
+                boost::uint64_t id)
+                : id(id)
+                , saved(0)
+                , external(0)
+                , meta(NULL)
+                , seg(NULL)
             {
             }
 

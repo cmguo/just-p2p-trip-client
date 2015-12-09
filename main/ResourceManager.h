@@ -50,6 +50,8 @@ namespace trip
             virtual bool shutdown(
                 boost::system::error_code & ec);
 
+            virtual void dump() const;
+
         private:
             void on_event(
                 util::event::Observable const & observable, 

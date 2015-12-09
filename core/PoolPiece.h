@@ -5,6 +5,8 @@
 
 #include "trip/client/core/Piece.h"
 
+#include <framework/memory/MemoryPool.h>
+
 namespace trip
 {
     namespace client
@@ -23,6 +25,8 @@ namespace trip
 
             static void free(
                 PoolPiece * p);
+
+            static framework::memory::MemoryPool & mpool();
 
         private:
             PoolPiece(

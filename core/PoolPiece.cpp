@@ -33,5 +33,10 @@ namespace trip
             pool.free(p);
         }
 
+        framework::memory::MemoryPool & PoolPiece::mpool()
+        {
+            return pool;
+        }
+
     } // namespace client
 } // namespace trip

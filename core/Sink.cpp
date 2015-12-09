@@ -44,7 +44,7 @@ namespace trip
             boost::uint32_t begin, 
             boost::uint32_t end)
         {
-            LOG_INFO("[seek_to] seg=" << seg);
+            LOG_TRACE("[seek_to] seg=" << seg);
             DataId ibegin(seg, 0, begin / PIECE_SIZE);
             DataId iend(seg, 0, (end + PIECE_SIZE - 1) / PIECE_SIZE);
             if (end == 0) {
@@ -65,7 +65,7 @@ namespace trip
         void Sink::seek_end(
             boost::uint64_t seg)
         {
-            LOG_INFO("[seek_end] seg=" << seg);
+            LOG_TRACE("[seek_end] seg=" << seg);
             resource_->data_ready.un(
                 boost::bind(&Sink::on_event, this, _2));
         }
@@ -115,11 +115,11 @@ namespace trip
                 on_data();
             } else if (event == resource_->seg_meta_ready) {
                 if (pos_.id().segment == resource_->seg_meta_ready.id.segment) {
-                    LOG_INFO("[on_event] seg_meta_ready, segment=" << resource_->seg_meta_ready.id.segment);
+                    LOG_TRACE("[on_event] seg_meta_ready, segment=" << resource_->seg_meta_ready.id.segment);
                     on_segment_meta(resource_->seg_meta_ready.id.segment, *resource_->seg_meta_ready.meta);
                 }
             } else if (event == resource_->merged) {
-                LOG_INFO("[on_event] merged, id=" << resource_->merged.resource->id());
+                LOG_TRACE("[on_event] merged, id=" << resource_->merged.resource->id());
                 resource_->del_sink(this);
                 resource_->merged.un(
                     boost::bind(&Sink::on_event, this, _2));
@@ -133,12 +133,12 @@ namespace trip
                     boost::bind(&Sink::on_event, this, _2));
                 resource_->add_sink(this);
             } else if (event == resource_->data_seek) {
-                LOG_INFO("[on_event] data_seek, id=" << resource_->data_seek.id);
+                LOG_TRACE("[on_event] data_seek, id=" << resource_->data_seek.id);
                 //if (!at_end() && resource_->data_seek.id == beg_.id()) {
                 //    on_data();
                 //}
             } else if (event == resource_->meta_changed) {
-                LOG_INFO("[on_event] meta_changed");
+                LOG_TRACE("[on_event] meta_changed");
                 on_meta(*resource_->meta_changed.meta);
                 resource_->meta_changed.un(
                     boost::bind(&Sink::on_event, this, _2));

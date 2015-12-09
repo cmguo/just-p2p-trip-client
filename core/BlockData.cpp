@@ -84,5 +84,10 @@ namespace trip
             pool.free(p);
         }
 
+        framework::memory::MemoryPool & BlockData::mpool()
+        {
+            return pool;
+        }
+
     } // namespace client
 } // namespace trip

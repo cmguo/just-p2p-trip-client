@@ -112,9 +112,11 @@ namespace trip
             return true;
         }
 
-        void CdnDownloader::prepare_taskwindow(size_t seg_count)
+        void CdnDownloader::prepare_taskwindow(
+            DataId pos, 
+            size_t seg_count)
         {
-            DataId play_pos(master_->position());
+            DataId play_pos(pos);
             DataId play_beg = play_pos;
             play_beg.inc_segment(0);
             DataId play_end = play_pos;
@@ -206,8 +208,10 @@ namespace trip
 
         void CdnDownloader::reset()
         {
-            // TODO: keep old segments_ that can be reused
-            prepare_taskwindow(4);
+            if (master_)
+                prepare_taskwindow(master_->position(), 4);
+            else
+                prepare_taskwindow(0, 0);
         }
 
         void CdnDownloader::on_timeout(DataId const& piece)
