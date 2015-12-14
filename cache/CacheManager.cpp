@@ -36,17 +36,10 @@ namespace trip
             , disk_cache_(NULL)
         {
             module_config()
-                << CONFIG_PARAM_NAME_NOACC("path", path_)
-                << CONFIG_PARAM_NAME_NOACC("capacity", capacity_)
-                << CONFIG_PARAM_NAME_NOACC("cache_memory", cache_memory_)
+                << CONFIG_PARAM_NAME_RDWR("path", path_)
+                << CONFIG_PARAM_NAME_RDWR("capacity", capacity_)
+                << CONFIG_PARAM_NAME_RDWR("cache_memory", cache_memory_)
                 ;
-
-            LOG_INFO("capacity=" << capacity_ << ", cache_memory=" << cache_memory_);
-
-            memory_cache_ = new MemoryCachePool(cache_memory_);
-            if (capacity_) {
-                disk_cache_ = new DiskCachePool(io_svc(), capacity_);
-            }
         }
 
         CacheManager::~CacheManager()
@@ -56,6 +49,13 @@ namespace trip
         bool CacheManager::startup(
             boost::system::error_code & ec)
         {
+            LOG_INFO("capacity=" << capacity_ << ", cache_memory=" << cache_memory_);
+
+            memory_cache_ = new MemoryCachePool(cache_memory_);
+            if (capacity_) {
+                disk_cache_ = new DiskCachePool(io_svc(), capacity_);
+            }
+
             rmgr_.resource_added.on(
                 boost::bind(&CacheManager::on_event, this, _1, _2));
             rmgr_.resource_deleting.on(
@@ -83,6 +83,11 @@ namespace trip
                 boost::bind(&CacheManager::on_event, this, _1, _2));
             rmgr_.resource_added.un(
                 boost::bind(&CacheManager::on_event, this, _1, _2));
+
+            delete memory_cache_;
+            if (disk_cache_)
+                delete disk_cache_;
+
             return true;
         }
 

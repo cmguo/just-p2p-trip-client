@@ -38,7 +38,9 @@ namespace trip
                 };
                 parse_cmdline(sizeof(default_argv) / sizeof(default_argv[0]), default_argv);
     
+#ifndef _STATIC
                 framework::logger::load_config(config());
+#endif
     
                 util::daemon::use_module<ResourceManager>(*this);
                 util::daemon::use_module<CacheManager>(*this);

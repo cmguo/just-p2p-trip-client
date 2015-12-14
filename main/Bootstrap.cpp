@@ -23,7 +23,7 @@ namespace trip
             , http_(io_svc())
         {
             module_config()
-                << CONFIG_PARAM_NAME_NOACC("url", url_)
+                << CONFIG_PARAM_NAME_RDWR("url", url_)
                 ;
         }
 

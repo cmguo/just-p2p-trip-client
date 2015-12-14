@@ -69,8 +69,8 @@ namespace trip
         static std::string idstr(
             DataId id)
         {
-            id = framework::system::BytesOrder::host_to_big_endian(id);
-            std::string sid((char const *)&id, sizeof(id));
+            boost::uint64_t id2 = framework::system::BytesOrder::host_to_big_endian(id.id);
+            std::string sid((char const *)&id2, sizeof(id2));
             return framework::string::Base16::encode(sid);
         }
 
