@@ -85,8 +85,10 @@ namespace trip
                         break;
                     }
                 }
-                if (sinfo == NULL) // TODO: No tasks, how to resume?
+                if (sinfo == NULL) { // TODO: No tasks, how to resume?
+                    LOG_DEBUG("[get_task] no task...");
                     return false;
+                }
             }
 
             source.context(sinfo);
@@ -183,7 +185,7 @@ namespace trip
                         sinfo->pos = sinfo->end;
                     } else {
                         seg->seg->seek(sinfo->pos);
-                        LOG_INFO("[prepare_taskwindow] segment=" << seg->seg << ", pos=" << sinfo->pos);
+                        LOG_DEBUG("[prepare_taskwindow] segment=" << seg->seg << ", pos=" << sinfo->pos);
                     }
                     segments_[i] = sinfo;
                 } else {

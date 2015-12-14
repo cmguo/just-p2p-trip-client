@@ -250,7 +250,7 @@ namespace trip
                 return;
             }
             if (ec) {
-                LOG_TRACE("[on_write] at end");
+                LOG_WARN("[on_write] ec:" << ec.message());
                 response_t resp;
                 resp.swap(r.resp);
                 resp(ec);
@@ -263,12 +263,14 @@ namespace trip
             Request & r)
         {
             if (at_end()) {
+                LOG_TRACE("[write] at end");
                 response_t resp;
                 resp.swap(r.resp);
                 resp(boost::system::error_code());
                 return;
             }
             if ((piece_ = read())) {
+                //LOG_TRACE("[write] piece:" << (void *)piece_->data() << ":" << piece_->size());
                 boost::asio::async_write(*r.sink, 
                     boost::asio::buffer(piece_->data(), piece_->size()), 
                     boost::asio::transfer_all(), 

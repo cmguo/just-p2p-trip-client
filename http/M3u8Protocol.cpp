@@ -81,6 +81,7 @@ namespace trip
             for (size_t i = 0; i < segments.size(); ++i) {
                 values[3] += segments[i].duration;
                 values[2] = (values[3] + 999) / 1000 - values[1];
+                if (values[2] == 0) values[2] = 1;
                 out << M3U8_EXTINF << values[2] << ",\n";
                 out << formator(values) << "\n";
                 ++values[0];

@@ -136,7 +136,7 @@ namespace trip
             DataId sid, 
             Segment2 const & segment)
         {
-            LOG_INFO("[save_segment] rid=" << resource_.id() << ", segment=" << sid.segment);
+            LOG_DEBUG("[save_segment] rid=" << resource_.id() << ", segment=" << sid.segment);
             if (segment.meta == NULL || segment.seg == NULL) {
                 return false;
             }
@@ -156,7 +156,7 @@ namespace trip
             DataId sid, 
             SegmentMeta const & segment)
         {
-            LOG_INFO("[load_segment] rid=" << resource_.id() << " segment=" << sid.segment);
+            LOG_DEBUG("[load_segment] rid=" << resource_.id() << " segment=" << sid.segment);
             boost::filesystem::path path = seg_path(sid);
             Md5Sum md5 = Segment::file_md5sum(path);
             if (md5 != segment.md5sum) {
@@ -171,6 +171,7 @@ namespace trip
         bool ResourceCache::free_segment(
             DataId sid)
         {
+            LOG_DEBUG("[free_segment] rid=" << resource_.id() << " segment=" << sid.segment);
             boost::filesystem::path path = seg_path(sid);
             boost::system::error_code ec;
             boost::filesystem::remove(path, ec);

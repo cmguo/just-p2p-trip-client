@@ -69,6 +69,9 @@ namespace trip
                         }
                     }
                 }
+                // should set segment to valid value, because "do_save" may
+                // run first
+                cache->segment = seg;
                 queue_->post(
                     boost::bind(&DiskCachePool::do_save, this, cache, sid), 
                     boost::bind(&DiskCachePool::on_save, this, cache, sid, _1));
@@ -90,7 +93,10 @@ namespace trip
             if (cache->data != this) // save not finished
                 return false;
             used_ -= DataId(cache->segid).block_piece;
+            Resource & res(cache->rcache->resource());
+            res.set_segment_status(cache->segid, false);
             cache->rcache->free_segment(cache->segid);
+            cache->segid = 0; // also set lock to NULL
             return true;
         }
 

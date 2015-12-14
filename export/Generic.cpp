@@ -101,7 +101,7 @@ namespace trip
                     NULL == value) {
                         ec = framework::system::logic_error::invalid_argument;
                 } else {
-                    ec = daemon_.config().set(section, key, value);
+                    ec = daemon_.config().set_force(section, key, value);
                 }
 
                 return last_error(__FUNCTION__, ec);

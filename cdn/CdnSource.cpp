@@ -43,14 +43,14 @@ namespace trip
         bool CdnSource::open(
             Url const & url)
         {
-            LOG_INFO("[open] url=" << url.to_string());
+            LOG_DEBUG("[open] url=" << url.to_string());
             on_ready();
             return true;
         }
 
         bool CdnSource::close()
         {
-            LOG_INFO("[close]");
+            LOG_DEBUG("[close]");
             return true;
         }
 

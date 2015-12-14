@@ -79,12 +79,12 @@ namespace trip
                 Cache * c = *p;
                 if (check(c)) {
                     c->lru = 0;
-                    *p = c->next;
+                    *p = c->next; // unlink
                     c->next = touched;
                     touched = c;  
                 } else {
                     ++c->lru;
-                    p = &(*p)->next;
+                    p = &c->next;
                 }
             }
             while (touched) {
@@ -136,10 +136,13 @@ namespace trip
                 c->rcache->resource().release_lock(c->lock);
             c->rcache = NULL;
             c->data = NULL;
+            c->data2 = NULL;
             c->lru = 0;
             *cache = c->next;
-            if (&c->next == used_caches_tail_)
+            if (&c->next == used_caches_tail_) {
+                assert(c->next == NULL);
                 used_caches_tail_ = cache;
+            }
             c->next = free_caches_;
             free_caches_ = c;
         }

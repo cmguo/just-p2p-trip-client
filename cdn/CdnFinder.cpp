@@ -54,7 +54,7 @@ namespace trip
             std::vector<Url> urls;
             resource.set_urls(urls); // swap
             if (urls.empty()) {
-                LOG_INFO("[find] rid=" << resource.id());
+                LOG_DEBUG("[find] rid=" << resource.id());
                 Url url(url_);
                 url.param("rid", resource.id().to_string());
                 url.param("count", framework::string::format(count));
@@ -70,7 +70,7 @@ namespace trip
             Resource & resource, 
             Url const & url)
         {
-            LOG_INFO("[create] rid=" << resource.id() << ", url=" << url.to_string());
+            LOG_DEBUG("[create] rid=" << resource.id() << ", url=" << url.to_string());
             return new CdnSource(cmgr_.get_tunnel(url), resource, url);
         }
 
@@ -78,7 +78,6 @@ namespace trip
             boost::system::error_code ec)
         {
             Url url("http://jump.trip.com" + http_.request_head().path);
-            LOG_INFO("[handle_fetch] rid=" << url.param("rid") << ", ec=" << ec.message());
             Uuid rid(url.param("rid"));
             std::vector<Url> urls;
             if (!ec) {
@@ -88,7 +87,11 @@ namespace trip
                     ec = cdn_error::xml_format_error;
                 }
             }
-            found(rid, urls);
+            if (!ec) {
+                found(rid, urls);
+            } else {
+                LOG_DEBUG("[handle_fetch] rid=" << url.param("rid") << ", ec=" << ec.message());
+            }
         }
 
     } // namespace client

@@ -22,6 +22,7 @@ namespace trip
                 Segment2 const * segment; // disk cache
             };
             union {
+                void const * data2;
                 Resource::lock_t lock; // memory cache
                 boost::uint64_t segid; // disk cache, segment, use block_piece from block count 
             };

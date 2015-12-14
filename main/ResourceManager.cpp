@@ -55,16 +55,17 @@ namespace trip
             return true;
         }
 
+        static struct {
+            char const * name;
+            framework::memory::MemoryPool const * pool;
+        } const mpools[] = {
+            {"PoolPiece", &PoolPiece::mpool()}, 
+            {"ResourceData", &ResourceData::mpool()}, 
+            {"BlockData", &BlockData::mpool()}
+        };
+
         void ResourceManager::dump() const
         {
-            struct {
-                char const * name;
-                framework::memory::MemoryPool const * pool;
-            } const mpools[] = {
-                {"PoolPiece", &PoolPiece::mpool()}, 
-                {"ResourceData", &ResourceData::mpool()}, 
-                {"BlockData", &BlockData::mpool()}
-            };
             for (size_t i = 0; i < sizeof(mpools) / sizeof(mpools[0]); ++i) {
                 framework::memory::MemoryPool const & pool(*mpools[i].pool);
                 LOG_INFO("[dump] [mpool] " << mpools[i].name << ": "
@@ -77,6 +78,18 @@ namespace trip
             for (; iter != resources_.end(); ++iter) {
                 Resource const & res(*iter->second);
                 LOG_INFO("[dump] [resouce] " << res.id());
+            }
+        }
+
+        void ResourceManager::check_memory(
+            void const * obj)
+        {
+            for (size_t i = 0; i < sizeof(mpools) / sizeof(mpools[0]); ++i) {
+                framework::memory::MemoryPool const & pool(*mpools[i].pool);
+                int n = pool.check_object(obj);
+                if (n) {
+                    LOG_INFO("[check_memory] pool:" << mpools[i].name << ", status:" << n);
+                }
             }
         }
 

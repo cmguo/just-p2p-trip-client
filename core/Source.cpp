@@ -31,14 +31,14 @@ namespace trip
         void Source::attach(
             Scheduler & scheduler)
         {
-            LOG_INFO("[attach]");
+            LOG_TRACE("[attach]");
             scheduler_ = &scheduler;
             open(url_);
         }
 
         void Source::detach()
         {
-            LOG_INFO("[detach]");
+            LOG_TRACE("[detach]");
             close();
         }
 
@@ -74,8 +74,6 @@ namespace trip
             std::vector<DataId> pieces;
             if (scheduler_->get_task(*this, pieces)) {
                 request(pieces);
-            } else {
-                LOG_INFO("[on_ready] no task");
             }
         }
 

@@ -7,12 +7,15 @@
 #include <framework/memory/SmallFixedPool.h>
 #include <framework/memory/PrivateMemory.h>
 
-#include <iostream>
+#include <framework/logger/Logger.h>
+#include <framework/logger/StreamRecord.h>
 
 namespace trip
 {
     namespace client
     {
+
+        FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("trip.client.BlockData", framework::logger::Debug);
 
         static framework::memory::SmallFixedPool pool(framework::memory::PrivateMemory(), -1, sizeof(BlockPiece));
 
@@ -21,9 +24,9 @@ namespace trip
             boost::uint32_t offset,
             boost::uint32_t size)
             : nref_(0)
-            , map_addr_(map_addr)
             , offset_(offset)
             , size_(size)
+            , map_addr_(map_addr)
         {
         }
 
@@ -38,13 +41,18 @@ namespace trip
         {
             framework::filesystem::File file;
             boost::system::error_code ec;
-            if (!file.open(path, file.f_read, ec))
+            if (!file.open(path, file.f_read, ec)) {
+                LOG_WARN("[alloc] open failed, path:" << path.string() << ", ec:" << ec.message());
                 return NULL;
+            }
             void * addr = file.map(offset, size, file.fm_read, ec);
-            if (addr == NULL)
+            if (addr == NULL) {
+                LOG_WARN("[alloc] map failed, ec:" << ec.message());
                 return NULL;
+            }
             void * ptr = pool.alloc(sizeof(BlockData));
             if (ptr) {
+                LOG_TRACE("[alloc] ptr:" << addr << ", size:" << size);
                 return new (ptr) BlockData(addr, offset, size);
             } else {
                 file.unmap(addr, offset, size, ec);
@@ -56,6 +64,7 @@ namespace trip
         void BlockData::free(
             BlockData * p)
         {
+            LOG_TRACE("[free] ptr:" << (void *)p->map_addr_ << ", size:" << p->size_);
             framework::filesystem::File file;
             boost::system::error_code ec;
             file.unmap(p->map_addr_, p->offset_, p->size_, ec);

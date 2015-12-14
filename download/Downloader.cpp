@@ -99,7 +99,7 @@ namespace trip
                 bool found = false;
                 for (size_t j = 0; j < sources_.size(); ++j) {
                     if (url == sources_[j]->url()) {
-                        LOG_INFO("[on_sources] old source " << url.to_string());
+                        LOG_DEBUG("[on_sources] old source " << url.to_string());
                         if (!sources_[j]->attached()) {
                             sources_[j]->attach(*this);
                             add_source(sources_[j]);
@@ -109,7 +109,7 @@ namespace trip
                     }
                 }
                 if (!found) {
-                    LOG_INFO("[active_sources] new source " << url.to_string());
+                    LOG_DEBUG("[active_sources] new source " << url.to_string());
                     Source * s = finder.create(resource(), url);
                     sources_.push_back(s);
                     s->attach(*this);

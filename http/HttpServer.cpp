@@ -15,6 +15,7 @@ using namespace util::protocol;
 #include <framework/string/Parse.h>
 #include <framework/logger/Logger.h>
 #include <framework/logger/StreamRecord.h>
+#include <framework/logger/LogAccept.h>
 
 #include <boost/bind.hpp>
 
@@ -41,9 +42,10 @@ namespace trip
 
         void HttpServer::local_process(response_type const & resp)
         {
-            //LOG_INFO("[local_process]");
+            LOG_DEBUG("[local_process]");
 
-            //request_head().get_content(std::cout);
+            LOG_ACCEPT_TRACE
+                request_head().get_content(std::cout);
 
             response_head().connection = http_field::Connection::close;
 
@@ -138,7 +140,7 @@ namespace trip
                             response_head().err_code = http_error::partial_content;
                             response_head().content_range = content_range;
                         }
-                        response_head()["Content-Type"] = content_type(meta->file_extension);
+                        response_head()["Content-Type"] = std::string("{") + content_type(meta->file_extension.substr(1)) + "}";
                         if (url_.param("chunked") == "true") {
                             response_head().transfer_encoding = "chunked";
                         }
@@ -146,13 +148,13 @@ namespace trip
                         return;
                     }
                 } else if (option_ == "/meta") {
-                    response_head()["Content-Type"] = "application/xml";
+                    response_head()["Content-Type"] = "{application/xml}";
                     make_meta(ec);
                 } else if (option_ == "/stat") {
-                    response_head()["Content-Type"] = "application/xml";
+                    response_head()["Content-Type"] = "{application/xml}";
                     make_stat(ec);
                 } else if (option_ == "/hls") {
-                    response_head()["Content-Type"] = "application/x-mpegURL";
+                    response_head()["Content-Type"] = "{application/x-mpegURL}";
                     make_hls(ec);
                 }
             }
@@ -167,7 +169,8 @@ namespace trip
         void HttpServer::transfer_response_data(
             response_type const & resp)
         {
-            //response_head().get_content(std::cout);
+            LOG_ACCEPT_TRACE
+                response_head().get_content(std::cout);
             
             if (response_data().size()) {
                 util::protocol::HttpServer::transfer_response_data(resp);
@@ -260,7 +263,9 @@ namespace trip
                 session_->resource().meta();
             M3u8Config conf;
             conf.interval = meta->interval;
-            conf.url_format = "/fetch/%n" + meta->file_extension + "?session=" + url_.param("session");
+            conf.url_format = "http://" + url_.host_svc() 
+                + "/fetch/%n" + meta->file_extension 
+                + "?session=" + url_.param("session");
             std::vector<SegmentMeta> segments;
             if (session_->resource().segments_ready()) {
                 session_->resource().get_segments(segments);

@@ -37,6 +37,7 @@ namespace trip
             r.query_lock(cache->lock, from, to);
             Block const * blk = r.get_segment(from)->get_block(from);
             assert(blk == cache->block);
+            (void)blk;
             return cache->block->touched();
         }
 

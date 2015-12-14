@@ -53,7 +53,7 @@ namespace trip
                 boost::bind(&UdpManager::on_event, this, _1, _2));
             if (local_endpoint_.id == Uuid()) {
                 local_endpoint_.id.generate();
-                config().set_force(name(), "uid", local_endpoint_.id.to_string());
+                config().set_force(name(), "uid", local_endpoint_.id.to_string(), true);
             }
             std::vector<Interface> interfaces;
             enum_interface(interfaces);

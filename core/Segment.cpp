@@ -186,6 +186,8 @@ namespace trip
                 size = last_block_size_;
             }
             boost::intrusive_ptr<BlockData> data = BlockData::alloc(path, offset, size);
+            if (!data)
+                return NULL;
             Block & block(modify_block(id));
             block.set_data(data);
             --left_;
