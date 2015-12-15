@@ -40,6 +40,27 @@ namespace trip
             return true;
         }
 
+        boost::uint16_t Packet::checksum() const
+        {
+            boost::uint32_t sum = 0;
+            if (in_avail() & 1) {
+                *pptr() = 0; // pad one byte
+            }
+            for (const_iterator iter = begin(); iter != end(); ++iter) {
+                boost::uint16_t const * ptr = 
+                    boost::asio::buffer_cast<boost::uint16_t const *>(*iter);
+                size_t size = (boost::asio::buffer_size(*iter) + 1) / 2;
+                while (size) {
+                    sum += *ptr;
+                    ++ptr;
+                    --size;
+                }
+            }
+            while (sum >> 16)
+                sum = (sum & 0xffff) + (sum >> 16);
+            return (boost::uint16_t)~sum;
+        }
+
         void PacketBufferIterator::increment()
         {
             boost::uint8_t * p = 

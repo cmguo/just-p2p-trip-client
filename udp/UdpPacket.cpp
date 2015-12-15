@@ -16,11 +16,17 @@ namespace trip
 
         bool UdpPacket::decode()
         {
-            return true;
+            th.chk = checksum();
+            if (th.chk == 0)
+                return true;
+            th.chk = 0;
+            return false;
         }
-
+        
         bool UdpPacket::encode()
         {
+            th.chk = checksum();
+            ((TunnelHeader *)head_)->chk = th.chk;
             return true;
         }
 

@@ -63,7 +63,8 @@ namespace trip
                 used_ += seg->block_count();
                 if (cache_empty() && caches2_.empty()) {
                     if (used_ < total_) {
-                        caches2_.resize(total_ / SEGMENT_SIZE * 2 * (total_ - used_) / used_);
+                        caches2_.resize(total_ * (total_ - used_) / used_);
+                        LOG_INFO("[alloc] resize pool, total:" << total_ << ", used:" << used_ << ", grow:" << caches2_.size());
                         for (size_t i = 0; i < caches2_.size(); ++i) {
                             free_cache(&caches2_[i]);
                         }

@@ -36,12 +36,6 @@ namespace trip
             }
 
         public:
-            void size(
-                boost::uint16_t n)
-            {
-                size_ = n;
-            }
-
             void prio(
                 boost::uint16_t n)
             {
@@ -53,15 +47,12 @@ namespace trip
                 bool read);
 
         public:
-            boost::uint16_t size() const
-            {
-                return size_;
-            }
-
             boost::uint16_t prio() const
             {
                 return prio_;
             }
+
+            boost::uint16_t checksum() const;
 
             static size_t const HEAD_SIZE = 24;
             static size_t const TAIL_SIZE = 48;
@@ -70,7 +61,6 @@ namespace trip
         protected:
             friend class PacketBufferIterator;
 
-            boost::uint16_t size_;
             boost::uint16_t prio_;      // Priority
             /* for udp, mtu = 1472 */
             boost::uint8_t head_[24];   // TunnelHeader:8, MessageHeader: 8, piece index: 8
