@@ -4,9 +4,6 @@
 #include "trip/client/main/ResourceManager.h"
 #include "trip/client/utils/Format.h"
 #include "trip/client/core/Resource.h"
-#include "trip/client/core/PoolPiece.h"
-#include "trip/client/core/BlockData.h"
-#include "trip/client/core/Block.h"
 
 #include <framework/logger/Logger.h>
 #include <framework/logger/StreamRecord.h>
@@ -25,17 +22,6 @@ namespace trip
             : util::daemon::ModuleBase<ResourceManager>(daemon, "ResourceManager")
             , mapping_(io_svc())
         {
-            LOG_INFO("[sizeof]"                                 // 64bit    32bit   pool
-                << " Segment:" << sizeof(Segment)               // 1032     520     1
-                << " Block:" << sizeof(Block)                   // 1032     520     1
-                << " BlockData:" << sizeof(BlockData)           // 16       12      2
-                << " BlockPiece:" << sizeof(BlockPiece)         // 24       12      2
-                << " Resource:" << sizeof(Resource)             // 536      308     x
-                << " ResourceMeta:" << sizeof(ResourceMeta)     // 40       36      x
-                << " Segment2:" << sizeof(Segment2)             // 48       32      x
-                << " SegmentMeta:" << sizeof(SegmentMeta)       // 24       24      x
-                //<< "Resource::Lock:" << sizeof(Resource::Lock)  // 16       16      x
-                );
         }
 
         ResourceManager::~ResourceManager()
@@ -55,41 +41,13 @@ namespace trip
             return true;
         }
 
-        static struct {
-            char const * name;
-            framework::memory::MemoryPool const * pool;
-        } const mpools[] = {
-            {"PoolPiece", &PoolPiece::mpool()}, 
-            {"ResourceData", &ResourceData::mpool()}, 
-            {"BlockData", &BlockData::mpool()}
-        };
-
         void ResourceManager::dump() const
         {
-            for (size_t i = 0; i < sizeof(mpools) / sizeof(mpools[0]); ++i) {
-                framework::memory::MemoryPool const & pool(*mpools[i].pool);
-                LOG_INFO("[dump] [mpool] " << mpools[i].name << ": "
-                    << pool.capacity() << "/" << pool.consumption() << "/" << pool.peek()
-                    << " " << pool.num_block() << "/" << pool.num_object());
-            }
-            // resources
             std::map<Uuid, Resource *>::const_iterator iter = 
                 resources_.begin();
             for (; iter != resources_.end(); ++iter) {
                 Resource const & res(*iter->second);
                 LOG_INFO("[dump] [resouce] " << res.id());
-            }
-        }
-
-        void ResourceManager::check_memory(
-            void const * obj)
-        {
-            for (size_t i = 0; i < sizeof(mpools) / sizeof(mpools[0]); ++i) {
-                framework::memory::MemoryPool const & pool(*mpools[i].pool);
-                int n = pool.check_object(obj);
-                if (n) {
-                    LOG_INFO("[check_memory] pool:" << mpools[i].name << ", status:" << n);
-                }
             }
         }
 

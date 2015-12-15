@@ -6,10 +6,10 @@
 #include "trip/client/cache/MemoryCachePool.h"
 #include "trip/client/cache/DiskCachePool.h"
 #include "trip/client/main/ResourceManager.h"
+#include "trip/client/main/MemoryManager.h"
 #include "trip/client/utils/Format.h"
 #include "trip/client/timer/TimerManager.h"
 #include "trip/client/core/Resource.h"
-#include "trip/client/core/Memory.h"
 
 #include <framework/logger/Logger.h>
 #include <framework/logger/StreamRecord.h>
@@ -28,6 +28,7 @@ namespace trip
         CacheManager::CacheManager(
             util::daemon::Daemon & daemon)
             : util::daemon::ModuleBase<CacheManager>(daemon, "trip.client.CacheManager")
+            , mmgr_(util::daemon::use_module<MemoryManager>(daemon))
             , rmgr_(util::daemon::use_module<ResourceManager>(daemon))
             , tmgr_(util::daemon::use_module<TimerManager>(daemon))
             , capacity_(0)
@@ -56,11 +57,11 @@ namespace trip
                 disk_cache_ = new DiskCachePool(io_svc(), capacity_);
             }
 
+            mmgr_.out_of_memory.on(
+                boost::bind(&CacheManager::on_event, this, _1, _2));
             rmgr_.resource_added.on(
                 boost::bind(&CacheManager::on_event, this, _1, _2));
             rmgr_.resource_deleting.on(
-                boost::bind(&CacheManager::on_event, this, _1, _2));
-            Memory::inst().out_of_memory.on(
                 boost::bind(&CacheManager::on_event, this, _1, _2));
             tmgr_.t_1_s.on(
                 boost::bind(&CacheManager::on_event, this, _1, _2));
@@ -82,6 +83,8 @@ namespace trip
             rmgr_.resource_deleting.un(
                 boost::bind(&CacheManager::on_event, this, _1, _2));
             rmgr_.resource_added.un(
+                boost::bind(&CacheManager::on_event, this, _1, _2));
+            mmgr_.out_of_memory.un(
                 boost::bind(&CacheManager::on_event, this, _1, _2));
 
             delete memory_cache_;
@@ -150,11 +153,11 @@ namespace trip
                         iter->second->save_status();
                     }
                 }
-            } else if (observable == Memory::inst()) {
-                    LOG_INFO("[on_event] out_of_memory, level=" << Memory::inst().out_of_memory.level);
+            } else if (observable == mmgr_) {
+                    LOG_INFO("[on_event] out_of_memory, level=" << mmgr_.out_of_memory.level);
                     // for level 0, delete blocks not visited in current 30 seconds
                     // for level 5, delete blocks not visited in current 05 seconds
-                    memory_cache_->reclaim_caches((6 - Memory::inst().out_of_memory.level) * 5);
+                    memory_cache_->reclaim_caches((6 - mmgr_.out_of_memory.level) * 5);
             } else {
                 Resource const & r = (Resource const &)observable;
                 ResourceCache * rcache = rcaches_[r.id()];

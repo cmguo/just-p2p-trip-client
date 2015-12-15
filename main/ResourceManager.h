@@ -43,9 +43,6 @@ namespace trip
             Resource & get(
                 std::vector<Url> & urls);
 
-            static void check_memory(
-                void const * obj);
-
         private:
             virtual bool startup(
                 boost::system::error_code & ec);

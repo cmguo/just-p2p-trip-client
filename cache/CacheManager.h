@@ -15,6 +15,7 @@ namespace trip
     namespace client
     {
 
+        class MemoryManager;
         class ResourceManager;
         class TimerManager;
         class CachePool;
@@ -44,6 +45,7 @@ namespace trip
                 util::event::Event const & event);
 
         private:
+            MemoryManager & mmgr_;
             ResourceManager & rmgr_;
             TimerManager & tmgr_;
             boost::filesystem::path path_;

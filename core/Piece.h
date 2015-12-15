@@ -12,7 +12,7 @@ namespace trip
     namespace client
     {
 
-#define PIECE_SIZE 1400
+#define PIECE_SIZE 1408
 #define PIECE_PER_BLOCK (1 << PIECE_BIT)
 #define BLOCK_SIZE (PIECE_SIZE * PIECE_PER_BLOCK)
 #define BLOCK_PER_SEGMENT (1 << BLOCK_BIT)
