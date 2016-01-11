@@ -14,7 +14,13 @@
     <item>
         <first>tracker</first>
         <second>
-            <item>http://192.168.33.63/trip/tracker/</item>
+            <item>http://192.168.33.139:4111/trip/tracker/</item>
+        </second>
+    </item>
+    <item>
+        <first>report</first>
+        <second>
+            <item>http://192.168.33.63/trip/report.xml</item>
         </second>
     </item>
 </root>

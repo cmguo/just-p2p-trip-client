@@ -24,8 +24,8 @@ namespace trip
             : Downloader(mgr, resource)
             , lock_(NULL)
         {
-            find_sources("http", 10);
-            //find_sources("p2p", 10);
+            //find_sources("http", 10);
+            find_sources("p2p", 10);
             lock_ = resource.alloc_lock(win_beg_, win_end_);
             full_seg_ = new SegmentInfo();
             full_seg_->meta_ready = true;

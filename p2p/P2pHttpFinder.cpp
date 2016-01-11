@@ -78,11 +78,15 @@ namespace trip
             Message const & msg) = {
             &format_msg<MessageRequestLogin>, 
             &format_msg<MessageRequestSync>, 
-            &format_msg<MessageRequestPort>, 
             &format_msg<MessageRequestLogout>, 
-            NULL, NULL, NULL, NULL,
+            NULL, NULL, NULL, NULL, NULL,
             &format_msg<MessageRequestFind>, 
+            NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
+            // Stun
+            &format_msg<MessageRequestPort>, 
+            NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
             &format_msg<MessageRequestPass>, 
+            NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
         };
 
         static bool (* parse_msgs[]) (
@@ -90,21 +94,28 @@ namespace trip
             Message & msg) = {
             &parse_msg<MessageResponseLogin>, 
             &parse_msg<MessageResponseSync>, 
-            &parse_msg<MessageResponsePort>, 
             &parse_msg<MessageResponseLogout>, 
-            NULL, NULL, NULL, NULL,
+            NULL, NULL, NULL, NULL, NULL, 
             &parse_msg<MessageResponseFind>, 
+            NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
+            // Stun
+            &parse_msg<MessageResponsePort>, 
+            NULL, NULL, NULL, NULL, NULL, NULL, NULL,
             &parse_msg<MessageResponsePass>, 
+            NULL, NULL, NULL, NULL, NULL, NULL, NULL,
         };
 
         static char const * const commands[] = {
             "login", 
             "sync", 
-            "port", 
             "logout", 
-            NULL, NULL, NULL, NULL,
-            "find"
-            "pass"
+            NULL, NULL, NULL, NULL, NULL, 
+            "find", 
+            NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
+            "port", 
+            NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+            "pass", 
+            NULL, NULL, NULL, NULL, NULL, NULL, NULL,
         };
 
         void P2pHttpFinder::send_msg(
@@ -126,6 +137,11 @@ namespace trip
         boost::uint16_t P2pHttpFinder::get_id()
         {
             return 0;
+        }
+
+        void P2pHttpFinder::set_id(
+            boost::uint16_t id)
+        {
         }
 
         void P2pHttpFinder::handle_fetch(

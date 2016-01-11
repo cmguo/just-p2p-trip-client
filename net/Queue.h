@@ -20,7 +20,8 @@ namespace trip
 
             virtual void pop() = 0;
 
-            virtual void on_timer() {};
+            virtual void on_timer(
+                Time const & now) {};
             
             virtual bool empty() const { return first() == NULL; }
         };

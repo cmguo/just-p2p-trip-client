@@ -6,6 +6,8 @@
 #include "trip/client/proto/Message.h"
 #include "trip/client/core/Finder.h"
 
+#include <util/event/Event.h>
+
 namespace trip
 {
     namespace client
@@ -13,6 +15,7 @@ namespace trip
 
         class UdpManager;
         class P2pManager;
+        class ResourceManager;
         struct MessageResponseFind;
 
         struct P2pEndpoint;
@@ -49,13 +52,23 @@ namespace trip
 
             virtual boost::uint16_t get_id() = 0;
 
+            virtual void set_id(
+                boost::uint16_t id) = 0;
+
         public:
             void open();
 
             void close();
 
         private:
-            void on_event();
+            void sync(
+                int type, 
+                Resource * res);
+
+        private:
+            void on_event(
+                util::event::Observable const & observable, 
+                util::event::Event const & event);
 
             void handle_find(
                 MessageResponseFind const & find);
@@ -63,6 +76,7 @@ namespace trip
         protected:
             P2pManager & pmgr_;
             UdpManager & umgr_;
+            ResourceManager & rmgr_;
             bool inited_;
         };
 

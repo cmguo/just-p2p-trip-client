@@ -26,6 +26,7 @@ namespace trip
             : Tunnel(&socket)
             , tid_(0)
             , seq_(0)
+            , endpoints_(NULL)
         {
         }
 
@@ -38,38 +39,40 @@ namespace trip
             return static_cast<UdpSession *>(slot_at(uint16_t(0))->cell);
         }
 
-        void UdpTunnel::set_endpoint(
-            framework::network::Endpoint const & ep)
+        void UdpTunnel::set_endpoints(
+            UdpEndpointPairs const * ep)
         {
-            endpoint_ = ep;
+            endpoints_ = ep;
         }
 
         void UdpTunnel::on_send(
-            void * head, 
+            //void * head, 
             NetBuffer & buf)
         {
-            UdpPacket * pkt = (UdpPacket *)head;
-            TunnelHeader & th = pkt->th;
+            UdpPacket & pkt = static_cast<UdpPacket &>(buf);
+            TunnelHeader & th = pkt.th;
             TunnelOArchive ar(buf);
             th.ver = 1;
             th.tid = tid_;
             std::streampos pos = ar.tellp();
             ar.seekp(sizeof(TunnelHeader), std::ios::cur);
             std::streampos pos2 = ar.tellp();
+            /*
             while (Bus::is_signal()) {
-                Bus::on_send(head, buf);
+                Bus::on_send(buf);
                 std::streampos pos3 = ar.tellp();
                 if (pos3 == pos2)
                     break;
                 pos2 = pos3;
             }
-            if (endpoint_.port()) {
-                pkt->endp = endpoint_;
+            */
+            if (endpoints_) {
+                pkt.endpairs = endpoints_;
                 Message * msg = NULL;
                 while ((msg = (Message *)first())) {
                     ar << *msg;
                     if (ar) {
-                        //LOG_DEBUG("[on_send] size=" << size_t(ar.tellp() - pos2) - sizeof(MessageHeader) << ", sid=" << msg->sid);
+                        LOG_DEBUG("[on_send] size=" << size_t(ar.tellp() - pos2) - sizeof(MessageHeader) << ", sid=" << msg->sid);
                         pop();
                         free_message(msg);
                         pos2 = ar.tellp();
@@ -87,21 +90,21 @@ namespace trip
             th.seq = seq_++;
             ar << th;
             ar.seekp(pos2, std::ios::beg);
-            //LOG_DEBUG("[on_send] tid=" << th.tid << ", seq=" << th.seq);
-            Tunnel::on_send(head, buf);
+            LOG_DEBUG("[on_send] tid=" << th.tid << ", seq=" << th.seq);
+            Tunnel::on_send(/*head, */buf);
         }
 
         void UdpTunnel::on_recv(
-            void * head, 
+            //void * head, 
             NetBuffer & buf)
         {
-            Tunnel::on_recv(head, buf);
-            UdpPacket * pkt = (UdpPacket *)head;
-            TunnelHeader & th = pkt->th;
+            Tunnel::on_recv(/*head, */buf);
+            UdpPacket & pkt = static_cast<UdpPacket &>(buf);
+            TunnelHeader & th = pkt.th;
             size_t end = buf.pubseekoff(0, std::ios::cur, std::ios::out);
             TunnelIArchive ar(buf);
             ar >> th;
-            //LOG_DEBUG("[on_recv] tid=" << th.tid << ", seq=" << th.seq);
+            LOG_DEBUG("[on_recv] tid=" << th.tid << ", seq=" << th.seq);
             size_t pos = ar.tellg();
             while (pos + 8 < end) {
                 boost::uint16_t size;
@@ -111,14 +114,16 @@ namespace trip
                 ar.seekg(pos, std::ios::beg);
                 pos += (8 + size);
                 buf.pubseekoff(pos, std::ios::beg, std::ios::out); // limit in this message
-                //LOG_DEBUG("[on_recv] size=" << size << ", sid=" << sid);
-                Tunnel::on_recv(sid, head, buf);
+                LOG_DEBUG("[on_recv] size=" << size << ", sid=" << sid);
+                Tunnel::on_recv(sid, /*head, */buf);
                 ar.seekg(pos, std::ios::beg);
             }
         }
 
-        void UdpTunnel::on_timer()
+        void UdpTunnel::on_timer(
+            Time const & now)
         {
+            Tunnel::on_timer(now);
         }
 
     } // namespace client

@@ -58,11 +58,11 @@ namespace trip
             std::vector<Interface> interfaces;
             enum_interface(interfaces);
             Endpoint ep;
-            ep.endp.port(addr_.port());
+            ep.port(addr_.port());
             for (size_t i = 0; i < interfaces.size(); ++i) {
                 Interface ifc(interfaces[i]);
                 if ((ifc.flags & (ifc.up | ifc.loopback)) == ifc.up) {
-                    ep.endp.ip(ifc.addr);
+                    ep.ip(ifc.addr);
                     local_endpoint_.endpoints.push_back(ep);
                 }
             }
@@ -110,8 +110,9 @@ namespace trip
             std::map<Uuid, UdpTunnel *>::iterator iter = tunnels_.find(endpoint.id);
             if (iter == tunnels_.end()) {
                 UdpTunnel * tunnel = new UdpTunnel(*socket_);
-                new UdpSessionListener(*this, *tunnel, endpoint);
+                UdpSessionListener * listener = new UdpSessionListener(*this, *tunnel);
                 iter = tunnels_.insert(std::make_pair(endpoint.id, tunnel)).first;
+                listener->set_remote(endpoint);
             }
             return *iter->second;
         }

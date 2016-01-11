@@ -26,26 +26,27 @@ namespace trip
         public:
             UdpSession * main_session();
 
-            void set_endpoint(
-                framework::network::Endpoint const & ep);
+            void set_endpoints(
+                UdpEndpointPairs const * ep);
 
         public:
             virtual void on_send(
-                void * head, 
+                //void * head, 
                 NetBuffer & buf);
 
             virtual void on_recv(
-                void * head, 
+                //void * head, 
                 NetBuffer & buf);
 
-            virtual void on_timer();
+            virtual void on_timer(
+                Time const & now);
 
         protected:
             friend class UdpSessionListener;
             friend class UdpSessionListener2;
             boost::uint16_t tid_; // id of remote tunnel point
             boost::uint16_t seq_;
-            framework::network::Endpoint endpoint_;
+            UdpEndpointPairs const * endpoints_;
         };
 
     } // namespace client

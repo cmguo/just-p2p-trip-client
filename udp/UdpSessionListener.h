@@ -19,24 +19,32 @@ namespace trip
         public:
             UdpSessionListener(
                 UdpManager & manager, 
-                UdpTunnel & tunnel, 
-                UdpEndpoint const & endpoint);
+                UdpTunnel & tunnel);
 
             virtual ~UdpSessionListener();
 
         public:
+            void set_remote(
+                UdpEndpoint const & remote);
+
+            void set_fake_sid(
+                boost::uint16_t id);
+
+        public:
+            /*
             virtual void on_send(
-                void * head, 
+                //void * head, 
                 NetBuffer & buf);
+                */
 
             virtual void on_recv(
-                void * head, 
+                //void * head, 
                 NetBuffer & buf);
 
             virtual void on_msg(
                 Message * msg);
 
-            virtual bool empty() const;
+            //virtual bool empty() const;
 
             virtual void on_timer(
                 Time const & now);
@@ -48,13 +56,11 @@ namespace trip
         protected:
             UdpManager & umgr_;
             UdpEndpoint endpoint_;
+            UdpEndpointPairs endpoints_;
             Time msg_time_;
             boost::uint16_t msg_try_;
-            boost::uint16_t msg_sent_;
-            boost::uint16_t msg_recv_;
-            boost::uint16_t probe_rand_[4];
             boost::uint16_t status_; // 0 - probing, 1 - connecting, 2 - connected
-            framework::network::Endpoint pkt_ep_;
+            Endpoint pkt_ep_;
             boost::uint16_t seq_;
             UdpSession * recent_;
         };

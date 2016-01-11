@@ -79,7 +79,7 @@ namespace trip
                     if (t_1_s.now >= expire_10s_) {
                         expire_10s_ += Duration::seconds(10);
                         raise(t_10_s);
-                        //get_daemon().dump();
+                        get_daemon().dump();
                     }
                     raise(t_1_s);
                 }

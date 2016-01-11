@@ -43,20 +43,24 @@ namespace trip
         }
 
         void Cell::on_send(
-            void * head, 
+            //void * head, 
             NetBuffer & buf)
         {
+            snd_stat_.push(buf.in_avail());
         }
 
         void Cell::on_recv(
-            void * head, 
+            //void * head, 
             NetBuffer & buf)
         {
+            rcv_stat_.push(buf.in_avail());
         }
 
         void Cell::on_timer(
             Time const & now)
         {
+            rcv_stat_.on_timer(now);
+            snd_stat_.on_timer(now);
         }
 
         bool Cell::empty() const

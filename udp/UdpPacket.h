@@ -3,6 +3,7 @@
 #ifndef _TRIP_P2P_UDP_PACKET_H_
 #define _TRIP_P2P_UDP_PACKET_H_
 
+#include "trip/client/udp/UdpEndpoint.h"
 #include "trip/client/proto/Packet.h"
 #include "trip/client/proto/TunnelHeader.h"
 
@@ -28,12 +29,13 @@ namespace trip
             bool encode();
 
             boost::asio::ip::udp::endpoint endp;
+            UdpEndpointPairs const * endpairs;
             TunnelHeader th;
-            void (*sender)(
-                boost::asio::ip::udp::socket & socket, 
-                UdpPacket & packet, 
-                void * context);
-            void * sendctx;
+            //void (*sender)(
+            //    boost::asio::ip::udp::socket & socket, 
+            //    UdpPacket & packet, 
+            //    void * context);
+            //void * sendctx;
         };
 
     } // namespace client

@@ -31,7 +31,7 @@ namespace trip
 
         protected:
             UdpManager & umgr_;
-            UdpEndpoint endpoint_;
+            UdpEndpointPairs endpoints_;
             UdpSession * session_;
         };
 

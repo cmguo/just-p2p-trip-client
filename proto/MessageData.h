@@ -44,20 +44,23 @@ namespace trip
  
             REQ_Login       = 0x20, 
             REQ_Sync        = 0x21, 
-            REQ_Port        = 0x22, // Alloc NAT Port, with help of tracker
             REQ_Logout      = 0x23, 
 
             REQ_Find        = 0x28, 
-            REQ_Pass        = 0x29, // Help pass through
 
             RSP_Login       = 0x0100 | REQ_Login, 
             RSP_Sync        = 0x0100 | REQ_Sync, 
-            RSP_Port        = 0x0100 | REQ_Port, 
             RSP_Logout      = 0x0100 | REQ_Logout, 
 
             RSP_Find        = 0x0100 | REQ_Find, 
-            RSP_Pass        = 0x0100 | REQ_Pass, 
 
+            // Stun Messages
+
+            REQ_Port        = 0x30, // Alloc NAT Port, with help of tracker
+            REQ_Pass        = 0x38, // Help pass through
+
+            RSP_Port        = 0x0100 | REQ_Port, 
+            RSP_Pass        = 0x0100 | REQ_Pass, 
         };
 
         template <

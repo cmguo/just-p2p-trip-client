@@ -57,22 +57,22 @@ namespace trip
 
         void Bus::on_send(
             boost::uint16_t id, 
-            void * head, 
+            //void * head, 
             NetBuffer & buf)
         {
             Slot * slot(slot_at(id));
             assert(slot);
-            slot->cell->on_send(head, buf);
+            slot->cell->on_send(/*head, */buf);
         }
 
         void Bus::on_recv(
             boost::uint16_t id, 
-            void * head, 
+            //void * head, 
             NetBuffer & buf)
         {
             Slot * slot(slot_at(id));
             assert(slot);
-            slot->cell->on_recv(head, buf);
+            slot->cell->on_recv(/*head, */buf);
         }
 
         void Bus::signal(
@@ -90,28 +90,32 @@ namespace trip
         }
 
         void Bus::on_send(
-            void * head, 
+            //void * head, 
             NetBuffer & buf)
         {
-            if (signal_slots_ == NULL)
-                return;
-            Slot * slot = signal_slots_;
-            signal_slots_ = signal_slots_->next;
-            if (signal_slots_ == NULL)
-                signal_slots_tail_ = &signal_slots_;
-            slot->cell->on_send(head, buf);
-            if (!slot->cell->empty()) {
-                *signal_slots_tail_ = slot;
-                signal_slots_tail_ = &slot->next;
-            } else {
-                slot->flags &= ~Slot::sfSignal;
+            if (signal_slots_) {
+                Slot * slot = signal_slots_;
+                signal_slots_ = signal_slots_->next;
+                if (signal_slots_ == NULL)
+                    signal_slots_tail_ = &signal_slots_;
+                slot->cell->on_send(/*head, */buf);
+                if (!slot->cell->empty()) {
+                    *signal_slots_tail_ = slot;
+                    signal_slots_tail_ = &slot->next;
+                } else {
+                    slot->flags &= ~Slot::sfSignal;
+                }
+            } else if (queue_) {
+
             }
+            Cell::on_send(buf);
         }
 
         void Bus::on_recv(
-            void * head, 
+            //void * head, 
             NetBuffer & buf)
         {
+            Cell::on_recv(buf);
         }
 
         bool Bus::is_signal() const

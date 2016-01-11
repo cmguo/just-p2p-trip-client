@@ -77,20 +77,22 @@ namespace trip
                 return;
             }
 
-            if (!ec && pkt->decode()) {
+            if (!ec) {
                 LOG_DEBUG("[handle_recv] bytes=" << bytes_recved);
                 pkt->commit(bytes_recved);
-                TunnelIArchive ar(*pkt);
-                boost::uint16_t ver;
-                boost::uint16_t tid;
-                ar >> ver >> tid;
-                ar.seekg(0, std::ios::beg);
-                rcv_pkt_ = pkt;
-                Bus::on_recv(tid, pkt, *pkt);
+                if (pkt->decode()) {
+                    TunnelIArchive ar(*pkt);
+                    boost::uint16_t ver;
+                    boost::uint16_t tid;
+                    ar >> ver >> tid;
+                    ar.seekg(0, std::ios::beg);
+                    rcv_pkt_ = pkt;
+                    Bus::on_recv(tid, /*pkt, */*pkt);
+                } else {
+                    ec = udp_error::chksum_error;
+                    LOG_ERROR("[handle_recv] failed, ec:" << ec.message());
+                }
                 pkt->reset();
-            } else if (!ec) {
-                ec = udp_error::chksum_error;
-                LOG_ERROR("[handle_recv] failed, ec:" << ec.message());
             } else {
                 LOG_ERROR("[handle_recv] failed, ec:" << ec.message());
             }
@@ -107,12 +109,20 @@ namespace trip
                 return;
             UdpPacket pkt;
             while (!Bus::empty()) {
-                Bus::on_send(&pkt, pkt);
+                Bus::on_send(/*&pkt, */pkt);
                 assert(pkt.in_avail());
                 LOG_DEBUG("[send] bytes=" << pkt.in_avail());
                 if (pkt.encode()) {
-                    if (pkt.sender) {
-                        pkt.sender(socket_, pkt, pkt.sendctx);
+                    //if (pkt.sender) {
+                    //    pkt.sender(socket_, pkt, pkt.sendctx);
+                    if (pkt.endpairs) {
+                        for (size_t i = 0; i < pkt.endpairs->size(); ++i) {
+                            pkt.endp = pkt.endpairs->at(i).second;
+                            boost::system::error_code ec;
+                            socket_.send_to(pkt.data(), pkt.endp, 0, ec);
+                            if (ec)
+                                LOG_WARN("[send] ec=" << ec.message());
+                        }
                     } else {
                         boost::system::error_code ec;
                         socket_.send_to(pkt.data(), pkt.endp, 0, ec);

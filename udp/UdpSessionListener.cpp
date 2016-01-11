@@ -16,37 +16,57 @@ namespace trip
 
         UdpSessionListener::UdpSessionListener(
             UdpManager & manager, 
-            UdpTunnel & tunnel, 
-            UdpEndpoint const & endpoint)
+            UdpTunnel & tunnel)
             : UdpSession(tunnel)
             , umgr_(manager)
-            , endpoint_(endpoint)
             , msg_try_(0)
-            , msg_sent_(0)
-            , msg_recv_(0)
             , status_(0)
             , seq_(0)
             , recent_(NULL)
         {
-            if (endpoint_.endpoints.empty())
-                status_ = 1; // no need probe & connect
         }
 
         UdpSessionListener::~UdpSessionListener()
         {
         }
 
-        bool UdpSessionListener::empty() const
+        void UdpSessionListener::set_remote(
+            UdpEndpoint const & remote)
         {
-            return msg_sent_ < endpoint_.endpoints.size();
+            if (!endpoint_.endpoints.empty())
+                return;
+            endpoint_ = remote;
+            UdpEndpoint const & local(umgr_.local_endpoint());   
+            for (size_t i = 0; i < local.endpoints.size(); ++i) {
+                Endpoint const & l = local.endpoints[i];
+                if (l.type() != Endpoint::local) continue;
+                for (size_t j = 0; j < remote.endpoints.size(); ++j) {
+                    Endpoint const & r = remote.endpoints[j];
+                    endpoints_.push_back(std::make_pair(l, r));
+                }
+            }
+            tunnel().set_endpoints(&endpoints_);
+            Time now;
+            msg_time_ = now - Duration::seconds(1);
+            on_timer(now);
         }
 
+        /*
+        bool UdpSessionListener::empty() const
+        {
+            return msg_sent_ == endpoint_.endpoints.size();
+        }
+        */
+
+        /*
         void UdpSessionListener::on_send(
-            void * head, 
+            //void * head, 
             NetBuffer & buf)
         {
-            UdpPacket * pkt = (UdpPacket *)head;
-            pkt->endp = endpoint_.endpoints[msg_sent_].endp;
+            UdpPacket & pkt = static_cast<UdpPacket &>(buf);
+            pkt.endp = endpoint_.endpoints[msg_sent_];
+            tunnel().set_endpoints(&endpoints_);
+            ++msg_sent_;
             Message msg;
             MessageRequestConnect & req = 
                 msg.get<MessageRequestConnect>();
@@ -54,19 +74,21 @@ namespace trip
             req.uid = umgr_.local_endpoint().id;
             MessageTraits::o_archive_t oa(buf);
             oa << msg;
+            UdpSession::on_send(head, buf);
         }
+        */
 
         void UdpSessionListener::on_recv(
-            void * head, 
+            //void * head, 
             NetBuffer & buf)
         {
-            UdpPacket * pkt = (UdpPacket *)head;
-            if (pkt->th.seq != seq_) {
-                pkt_ep_ = pkt->endp;
-                seq_ = pkt->th.seq;
+            UdpPacket & pkt = static_cast<UdpPacket &>(buf);
+            if (pkt.th.seq != seq_) {
+                pkt_ep_ = pkt.endp;
+                seq_ = pkt.th.seq;
                 recent_ = NULL;
             }
-            UdpSession::on_recv(head, buf);
+            UdpSession::on_recv(/*head, */buf);
         }
 
         void UdpSessionListener::on_msg(
@@ -135,18 +157,32 @@ namespace trip
         void UdpSessionListener::on_timer(
             Time const & now)
         {
-            if (msg_sent_ == 0)
-                return;
-            if (now < msg_time_ + Duration::milliseconds(100))
+            if (now < msg_time_ + Duration::milliseconds(500))
                 return;
             if (status_ == 0) {
-                if (msg_recv_ == 0) {
-                    msg_sent_ = 0;
-                    ++msg_try_;
-                    msg_time_ = now;
-                    signal();
-                }
+                ++msg_try_;
+                msg_time_ = now;
+                Message * msg = alloc_message();
+                MessageRequestConnect & req = 
+                    msg->get<MessageRequestConnect>();
+                req.tid = tunnel().id();
+                req.uid = umgr_.local_endpoint().id;
+                send_msg(msg);
+            } else if (now >= tunnel().rcv_stat_.time() + Duration::seconds(5)
+                 && now >= tunnel().snd_stat_.time() + Duration::seconds(1)) {
+                Message * msg = alloc_message();
+                MessageRequestPing & req = 
+                    msg->get<MessageRequestPing>();
+                req.timestamp = framework::timer::ClockTime::tick_count();
+                send_msg(msg);
             }
+
+        }
+
+        void UdpSessionListener::set_fake_sid(
+            boost::uint16_t id)
+        {
+            UdpSession::sid_ = id;
         }
 
         void UdpSessionListener::set_remote(
@@ -154,8 +190,10 @@ namespace trip
         {
             if (status_ == 0) {
                 status_ = 1;
-                tunnel().set_endpoint(pkt_ep_);
                 tunnel().tid_ = id;
+                //tunnel().set_endpoints(&endpoints_);
+                endpoints_.clear();
+                endpoints_.push_back(std::make_pair(pkt_ep_, pkt_ep_));
             } else if (tunnel().tid_ != id) {
                 assert(false);
             }

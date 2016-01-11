@@ -4,6 +4,7 @@
 #include "trip/client/proto/MessageSession.h"
 #include "trip/client/p2p/P2pManager.h"
 #include "trip/client/p2p/P2pHttpFinder.h"
+#include "trip/client/p2p/P2pUdpFinder.h"
 #include "trip/client/p2p/P2pSink.h"
 #include "trip/client/udp/UdpManager.h"
 #include "trip/client/udp/UdpEndpoint.h"
@@ -20,7 +21,7 @@ namespace trip
             util::daemon::Daemon & daemon)
             : util::daemon::ModuleBase<P2pManager>(daemon, "P2pManager")
             , rmgr_(util::daemon::use_module<ResourceManager>(daemon))
-            , finder_(new P2pHttpFinder(*this))
+            , finder_(new P2pUdpFinder(*this))
         {
             UdpManager & umgr(util::daemon::use_module<UdpManager>(io_svc()));
             umgr.register_service(REQ_Bind, 

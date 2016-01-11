@@ -43,6 +43,11 @@ namespace trip
             Resource & get(
                 std::vector<Url> & urls);
 
+            std::map<Uuid, Resource *> const & resources()
+            {
+                return resources_;
+            }
+
         private:
             virtual bool startup(
                 boost::system::error_code & ec);

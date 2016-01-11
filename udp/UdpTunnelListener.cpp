@@ -30,19 +30,19 @@ namespace trip
         }
 
         void UdpTunnelListener::on_recv(
-            void * head, 
+            //void * head, 
             NetBuffer & buf)
         {
-            UdpPacket * pkt = (UdpPacket *)head;
-            if (pkt->th.seq != seq_) {
-                seq_ = pkt->th.seq;
+            UdpPacket & pkt = static_cast<UdpPacket &>(buf);
+            if (pkt.th.seq != seq_) {
+                seq_ = pkt.th.seq;
                 recent_ = NULL;
             }
             size_t pos = buf.pubseekoff(0, std::ios::cur, std::ios::in);
-            UdpSession::on_recv(head, buf);
+            UdpSession::on_recv(/*head, */buf);
             if (recent_) {
                 pos = buf.pubseekoff(pos, std::ios::beg, std::ios::in);
-                recent_->main_session()->on_recv(head, buf);
+                recent_->main_session()->on_recv(/*head, */buf);
             }
         }
 

@@ -20,17 +20,17 @@ namespace trip
         }
 
         void Tunnel::on_send(
-            void * head, 
+            //void * head, 
             NetBuffer & buf)
         {
-            Bus::on_send(head, buf);
+            Bus::on_send(/*head, */buf);
         }
 
         void Tunnel::on_recv(
-            void * head, 
+            //void * head, 
             NetBuffer & buf)
         {
-            Bus::on_recv(head, buf);
+            Bus::on_recv(/*head, */buf);
         }
 
     } // namespace client

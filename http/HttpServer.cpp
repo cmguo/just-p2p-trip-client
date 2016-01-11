@@ -5,6 +5,7 @@
 #include "trip/client/http/HttpManager.h"
 #include "trip/client/http/HttpSession.h"
 #include "trip/client/http/M3u8Protocol.h"
+#include "trip/client/main/DataGraph.h"
 #include "trip/client/proto/MessageResource.h"
 
 #include <util/serialization/ErrorCode.h>
@@ -53,32 +54,37 @@ namespace trip
             url_.from_string("http://" + request_head().host.get_value_or(peer_addr) + request_head().path);
 
             boost::system::error_code ec;
-            session_ = mgr_.alloc_session(url_, ec);
 
             option_ = url_.path();
             std::string::size_type pos = option_.rfind('.');
             if (pos != std::string::npos)
                 option_.erase(pos);
 
+            if (option_.compare(0, 5, "/dump") == 0) {
+                option_ = "/dump";
+            }
+
             if (option_.compare(0, 7, "/fetch/") == 0) {
                 segment_ = framework::string::parse<boost::uint64_t>(option_.substr(7));
                 option_ = "/fetch";
             }
 
-            if (!ec) {
-                if (option_ != "/meta"
-                    && option_ != "/stat"
-                    && option_ != "/hls"
-                    && option_ != "/fetch") {
-                        ec = http_error::not_found;
-                } else {
-                    Range range(request_head().range.get_value_or(Range()));
-                    // TODO: support multiple range
-                    if (range.size() > 1) {
-                        ec = http_error::requested_range_not_satisfiable;
-                    }
+            if (option_ != "/dump"
+                && option_ != "/meta"
+                && option_ != "/stat"
+                && option_ != "/hls"
+                && option_ != "/fetch") {
+                    ec = http_error::not_found;
+            } else {
+                Range range(request_head().range.get_value_or(Range()));
+                // TODO: support multiple range
+                if (range.size() > 1) {
+                    ec = http_error::requested_range_not_satisfiable;
                 }
             }
+
+            if (!ec && option_ != "/dump")
+                session_ = mgr_.alloc_session(url_, ec);
 
             if (ec) {
                 make_error(ec);
@@ -86,7 +92,15 @@ namespace trip
                 return;
             }
 
-            if (option_ == "/fetch") {
+            if (option_ == "/dump") {
+                std::ostream os(&response_data());
+                DataGraph & graph(util::daemon::use_module<DataGraph>(get_io_service()));
+                if (!graph.dump(url_.path().substr(5), os)) {
+                    ec = http_error::not_found;
+                    make_error(ec);
+                }
+                resp(ec, response_data().size());
+            } else if (option_ == "/fetch") {
                 range_ = Range(0);
                 if (request_head().range.is_initialized()) {
                     range_ = request_head().range.get();

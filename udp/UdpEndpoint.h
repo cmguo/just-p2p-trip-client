@@ -10,18 +10,7 @@ namespace trip
     namespace client
     {
 
-        struct Endpoint
-        {
-            enum Type {
-                local, 
-                nat, 
-                turn, 
-                reflex, 
-            };
-            boost::uint32_t type;
-            framework::network::Endpoint endp;
-            Endpoint() : type(local) {}
-        };
+        using framework::network::Endpoint;
 
         struct UdpEndpoint
         {
@@ -33,6 +22,10 @@ namespace trip
             }
         };
 
+
+        typedef std::pair<Endpoint, Endpoint> UdpEndpointPair;
+        typedef std::vector<UdpEndpointPair> UdpEndpointPairs;
+        
     } // namespace client
 } // namespace trip
 

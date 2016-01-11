@@ -5,6 +5,8 @@
 #include "trip/client/proto/PacketBuffers.h"
 #include "trip/client/core/PoolPiece.h"
 
+#include <iostream>
+
 namespace trip
 {
     namespace client
@@ -46,7 +48,8 @@ namespace trip
             if (in_avail() & 1) {
                 *pptr() = 0; // pad one byte
             }
-            for (const_iterator iter = begin(); iter != end(); ++iter) {
+            const_byte_buffers const cdata(data());
+            for (const_byte_buffers::const_iterator iter = cdata.begin(); iter != cdata.end(); ++iter) {
                 boost::uint16_t const * ptr = 
                     boost::asio::buffer_cast<boost::uint16_t const *>(*iter);
                 size_t size = (boost::asio::buffer_size(*iter) + 1) / 2;
@@ -68,13 +71,13 @@ namespace trip
             size_t n = 0;
             if (p == NULL) {
                 p = pkt_->head_;
-                n = sizeof(pkt_->head_);
+                n = Packet::HEAD_SIZE;
             } else if (p == pkt_->head_) {
                 p = pkt_->body_->data();
                 n = PIECE_SIZE;
             } else if (p == pkt_->body_->data()) {
                 p = pkt_->tail_;
-                n = sizeof(pkt_->tail_);
+                n = Packet::TAIL_SIZE;
             } else {
                 p = NULL;
                 n = 0;

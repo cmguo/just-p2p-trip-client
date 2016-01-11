@@ -9,8 +9,9 @@ namespace trip
     {
 
         UdpPacket::UdpPacket()
-            : sender(NULL)
-            , sendctx(NULL)
+            //: sender(NULL)
+            //, sendctx(NULL)
+            : endpairs(NULL)
         {
         }
 
@@ -27,6 +28,8 @@ namespace trip
         {
             th.chk = checksum();
             ((TunnelHeader *)head_)->chk = th.chk;
+            th.chk = checksum();
+            assert(th.chk == 0);
             return true;
         }
 

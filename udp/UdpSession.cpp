@@ -38,17 +38,17 @@ namespace trip
         }
 
         void UdpSession::on_send(
-            void * head, 
+            //void * head, 
             NetBuffer & buf)
         {
-            assert(false);
+            Cell::on_send(/*head, */buf);
         }
 
         void UdpSession::on_recv(
-            void * head, 
+            //void * head, 
             NetBuffer & buf)
         {
-            Cell::on_recv(head, buf);
+            Cell::on_recv(/*head, */buf);
             MessageTraits::i_archive_t ar(buf);
             Message * msg = alloc_message();
             ar >> *msg;

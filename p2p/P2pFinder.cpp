@@ -8,6 +8,7 @@
 #include "trip/client/proto/MessageTracker.h"
 #include "trip/client/proto/Message.hpp"
 #include "trip/client/main/Bootstrap.h"
+#include "trip/client/main/ResourceManager.h"
 #include "trip/client/core/Resource.h"
 
 namespace trip
@@ -19,10 +20,11 @@ namespace trip
             P2pManager & manager)
             : pmgr_(manager)
             , umgr_(util::daemon::use_module<UdpManager>(pmgr_.io_svc()))
+            , rmgr_(util::daemon::use_module<ResourceManager>(pmgr_.io_svc()))
             , inited_(false)
         {
             Bootstrap::instance(manager.io_svc()).ready.on(
-                boost::bind(&P2pFinder::on_event, this));
+                boost::bind(&P2pFinder::on_event, this, _1, _2));
         }
 
         P2pFinder::~P2pFinder()
@@ -38,11 +40,6 @@ namespace trip
             login.sid = get_id();
             login.endpoint = umgr_.local_endpoint();
             send_msg(login);
-
-            MessageRequestSync sync;
-            sync.type = 0; // full
-            //sync.rids;
-            send_msg(sync);
         }
 
         void P2pFinder::close()
@@ -56,11 +53,50 @@ namespace trip
             return "p2p";
         }
 
-        void P2pFinder::on_event()
+        void P2pFinder::sync(
+            int type, 
+            Resource * res)
         {
-            init();
-            inited_ = true;
-            open();
+            MessageRequestSync sync;
+            sync.type = type;
+            if (type == 0) {
+                std::map<Uuid, Resource *> const & resources(rmgr_.resources());
+                std::map<Uuid, Resource *>::const_iterator iter = resources.begin();
+                for (; iter != resources.end(); ++iter) {
+                    sync.rids.push_back(iter->first);
+                    if (sync.rids.size() == PIECE_SIZE / 16) {
+                        send_msg(sync);
+                        sync.type = 1;
+                        sync.rids.clear();
+                    }
+                }
+                if (!sync.rids.empty())
+                    send_msg(sync);
+                rmgr_.resource_added.on(
+                    boost::bind(&P2pFinder::on_event, this, _1, _2));
+                rmgr_.resource_deleting.on(
+                    boost::bind(&P2pFinder::on_event, this, _1, _2));
+            } else {
+                sync.rids.push_back(res->id());
+                send_msg(sync);
+            }
+        }
+
+        void P2pFinder::on_event(
+            util::event::Observable const & observable, 
+            util::event::Event const & event)
+        {
+            if (observable == Bootstrap::instance(pmgr_.io_svc())) {
+                init();
+                inited_ = true;
+                open();
+            } else if (observable == rmgr_) {
+                if (event == rmgr_.resource_added) {
+                    sync(1, rmgr_.resource_added.resource);
+                } else {
+                    sync(2, rmgr_.resource_added.resource);
+                }
+            }
         }
 
         void P2pFinder::find(
@@ -88,6 +124,12 @@ namespace trip
         {
             switch (msg.type) {
             case RSP_Login:
+                {
+                    MessageResponseLogin const & resp =
+                        msg.as<MessageResponseLogin>();
+                    set_id(resp.sid);
+                    sync(0, NULL);
+                }
                 break;
             case RSP_Sync:
                 break;

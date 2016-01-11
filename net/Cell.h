@@ -3,6 +3,8 @@
 #ifndef _TRIP_CLIENT_NET_SLOT_H_
 #define _TRIP_CLIENT_NET_SLOT_H_
 
+#include "trip/client/net/Stat.h"
+
 #include <streambuf>
 
 namespace trip
@@ -44,11 +46,11 @@ namespace trip
 
         public:
             virtual void on_send(
-                void * head, 
+                //void * head, 
                 NetBuffer & buf);
 
             virtual void on_recv(
-                void * head, 
+                //void * head, 
                 NetBuffer & buf);
 
             virtual void on_timer(
@@ -70,6 +72,8 @@ namespace trip
             boost::uint16_t id_;
             Bus * bus_;
             Queue * queue_;
+            Stat rcv_stat_;
+            Stat snd_stat_;
         };
 
     } // namespace client

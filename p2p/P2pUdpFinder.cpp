@@ -8,6 +8,7 @@
 #include "trip/client/udp/UdpManager.h"
 #include "trip/client/udp/UdpEndpoint.h"
 #include "trip/client/udp/UdpManager.h"
+#include "trip/client/udp/UdpSessionListener.h"
 #include "trip/client/proto/MessageTracker.h"
 #include "trip/client/proto/Message.hpp"
 #include "trip/client/main/Bootstrap.h"
@@ -36,7 +37,9 @@ namespace trip
                 urls.push_back(Url("http://tracker.trip.com/"));
             UdpEndpoint ep;
             ep.endpoints.resize(1);
-            framework::network::Endpoint & ep2 = ep.endpoints[0].endp;
+            framework::network::Endpoint & ep2 = ep.endpoints[0];
+            ep2.from_string(urls[0].host_svc());
+            attach(&umgr_.get_tunnel(ep));
             for (size_t i = 0; i < urls.size(); ++i) {
                 Url const & url(urls[i]);
                 ep2.from_string(url.host_svc());
@@ -49,7 +52,10 @@ namespace trip
         {
             Message * copy = alloc_message();
             *copy = msg;
-            UdpSession::send_msg(copy);
+            if (msg.type < REQ_Find)
+                UdpSession::send_msg(copy);
+            else
+                tunnels_[0]->push(copy);
         }
 
         boost::uint16_t P2pUdpFinder::get_id()
@@ -57,10 +63,21 @@ namespace trip
             return id();
         }
 
+        void P2pUdpFinder::set_id(
+            boost::uint16_t id)
+        {
+            UdpSession::sid_ = id;
+            ((UdpSessionListener *)tunnel().main_session())->set_fake_sid(id);
+        }
+
         void P2pUdpFinder::on_msg(
             Message * msg)
         {
-            handle_msg(*msg);
+            if (!handle_msg(*msg)) {
+                pass_msg_to(msg, tunnel().main_session());
+                return;
+            }
+            free_message(msg);
         }
 
     } // namespace client

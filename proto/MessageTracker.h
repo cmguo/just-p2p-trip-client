@@ -19,17 +19,6 @@ namespace trip
         using util::serialization::make_sized;
         using framework::container::make_array;
 
-        /* Endpoint */
-
-        template <typename Archive>
-        void serialize(
-            Archive & ar, 
-            Endpoint & endpoint)
-        {
-            ar & SERIALIZATION_NVP_NAME("type", endpoint.type);
-            ar & SERIALIZATION_NVP_NAME("endp", endpoint.endp);
-        }
-
         /* UdpEndpoint */
 
         template <typename Archive>
@@ -69,6 +58,7 @@ namespace trip
             boost::uint16_t sid;
 
             MessageResponseLogin()
+                : sid(0)
             {
             }
 
@@ -76,6 +66,7 @@ namespace trip
             void serialize(
                 Archive & ar)
             {
+                ar & SERIALIZATION_NVP(sid);
             }
         };
 

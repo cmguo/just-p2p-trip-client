@@ -31,11 +31,11 @@ namespace trip
             using Bus::on_recv;
 
             virtual void on_send(
-                void * head, 
+                //void * head, 
                 NetBuffer & buf);
 
             virtual void on_recv(
-                void * head, 
+                //void * head, 
                 NetBuffer & buf);
 
         protected:

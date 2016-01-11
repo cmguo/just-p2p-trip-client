@@ -25,7 +25,7 @@ namespace trip
 
         public:
             virtual void on_recv(
-                void * head, 
+                //void * head, 
                 NetBuffer & buf);
 
             virtual void on_msg(

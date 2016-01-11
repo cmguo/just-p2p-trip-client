@@ -5,6 +5,7 @@
 
 #include "trip/client/core/Resource.h"
 #include "trip/client/utils/Serialize.h"
+#include "trip/client/main/DataGraph.hpp"
 
 #include <util/serialization/NVPair.h>
 #include <util/serialization/stl/vector.h>
@@ -18,29 +19,6 @@ namespace trip
 {
     namespace client
     {
-
-        template <typename Archive>
-        void serialize(
-            Archive & ar, 
-            ResourceMeta & meta)
-        {
-            ar & SERIALIZATION_NVP_NAME("duration", meta.duration)
-                & SERIALIZATION_NVP_NAME("bytesize", meta.bytesize)
-                & SERIALIZATION_NVP_NAME("interval", meta.interval)
-                & SERIALIZATION_NVP_NAME("bitrate", meta.bitrate)
-                & SERIALIZATION_NVP_NAME("segcount", meta.segcount)
-                & SERIALIZATION_NVP_NAME("file_extension", meta.file_extension);
-        }
-
-        template <typename Archive>
-        void serialize(
-            Archive & ar, 
-            SegmentMeta & meta)
-        {
-            ar & SERIALIZATION_NVP_NAME("duration", meta.duration)
-                & SERIALIZATION_NVP_NAME("bytesize", meta.bytesize)
-                & SERIALIZATION_NVP_NAME("md5sum", meta.md5sum);
-        }
 
         struct ResourceInfo
         {

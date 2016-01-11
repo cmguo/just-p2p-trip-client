@@ -1,4 +1,4 @@
-// Piece.cpp
+// Message.cpp
 
 #include "trip/client/Common.h"
 #include "trip/client/proto/Message.h"
@@ -35,23 +35,23 @@ namespace trip
 
         static char const * const msg_type_str1[][16] = {
             {"REQ_Connect", "REQ_Ping", "REQ_Disconnect"}, 
-            {"REQ_Bind", "REQ_Meta", "REQ_Map", "REQ_Data", "REQ_Unbind"}, 
-            {"REQ_Login", "REQ_Sync", "REQ_Port", "REQ_Logout", "REQ_Find", "REQ_Pass"},
-            {"RSP_Connect", "RSP_Ping", "RSP_Disconnect"}, 
-            {"RSP_Bind", "RSP_Meta", "RSP_Map", "RSP_Data", "RSP_Unbind"}, 
-            {"RSP_Login", "RSP_Sync", "RSP_Port", "RSP_Logout", "RSP_Find", "RSP_Pass"},
+            {"REQ_Bind", "REQ_Meta", "REQ_Map", "REQ_Data", "REQ_Unbind", NULL, NULL, NULL, NULL, "NTF_Map"}, 
+            {"REQ_Login", "REQ_Sync", "REQ_Logout", NULL, NULL, NULL, NULL, NULL, "REQ_Find"},
+            {"REQ_Port", "REQ_Pass"},
         };
 
-        static size_t msg_type_str2[][16] = {
-            {0, 1, 8, 2}, 
-            {3, 4, 8, 5}, 
+        static char const * const msg_type_str2[][16] = {
+            {"RSP_Connect", "RSP_Ping", "RSP_Disconnect"}, 
+            {"RSP_Bind", "RSP_Meta", "RSP_Map", "RSP_Data", "RSP_Unbind"}, 
+            {"RSP_Login", "RSP_Sync", "RSP_Logout", NULL, NULL, NULL, NULL, NULL, "RSP_Find"},
+            {"RSP_Port", "RSP_Pass"},
         };
 
         char const * msg_type_str(
             boost::uint16_t type)
         {
-            size_t s = msg_type_str2[(type >> 8) & 1][(type >> 4) & 15];
-            return s < 6 ? msg_type_str1[s][type & 15] : NULL;
+            char const * const (* msg_type_str)[16] = (type >> 8) ? msg_type_str2 : msg_type_str1;
+            return msg_type_str[(type >> 4) & 0xf][type & 0xf];
         }
 
     } // namespace client

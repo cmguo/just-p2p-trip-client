@@ -54,18 +54,18 @@ namespace trip
 
             boost::uint16_t checksum() const;
 
+            /* for udp, mtu = 1472 */
             static size_t const HEAD_SIZE = 24;
-            static size_t const TAIL_SIZE = 48;
+            static size_t const TAIL_SIZE = 40;
             static size_t const MAX_SIZE = HEAD_SIZE + PIECE_SIZE + TAIL_SIZE;
 
         protected:
             friend class PacketBufferIterator;
 
             boost::uint16_t prio_;      // Priority
-            /* for udp, mtu = 1472 */
-            boost::uint8_t head_[24];   // TunnelHeader:8, MessageHeader: 8, piece index: 8
-            Piece::pointer body_;           // Piece size: 1400
-            boost::uint8_t tail_[48];
+            boost::uint8_t head_[HEAD_SIZE];   // TunnelHeader:8, MessageHeader: 8, piece index: 8
+            Piece::pointer body_;           // Piece size: 1408
+            boost::uint8_t tail_[TAIL_SIZE];
         };
 
     } // namespace client

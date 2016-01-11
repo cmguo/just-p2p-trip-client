@@ -211,43 +211,39 @@ namespace trip
             switch (msg->type) {
             case RSP_Data:
                 {
-                    MessageResponseData & resp =
+                    MessageResponseData const & rsp =
                         msg->as<MessageResponseData>();
-                    on_data(resp.index, resp.piece);
-                    free_message(msg);
+                    on_data(rsp.index, rsp.piece);
                 }
                 break;
             case RSP_Map:
                 {
-                    MessageResponseMap & resp =
+                    MessageResponseMap /*const*/ & rsp =
                         msg->as<MessageResponseMap>();
-                    on_map(resp.start, resp.map);
-                    //free_message(msg);
+                    on_map(rsp.start, rsp.map);
                 }
                 break;
             case RSP_Meta:
                 {
-                    free_message(msg);
                 }
                 break;
             case RSP_Bind:
                 {
-                    MessageResponseBind & resp =
+                    MessageResponseBind const & rsp =
                         msg->as<MessageResponseBind>();
-                    UdpSession::sid_ = resp.sid;
+                    UdpSession::sid_ = rsp.sid;
                     req_map(resource_.data_ready.id);
-                    free_message(msg);
                 }
                 break;
             case RSP_Unbind:
                 {
-                    free_message(msg);
                 }
                 break;
             default:
                 assert(false);
-                free_message(msg);
+                return;
             }
+            free_message(msg);
         }
 
     } // namespace client

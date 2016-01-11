@@ -35,7 +35,7 @@ namespace trip
             boost::system::error_code ec;
             directory_ = directory / resource_.id().to_string();
             boost::filesystem::path external(directory_ / "external");
-            if (boost::filesystem::exists(external)) {
+            if (boost::filesystem::exists(external, ec)) {
                 std::ifstream ifs(external.string().c_str());
                 std::string line;
                 if (std::getline(ifs, line)) {
@@ -43,7 +43,7 @@ namespace trip
                     is_external_ = true;
                 }
             }
-            if (!boost::filesystem::exists(directory_)) {
+            if (!boost::filesystem::exists(directory_, ec)) {
                 if (!boost::filesystem::create_directory(directory_, ec)) {
                     if (is_external_) {
                         directory_ = directory / resource_.id().to_string();

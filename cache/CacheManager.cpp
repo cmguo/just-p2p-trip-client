@@ -105,8 +105,8 @@ namespace trip
             boost::filesystem::directory_iterator end;
             Uuid id;
             for (; iter != end; ++iter) {
-                std::string idstr = iter->path().stem().string();
-                if (!id.from_string(idstr)) {
+                std::string idstr = iter->path().leaf().string();
+                if (!id.from_string(idstr) && boost::filesystem::is_regular_file(iter->path() / "meta.xml")) {
                     LOG_INFO("[load_cache] found resource, id=" << id.to_string());
                     rmgr_.get(id);
                 }

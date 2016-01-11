@@ -29,6 +29,9 @@ namespace trip
 
             virtual boost::uint16_t get_id();
 
+            virtual void set_id(
+                boost::uint16_t id);
+
         private:
             virtual void on_msg(
                 Message * msg);

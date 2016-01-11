@@ -30,11 +30,11 @@ namespace trip
 
         public:
             virtual void on_send(
-                void * head, 
+                //void * head, 
                 NetBuffer & buf);
 
             virtual void on_recv(
-                void * head, 
+                //void * head, 
                 NetBuffer & buf);
 
             virtual void on_timer(
@@ -82,12 +82,12 @@ namespace trip
         protected:
             void on_send(
                 boost::uint16_t id, 
-                void * head, 
+                //void * head, 
                 NetBuffer & buf);
 
             void on_recv(
                 boost::uint16_t id, 
-                void * head, 
+                //void * head, 
                 NetBuffer & buf);
 
             using Cell::signal;

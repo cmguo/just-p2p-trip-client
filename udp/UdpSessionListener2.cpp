@@ -21,10 +21,9 @@ namespace trip
             UdpSession * session)
             : UdpSession(tunnel)
             , umgr_(manager)
-            , endpoint_(endpoint)
             , session_(session)
         {
-            tunnel.set_endpoint(endpoint.endpoints[0].endp);
+            tunnel.set_endpoints(&endpoints_);
             tunnel.tid_ = tunnel.id();
         }
 

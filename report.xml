@@ -1,0 +1,15 @@
+<root>
+    <base_url>http://192.168.33.63/trip/report.xml</base_url>
+    <infos>
+        <item>
+            <name>test</name>
+            <url>http://192.168.33.63/trip/report.xml</url>
+            <params>
+                <item>
+                    <name>A</name>
+                    <path>/resource/@first=2A4E9D8927968251F807921206645BD2/second/meta/segcount</path>
+                </item>
+            </params>
+        </item>
+    </infos>
+</root>
