@@ -23,8 +23,8 @@ namespace trip
             , umgr_(manager)
             , session_(session)
         {
-            tunnel.set_endpoints(&endpoints_);
-            tunnel.tid_ = tunnel.id();
+            tunnel.ep_pairs_ = &endpoints_;
+            tunnel.p_id(tunnel.l_id());
         }
 
         UdpSessionListener2::~UdpSessionListener2()

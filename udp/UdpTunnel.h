@@ -26,6 +26,22 @@ namespace trip
         public:
             UdpSession * main_session();
 
+            boost::uint16_t l_seq() const
+            {
+                return l_seq_;
+            }
+
+            boost::uint16_t p_seq() const
+            {
+                return p_seq_;
+            }
+
+            UdpEndpointPairs const * ep_pairs() const
+            {
+                return ep_pairs_;
+            }
+
+        public:
             void set_endpoints(
                 UdpEndpointPairs const * ep);
 
@@ -44,9 +60,9 @@ namespace trip
         protected:
             friend class UdpSessionListener;
             friend class UdpSessionListener2;
-            boost::uint16_t tid_; // id of remote tunnel point
-            boost::uint16_t seq_;
-            UdpEndpointPairs const * endpoints_;
+            boost::uint16_t l_seq_;
+            boost::uint16_t p_seq_;
+            UdpEndpointPairs const * ep_pairs_;
         };
 
     } // namespace client

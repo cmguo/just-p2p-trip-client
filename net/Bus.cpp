@@ -34,7 +34,7 @@ namespace trip
             Slot * slot(slot_alloc());
             if (slot == NULL)
                 return false;
-            cell->id(slot->id);
+            cell->l_id(slot->id);
             slot->flags |= Slot::sfActive;
             slot->cell = cell;
             return true;
@@ -45,7 +45,7 @@ namespace trip
         {
             Slot & slot(slot_at(cell));
             slot.flags &= ~Slot::sfActive;
-            slot.id = cell->id();
+            slot.id = cell->l_id();
             slot_free(slot);
             return true;
         }
@@ -158,7 +158,7 @@ namespace trip
         Bus::Slot & Bus::slot_at(
             Cell * cell)
         {
-            Slot * slot(slot_at(cell->id()));
+            Slot * slot(slot_at(cell->l_id()));
             assert(slot->cell == cell);
             return *slot;
         }

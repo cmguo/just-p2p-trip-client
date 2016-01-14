@@ -39,7 +39,7 @@ namespace trip
                 NetBuffer & buf);
 
         protected:
-            TunnelStat stat_;
+            TunnelStat tunnel_stat_;
         };
 
     } // namespace client

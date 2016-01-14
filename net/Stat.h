@@ -8,13 +8,35 @@ namespace trip
     namespace client
     {
 
+        struct StatValue
+        {
+            boost::uint64_t total;
+            boost::uint64_t last;
+            boost::uint64_t speed;
+            boost::uint64_t speed_max;
+            boost::uint64_t speed_avg;
+            Time time;
+
+            StatValue();
+
+            void push(
+                boost::uint32_t n);
+
+            void calc(
+                Time const & now, 
+                Time const & last);
+        };
+
         class Stat
         {
         public:
             Stat();
 
         public:
-            void push(
+            void push_recv(
+                size_t n);
+
+            void push_send(
                 size_t n);
 
             void on_timer(
@@ -23,21 +45,16 @@ namespace trip
         public:
             Time time() const { return time_; }
 
-            boost::uint64_t bytes() const { return bytes_; }
+            StatValue const & recv_bytes() const { return recv_bytes_; }
 
-            boost::uint64_t avg_speed() const { return avg_speed_; }
-
-            boost::uint64_t max_speed() const { return max_speed_; }
+            StatValue const & send_bytes() const { return send_bytes_; }
 
         private:
             Time time_;
-            Time last_time_;
-            Time next_time_;
-            boost::uint64_t bytes_;            
-            boost::uint64_t last_bytes_;            
-            boost::uint64_t last_speed_;
-            boost::uint64_t max_speed_;
-            boost::uint64_t avg_speed_;
+            Time time_next_;
+            Time time_last_;
+            StatValue recv_bytes_;            
+            StatValue send_bytes_;            
         };
 
     } // namespace client

@@ -46,9 +46,6 @@ namespace trip
 
             virtual void on_msg(
                 Message * msg);
-
-        protected:
-            boost::uint16_t sid_; // id of remote seesion
         };
 
     } // namespace client

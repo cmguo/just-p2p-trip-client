@@ -45,7 +45,7 @@ namespace trip
                     endpoints_.push_back(std::make_pair(l, r));
                 }
             }
-            tunnel().set_endpoints(&endpoints_);
+            tunnel().ep_pairs_ = &endpoints_;
             Time now;
             msg_time_ = now - Duration::seconds(1);
             on_timer(now);
@@ -165,11 +165,11 @@ namespace trip
                 Message * msg = alloc_message();
                 MessageRequestConnect & req = 
                     msg->get<MessageRequestConnect>();
-                req.tid = tunnel().id();
+                req.tid = tunnel().l_id();
                 req.uid = umgr_.local_endpoint().id;
                 send_msg(msg);
-            } else if (now >= tunnel().rcv_stat_.time() + Duration::seconds(5)
-                 && now >= tunnel().snd_stat_.time() + Duration::seconds(1)) {
+            } else if (now >= tunnel().stat_.recv_bytes().time + Duration::seconds(5)
+                 && now >= tunnel().stat_.send_bytes().time + Duration::seconds(1)) {
                 Message * msg = alloc_message();
                 MessageRequestPing & req = 
                     msg->get<MessageRequestPing>();
@@ -182,7 +182,7 @@ namespace trip
         void UdpSessionListener::set_fake_sid(
             boost::uint16_t id)
         {
-            UdpSession::sid_ = id;
+            UdpSession::p_id(id);
         }
 
         void UdpSessionListener::set_remote(
@@ -190,11 +190,11 @@ namespace trip
         {
             if (status_ == 0) {
                 status_ = 1;
-                tunnel().tid_ = id;
+                tunnel().p_id(id);
                 //tunnel().set_endpoints(&endpoints_);
                 endpoints_.clear();
                 endpoints_.push_back(std::make_pair(pkt_ep_, pkt_ep_));
-            } else if (tunnel().tid_ != id) {
+            } else if (tunnel().p_id() != id) {
                 assert(false);
             }
         }

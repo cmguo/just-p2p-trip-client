@@ -46,10 +46,10 @@ namespace trip
                 tunnel.push(&msg);
             } else {
                 sink = new P2pSink(*res, tunnel);
-                sink->sid_ = req.sid;
+                sink->p_id(req.sid);
                 MessageResponseBind & resp = 
                     msg.get<MessageResponseBind>();
-                resp.sid = sink->id();
+                resp.sid = sink->l_id();
                 sink->send_msg(&msg);
             }
             return sink;

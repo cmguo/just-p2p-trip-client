@@ -45,7 +45,7 @@ namespace trip
             MessageRequestBind & req = 
                 msg->get<MessageRequestBind>();
             req.rid = resource_.id();
-            req.sid = id();
+            req.sid = l_id();
             return send_msg(msg);
         }
 
@@ -88,7 +88,7 @@ namespace trip
         void P2pSource::seek(
             DataId id)
         {
-            if (sid_ == 0)
+            if (p_id() == 0)
                 return;
             req_map(id);
         }
@@ -231,7 +231,7 @@ namespace trip
                 {
                     MessageResponseBind const & rsp =
                         msg->as<MessageResponseBind>();
-                    UdpSession::sid_ = rsp.sid;
+                    UdpSession::p_id(rsp.sid);
                     req_map(resource_.data_ready.id);
                 }
                 break;

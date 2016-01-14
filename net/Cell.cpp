@@ -13,7 +13,8 @@ namespace trip
         Cell::Cell(
             Bus * bus, 
             Queue * queue)
-            : id_(0)
+            : l_id_(0)
+            , p_id_(0)
             , bus_(NULL)
             , queue_(queue)
         {
@@ -46,21 +47,20 @@ namespace trip
             //void * head, 
             NetBuffer & buf)
         {
-            snd_stat_.push(buf.in_avail());
+            stat_.push_send(buf.in_avail());
         }
 
         void Cell::on_recv(
             //void * head, 
             NetBuffer & buf)
         {
-            rcv_stat_.push(buf.in_avail());
+            stat_.push_recv(buf.in_avail());
         }
 
         void Cell::on_timer(
             Time const & now)
         {
-            rcv_stat_.on_timer(now);
-            snd_stat_.on_timer(now);
+            stat_.on_timer(now);
         }
 
         bool Cell::empty() const

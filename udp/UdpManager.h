@@ -52,6 +52,17 @@ namespace trip
                 return local_endpoint_;
             }
 
+            std::map<Uuid, UdpTunnel *> const & tunnels() const
+            {
+                return tunnels_;
+            }
+
+            std::vector<UdpTunnel *> const & pulse_tunnels() const
+            {
+                return pulse_tunnels_;
+            }
+
+        public:
             UdpTunnel * get_tunnel(
                 Uuid const & uid);
 
@@ -87,6 +98,7 @@ namespace trip
             UdpSocket * socket_;
             std::map<boost::uint32_t, service_t> services_;
             std::map<Uuid, UdpTunnel *> tunnels_;
+            std::vector<UdpTunnel *> pulse_tunnels_;
         };
 
     } // namespace client

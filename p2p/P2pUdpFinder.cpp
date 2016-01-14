@@ -60,13 +60,13 @@ namespace trip
 
         boost::uint16_t P2pUdpFinder::get_id()
         {
-            return id();
+            return l_id();
         }
 
         void P2pUdpFinder::set_id(
             boost::uint16_t id)
         {
-            UdpSession::sid_ = id;
+            UdpSession::p_id(id);
             ((UdpSessionListener *)tunnel().main_session())->set_fake_sid(id);
         }
 

@@ -8,29 +8,45 @@ namespace trip
     namespace client
     {
 
-        Stat::Stat()
-            : bytes_(0)
-            , last_bytes_(0)
+        StatValue::StatValue()
+            : total(0)
+            , last(0)
+            , speed(0)
+            , speed_max(0)
+            , speed_avg(0)
         {
-            next_time_ += Duration::seconds(1);
+        }
+
+        void StatValue::push(
+            boost::uint32_t n)
+        {
+            time = Time::now();
+            total += n;
+        }
+
+        void StatValue::calc(
+            Time const & now, 
+            Time const & tlast)
+        {
+            boost::uint64_t speed = (total - last) * 1000 / (now - tlast).total_milliseconds();
+            if (speed > speed_max)
+                speed_max = speed;
+            speed_avg = (speed_avg + speed) / 2;
+        }
+
+        Stat::Stat()
+        {
+            time_next_ += Duration::seconds(1);
         }
 
         void Stat::on_timer(
             Time const & now)
         {
-        }
-
-        void Stat::push(
-            size_t n)
-        {
-            time_ = Time::now();
-            bytes_ += n;
-            if (time_ >= next_time_) {
-                boost::uint64_t speed = (bytes_ - last_bytes_) * 1000 / (time_ - last_time_).total_milliseconds();
-                next_time_ += Duration::seconds(1);
-                if (speed > max_speed_)
-                    max_speed_ = speed;
-                avg_speed_ = (avg_speed_ + speed) / 2;
+            if (now >= time_next_) {
+                recv_bytes_.calc(now, time_last_);
+                send_bytes_.calc(now, time_last_);
+                time_last_ = now;
+                time_next_ += Duration::seconds(1);
             }
         }
 

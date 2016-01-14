@@ -33,15 +33,26 @@ namespace trip
             void detach();
 
         public:
-            boost::uint16_t id() const
+            boost::uint16_t l_id() const
             {
-                return id_;
+                return l_id_;
             }
 
-            void id(
+            void l_id(
                 boost::uint16_t n)
             {
-                id_ = n;
+                l_id_ = n;
+            }
+
+            boost::uint16_t p_id() const
+            {
+                return p_id_;
+            }
+
+            void p_id(
+                boost::uint16_t n)
+            {
+                p_id_ = n;
             }
 
         public:
@@ -69,11 +80,11 @@ namespace trip
             void pop();
 
         protected:
-            boost::uint16_t id_;
+            boost::uint16_t l_id_;
+            boost::uint16_t p_id_;
             Bus * bus_;
             Queue * queue_;
-            Stat rcv_stat_;
-            Stat snd_stat_;
+            Stat stat_;
         };
 
     } // namespace client

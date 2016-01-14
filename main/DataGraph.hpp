@@ -6,6 +6,8 @@
 #include "trip/client/main/ResourceManager.h"
 #include "trip/client/core/Resource.h"
 #include "trip/client/core/Resource.h"
+#include "trip/client/udp/UdpManager.h"
+#include "trip/client/udp/UdpSocket.h"
 
 #include <util/serialization/stl/vector.h>
 #include <util/serialization/stl/map.h>
@@ -56,6 +58,24 @@ namespace trip
             ResourceManager & t)
         {
             ar & t.resources();
+        }
+
+        template <typename Archive>
+        void serialize(
+            Archive & ar, 
+            UdpTunnel & t)
+        {
+        }
+
+        template <typename Archive>
+        void serialize(
+            Archive & ar, 
+            UdpManager & t)
+        {
+            ar & SERIALIZATION_NVP_NAME("local_endpoint", t.local_endpoint());
+            ar & SERIALIZATION_NVP_NAME("socket", t.socket());
+            ar & SERIALIZATION_NVP_NAME("tunnels", t.tunnels());
+            ar & SERIALIZATION_NVP_NAME("pulse_tunnels", t.pulse_tunnels());
         }
 
     }

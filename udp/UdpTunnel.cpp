@@ -24,9 +24,8 @@ namespace trip
         UdpTunnel::UdpTunnel(
             UdpSocket & socket)
             : Tunnel(&socket)
-            , tid_(0)
-            , seq_(0)
-            , endpoints_(NULL)
+            , l_seq_(0)
+            , ep_pairs_(NULL)
         {
         }
 
@@ -39,12 +38,6 @@ namespace trip
             return static_cast<UdpSession *>(slot_at(uint16_t(0))->cell);
         }
 
-        void UdpTunnel::set_endpoints(
-            UdpEndpointPairs const * ep)
-        {
-            endpoints_ = ep;
-        }
-
         void UdpTunnel::on_send(
             //void * head, 
             NetBuffer & buf)
@@ -53,7 +46,7 @@ namespace trip
             TunnelHeader & th = pkt.th;
             TunnelOArchive ar(buf);
             th.ver = 1;
-            th.tid = tid_;
+            th.tid = p_id_;
             std::streampos pos = ar.tellp();
             ar.seekp(sizeof(TunnelHeader), std::ios::cur);
             std::streampos pos2 = ar.tellp();
@@ -66,8 +59,8 @@ namespace trip
                 pos2 = pos3;
             }
             */
-            if (endpoints_) {
-                pkt.endpairs = endpoints_;
+            if (ep_pairs_) {
+                pkt.endpairs = ep_pairs_;
                 Message * msg = NULL;
                 while ((msg = (Message *)first())) {
                     ar << *msg;
@@ -86,8 +79,8 @@ namespace trip
             if (pos2 == pos + (std::streamoff)sizeof(TunnelHeader)) {
                 return;
             }
-            if (seq_ == 0) seq_ = 1;
-            th.seq = seq_++;
+            if (l_seq_ == 0) l_seq_ = 1;
+            th.seq = l_seq_++;
             ar << th;
             ar.seekp(pos2, std::ios::beg);
             LOG_DEBUG("[on_send] tid=" << th.tid << ", seq=" << th.seq);
@@ -101,6 +94,7 @@ namespace trip
             Tunnel::on_recv(/*head, */buf);
             UdpPacket & pkt = static_cast<UdpPacket &>(buf);
             TunnelHeader & th = pkt.th;
+            p_seq_ = th.seq;
             size_t end = buf.pubseekoff(0, std::ios::cur, std::ios::out);
             TunnelIArchive ar(buf);
             ar >> th;

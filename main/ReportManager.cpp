@@ -111,7 +111,7 @@ namespace trip
         void ReportManager::submit2(
             ReportInfo const & info)
         {
-            Url url(info.url);
+            Url url(set_.base_url + info.url);
             DataGraph & graph(DataGraph::get(io_svc()));
             for (size_t i = 0; i < info.params.size(); ++i) {
                 std::ostringstream oss;

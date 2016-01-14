@@ -17,14 +17,12 @@ namespace trip
         FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("trip.client.UdpSession", framework::logger::Debug);
 
         UdpSession::UdpSession()
-            : sid_(0)
         {
         }
 
         UdpSession::UdpSession(
             UdpTunnel & tunnel)
             : Cell(&tunnel)
-            , sid_(0)
         {
         }
 
@@ -60,7 +58,7 @@ namespace trip
             Message * msg)
         {
             //LOG_DEBUG("[send_msg] type=" << msg_type_str(msg->type));
-            msg->sid = sid_;
+            msg->sid = p_id();
             return push(msg);
         }
 
