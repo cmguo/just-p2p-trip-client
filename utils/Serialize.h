@@ -23,7 +23,7 @@ namespace framework
             Archive & ar, 
             Endpoint const & ep)
         {
-            boost::uint8_t protocol = ep.protocol();
+            boost::uint8_t protocol = ep.type() | ep.protocol();
             boost::uint8_t family = ep.family();
             boost::uint16_t port = ep.port();
             ar << protocol << family << port;
@@ -41,9 +41,25 @@ namespace framework
             Archive & ar, 
             Endpoint & ep)
         {
-            std::string str;
-            ar >> str;
-            ep.from_string(str);
+            boost::uint8_t protocol = 0;
+            boost::uint8_t family = 0;
+            boost::uint16_t port = 0;
+            ar >> protocol >> family >> port;
+            if (!ar) return;
+            if (family == ep.v4) {
+                boost::uint32_t ipv4 = 0;
+                ar >> ipv4;
+                if (!ar) return;
+                ep.ip_v4(ipv4);
+            } else {
+                Endpoint::ip_v6_bytes_type ipv6;
+                ar >> framework::container::make_array(ipv6.elems);
+                if (!ar) return;
+                ep.ip_v6(ipv6);
+            }
+            ep.protocol(Endpoint::ProtocolEnum(protocol));
+            ep.family(Endpoint::FamilyEnum(family));
+            ep.port(port);
         }
 
     }

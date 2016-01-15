@@ -6,6 +6,7 @@
 #include "trip/client/proto/MessageData.h"
 #include "trip/client/utils/Serialize.h"
 #include "trip/client/udp/UdpEndpoint.h"
+#include "trip/client/udp/Serialize.h"
 
 #include <util/serialization/NVPair.h>
 #include <util/serialization/Collection.h>
@@ -17,18 +18,6 @@ namespace trip
     {
 
         using util::serialization::make_sized;
-        using framework::container::make_array;
-
-        /* UdpEndpoint */
-
-        template <typename Archive>
-        void serialize(
-            Archive & ar, 
-            UdpEndpoint & endpoint)
-        {
-            ar & SERIALIZATION_NVP_NAME("id", endpoint.id);
-            ar & SERIALIZATION_NVP_NAME("endpoints", make_sized<boost::uint32_t>(endpoint.endpoints));
-        }
 
         /* Login */
 

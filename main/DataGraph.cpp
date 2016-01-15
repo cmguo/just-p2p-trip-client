@@ -1,7 +1,8 @@
 
 #include "trip/client/Common.h"
 #include "trip/client/main/DataGraph.h"
-#include "trip/client/main/DataGraph.hpp"
+#include "trip/client/main/Serialize.h"
+#include "trip/client/udp/Serialize.h"
 
 #include <util/datagraph/WalkArchive.h>
 #include <util/archive/JsonOArchive.h>
@@ -54,6 +55,7 @@ namespace trip
             DataRoot(
                 util::daemon::Daemon & daemon)
                 : resource(util::daemon::use_module<ResourceManager>(daemon))
+                , udp(util::daemon::use_module<UdpManager>(daemon))
             {
             }
 
@@ -61,10 +63,13 @@ namespace trip
             void serialize(
                 Archive & ar)
             {
-                ar & SERIALIZATION_NVP(resource);
+                ar & SERIALIZATION_NVP(resource)
+                    & SERIALIZATION_NVP(udp)
+                    ;
             }
 
             ResourceManager const & resource;
+            UdpManager const & udp;
 
             static DataRoot & inst(
                 util::daemon::Daemon & daemon = *(util::daemon::Daemon *)NULL)

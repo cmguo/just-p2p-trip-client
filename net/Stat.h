@@ -34,10 +34,10 @@ namespace trip
 
         public:
             void push_recv(
-                size_t n);
+                boost::uint32_t n);
 
             void push_send(
-                size_t n);
+                boost::uint32_t n);
 
             void on_timer(
                 Time const & now);

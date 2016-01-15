@@ -2,7 +2,7 @@
     <item>
         <first>index</first>
         <second>
-            <item>http://192.168.33.63/trip/resource.xml</item>
+            <item>http://hsptp.c4hcdn.com:8000/api/v1/data/idx.xml</item>
         </second>
     </item>
     <item>
@@ -14,7 +14,7 @@
     <item>
         <first>tracker</first>
         <second>
-            <item>http://192.168.33.139:4111/trip/tracker/</item>
+            <item>http://192.168.30.122:4111/trip/tracker/</item>
         </second>
     </item>
     <item>

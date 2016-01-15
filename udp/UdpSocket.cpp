@@ -110,7 +110,7 @@ namespace trip
             UdpPacket pkt;
             while (!Bus::empty()) {
                 Bus::on_send(/*&pkt, */pkt);
-                assert(pkt.in_avail());
+                //assert(pkt.in_avail());
                 LOG_DEBUG("[send] bytes=" << pkt.in_avail());
                 if (pkt.encode()) {
                     //if (pkt.sender) {

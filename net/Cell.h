@@ -55,6 +55,11 @@ namespace trip
                 p_id_ = n;
             }
 
+            Stat const & stat() const
+            {
+                return stat_;
+            }
+
         public:
             virtual void on_send(
                 //void * head, 

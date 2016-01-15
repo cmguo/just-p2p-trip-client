@@ -126,6 +126,7 @@ namespace trip
         void Bus::on_timer(
             Time const & now)
         {
+            Cell::on_timer(now);
             if (root_.node == NULL)
                 return;
             for (size_t i2 = 0; i2 < 32; ++i2) {

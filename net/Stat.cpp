@@ -28,7 +28,8 @@ namespace trip
             Time const & now, 
             Time const & tlast)
         {
-            boost::uint64_t speed = (total - last) * 1000 / (now - tlast).total_milliseconds();
+            speed = (total - last) * 1000 / (now - tlast).total_milliseconds();
+            last = total;
             if (speed > speed_max)
                 speed_max = speed;
             speed_avg = (speed_avg + speed) / 2;
@@ -48,6 +49,18 @@ namespace trip
                 time_last_ = now;
                 time_next_ += Duration::seconds(1);
             }
+        }
+
+        void Stat::push_recv(
+            boost::uint32_t n)
+        {
+            recv_bytes_.push(n);
+        }
+
+        void Stat::push_send(
+            boost::uint32_t n)
+        {
+            send_bytes_.push(n);
         }
 
     } // namespace client
