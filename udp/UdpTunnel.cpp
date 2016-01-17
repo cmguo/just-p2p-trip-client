@@ -65,7 +65,8 @@ namespace trip
                 while ((msg = (Message *)first())) {
                     ar << *msg;
                     if (ar) {
-                        LOG_DEBUG("[on_send] size=" << size_t(ar.tellp() - pos2) - sizeof(MessageHeader) << ", sid=" << msg->sid);
+                        LOG_DEBUG("[on_send] size=" << size_t(ar.tellp() - pos2) - sizeof(MessageHeader) << ", sid=" << msg->sid 
+                            << ", type=" << msg_type_str(msg->type));
                         pop();
                         free_message(msg);
                         pos2 = ar.tellp();
@@ -83,7 +84,7 @@ namespace trip
             th.seq = l_seq_++;
             ar << th;
             ar.seekp(pos2, std::ios::beg);
-            LOG_DEBUG("[on_send] tid=" << th.tid << ", seq=" << th.seq);
+            LOG_DEBUG("[on_send] tid=" << l_id() << "-" << p_id() << ", seq=" << th.seq);
             Tunnel::on_send(/*head, */buf);
         }
 
@@ -98,17 +99,18 @@ namespace trip
             size_t end = buf.pubseekoff(0, std::ios::cur, std::ios::out);
             TunnelIArchive ar(buf);
             ar >> th;
-            LOG_DEBUG("[on_recv] tid=" << th.tid << ", seq=" << th.seq);
+            LOG_DEBUG("[on_recv] tid=" << l_id() << "-" << p_id() << ", seq=" << th.seq);
             size_t pos = ar.tellg();
             while (pos + 8 < end) {
                 boost::uint16_t size;
                 boost::uint16_t sid;
+                boost::uint16_t type;
                 buf.pubseekoff(pos + 8, std::ios::beg, std::ios::out);
-                ar >> size >> sid;
+                ar >> size >> sid >> type;
                 ar.seekg(pos, std::ios::beg);
                 pos += (8 + size);
                 buf.pubseekoff(pos, std::ios::beg, std::ios::out); // limit in this message
-                LOG_DEBUG("[on_recv] size=" << size << ", sid=" << sid);
+                LOG_DEBUG("[on_recv] size=" << size << ", sid=" << sid << ", type=" << msg_type_str(type));
                 Tunnel::on_recv(sid, /*head, */buf);
                 ar.seekg(pos, std::ios::beg);
             }

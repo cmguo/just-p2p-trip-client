@@ -13,6 +13,7 @@
 #include <util/protocol/pptv/Base64.h>
 #include <util/protocol/http/HttpClient.h>
 #include <util/archive/XmlIArchive.h>
+#include <util/event/Observable.h>
 
 #include <boost/bind.hpp>
 #include <boost/asio/error.hpp>
@@ -76,8 +77,49 @@ namespace trip
                 LOG_WARN("[handle_fetch_all] format error");
             }
 
-            for (size_t i = 0; i < set_.infos.size(); ++i)
+            for (size_t i = 0; i < set_.infos.size(); ++i) {
+                ReportInfo const & info(set_.infos[i]);
+                if (!info.event.empty()) {
+                    // util.timer.TimerManager/t_1_s
+                    std::string::size_type p = info.event.find('/');
+                    if (p != std::string::npos) {
+                        util::event::Observable & o(o.get(info.event.substr(0, p)));
+                        o.on(info.event.substr(p + 1), 
+                            boost::bind(&ReportManager::on_event, this, _1, _2, boost::cref(info)));
+                    }
+                }
                 submit(set_.infos[i]);
+            }
+        }
+
+        void ReportManager::on_event(
+            util::event::Observable const & observable, 
+            util::event::Event const & event, 
+            ReportInfo const & info)
+        {
+            ReportInfo info2(info);
+            for (size_t i = 0; i < info.params.size(); ++i) {
+                std::string const & param(info.params[i].path);
+                std::string param2;
+                std::string::size_type p1 = param.find('$');
+                std::string::size_type p2 = 0;
+                while (p1 != std::string::npos && p1 + 2 < param.size() && param[p1 + 1] == '{') {
+                    param2 += param.substr(p2, p1 - p2);
+                    ++p1;
+                    ++p1;
+                    p2 = param.find('}', p1);
+                    if (p2 == std::string::npos) {
+                        p2 = p1 - 2;
+                        break;
+                    }
+                    param2 += event.get_value(param.substr(p1, p2 - p1));
+                    ++p2;
+                    p1 = param.find('$', p2);
+                }
+                param2 += param.substr(p2);
+                info2.params[i].path.swap(param2);
+            }
+            submit(info2);
         }
 
         void ReportManager::report(

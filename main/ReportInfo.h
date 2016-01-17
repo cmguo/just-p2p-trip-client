@@ -27,6 +27,7 @@ namespace trip
         struct ReportInfo
         {
             std::string name;
+            std::string event;
             Url url;
             std::vector<ReportParam> params;
 
@@ -35,6 +36,7 @@ namespace trip
                 Archive & ar)
             {
                 ar & SERIALIZATION_NVP(name)
+                    & SERIALIZATION_NVP(event)
                     & SERIALIZATION_NVP(url)
                     & SERIALIZATION_NVP(params);
             }

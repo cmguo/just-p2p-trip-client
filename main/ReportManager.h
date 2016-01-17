@@ -6,6 +6,7 @@
 #include "trip/client/main/ReportInfo.h"
 
 #include <util/daemon/Module.h>
+#include <util/event/Event.h>
 
 #include <framework/timer/TimeTraits.h>
 
@@ -46,6 +47,11 @@ namespace trip
 
         private:
             void on_boot_ready();
+
+            void on_event(
+                util::event::Observable const & observable, 
+                util::event::Event const & event, 
+                ReportInfo const & info);
 
         private:
             void submit(

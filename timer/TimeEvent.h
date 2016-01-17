@@ -3,7 +3,7 @@
 #ifndef _TRIP_CLIENT_TIMER_TIME_EVENT_H_
 #define _TRIP_CLIENT_TIMER_TIME_EVENT_H_
 
-#include <util/event/Event.h>
+#include <util/event/EventEx.h>
 
 namespace trip
 {
@@ -11,9 +11,11 @@ namespace trip
     {
 
         struct TimeEvent
-            : util::event::Event
+            : util::event::EventEx<TimeEvent>
         {
             Time now;
+            TimeEvent(char const * name) 
+                : util::event::EventEx<TimeEvent>(name) {}
         };
 
     } // namespace client

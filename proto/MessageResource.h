@@ -4,7 +4,7 @@
 #define _TRIP_CLIENT_PROTO_MESSAGE_RESOURCE_H_
 
 #include "trip/client/core/Resource.h"
-#include "trip/client/main/Serialize.h"
+#include "trip/client/core/Serialize.h"
 
 #include <util/serialization/NVPair.h>
 #include <util/serialization/stl/vector.h>

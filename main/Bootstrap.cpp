@@ -19,12 +19,15 @@ namespace trip
         Bootstrap::Bootstrap(
             util::daemon::Daemon & daemon)
             : util::daemon::ModuleBase<Bootstrap>(daemon, "trip.client.Bootstrap")
+            , util::event::Observable("trip.client.Bootstrap")
+            , ready("ready")
             , url_("http://boot.trip.com/trip/bootstrap.xml")
             , http_(io_svc())
         {
             module_config()
                 << CONFIG_PARAM_NAME_RDWR("url", url_)
                 ;
+            register_event(ready);
         }
 
         Bootstrap::~Bootstrap()

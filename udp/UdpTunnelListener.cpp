@@ -54,6 +54,8 @@ namespace trip
                 {
                     MessageRequestConnect & req
                         = msg->as<MessageRequestConnect>();
+                    if (req.uid == mgr_.local_endpoint().id)
+                        break;
                     UdpEndpoint endp;
                     endp.id = req.uid;
                     recent_ = &mgr_.get_tunnel(endp);

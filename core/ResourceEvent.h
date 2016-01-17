@@ -5,7 +5,7 @@
 
 #include "trip/client/core/DataId.h"
 
-#include <util/event/Event.h>
+#include <util/event/EventEx.h>
 
 namespace trip
 {
@@ -15,57 +15,63 @@ namespace trip
         class Resource;
 
         struct ResourceChangedEvent
-            : util::event::Event
+            : util::event::EventEx<ResourceChangedEvent>
         {
             Resource * resource;
-            ResourceChangedEvent() : resource(NULL) {}
+            ResourceChangedEvent(char const * name) 
+                : util::event::EventEx<ResourceChangedEvent>(name), resource(NULL) {}
         };
 
         struct ResourceMeta;
 
         struct MetaChangedEvent
-            : util::event::Event
+            : util::event::EventEx<MetaChangedEvent>
         {
             ResourceMeta const * meta;
-            MetaChangedEvent() : meta(NULL) {}
+            MetaChangedEvent(char const * name) 
+                : util::event::EventEx<MetaChangedEvent>(name), meta(NULL) {}
         };
 
         struct DataEvent
-            : util::event::Event
+            : util::event::EventEx<DataEvent>
         {
             DataId id;
             size_t degree;
-            DataEvent() : degree(0) {}
+            DataEvent(char const * name) 
+                : util::event::EventEx<DataEvent>(name), degree(0) {}
         };
 
         struct SegmentMeta;
 
         struct SegmentMetaEvent
-            : util::event::Event
+            : util::event::EventEx<SegmentMetaEvent>
         {
             DataId id;
             SegmentMeta const * meta;
-            SegmentMetaEvent() : meta(NULL) {}
+            SegmentMetaEvent(char const * name) 
+                : util::event::EventEx<SegmentMetaEvent>(name), meta(NULL) {}
         };
 
         struct Source;
 
         struct SourceChangedEvent
-            : util::event::Event
+            : util::event::EventEx<SourceChangedEvent>
         {
             boost::uint32_t type; // 0 - add, 1 - del, 2 - modify
             Source const * source;
-            SourceChangedEvent() : type(-1), source(NULL) {}
+            SourceChangedEvent(char const * name) 
+                : util::event::EventEx<SourceChangedEvent>(name), type(-1), source(NULL) {}
         };
 
         struct Sink;
 
         struct SinkChangedEvent
-            : util::event::Event
+            : util::event::EventEx<SourceChangedEvent>
         {
             boost::uint32_t type;
             Sink const * sink;
-            SinkChangedEvent() : type(-1), sink(NULL) {}
+            SinkChangedEvent(char const * name) 
+                : util::event::EventEx<SourceChangedEvent>(name), type(-1), sink(NULL) {}
         };
 
     } // namespace client

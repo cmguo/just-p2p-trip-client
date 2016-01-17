@@ -3,7 +3,11 @@
 #include "trip/client/Common.h"
 #include "trip/client/core/ResourceData.h"
 #include "trip/client/core/Resource.h"
+#include "trip/client/core/ResourceEvent.hpp"
 
+#include <util/event/EventEx.hpp>
+
+#include <framework/string/Format.h>
 #include <framework/logger/Logger.h>
 #include <framework/logger/StreamRecord.h>
 
@@ -15,10 +19,21 @@ namespace trip
         FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("trip.client.ResourceData", framework::logger::Debug);
 
         ResourceData::ResourceData()
-            : end_(0)
+            : util::event::Observable("Resource" + framework::string::format((void const *)this)) 
+            , seg_meta_ready("seg_meta_ready") 
+            , data_ready("data_ready")
+            , data_miss("data_miss")
+            , data_seek("data_seek")
+            , segment_full("segment_full")
+            , end_(0)
             , meta_dirty_(false)
             , meta_ready_(0)
         {
+            register_event(seg_meta_ready);
+            register_event(data_ready);
+            register_event(data_miss);
+            register_event(data_seek);
+            register_event(segment_full);
         }
 
         ResourceData::~ResourceData()

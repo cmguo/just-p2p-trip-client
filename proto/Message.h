@@ -19,6 +19,9 @@ namespace trip
 
         void free_message(Message * msg);
 
+        char const * msg_type_str(
+            boost::uint16_t type);
+
     } // namespace client
 } // namespace trip
 

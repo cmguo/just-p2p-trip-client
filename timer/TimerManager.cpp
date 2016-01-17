@@ -3,8 +3,10 @@
 #include "trip/client/Common.h"
 #include "trip/client/timer/TimerManager.h"
 
-#include "framework/logger/Logger.h"
-#include "framework/logger/Section.h"
+#include <util/event/EventEx.hpp>
+
+#include <framework/logger/Logger.h>
+#include <framework/logger/Section.h>
 
 #include <boost/bind.hpp>
 
@@ -13,11 +15,29 @@ namespace trip
     namespace client
     {
 
+        template <typename Archive>
+        void serialize(
+            Archive & ar, 
+            TimeEvent & t)
+        {
+            //ar & SERIALIZATION_NVP_1(t, now)
+            //    ;
+        }
+
         TimerManager::TimerManager(
             util::daemon::Daemon & daemon)
-            : util::daemon::ModuleBase<TimerManager>(daemon, "TimerManager")
+            : util::daemon::ModuleBase<TimerManager>(daemon, "trip.client.TimerManager")
+            , util::event::Observable("trip.client.TimerManager") 
+            , t_10_ms("t_10_ms")
+            , t_100_ms("t_100_ms")
+            , t_1_s("t_1_s")
+            , t_10_s("t_10_s")
             , timer_(io_svc())
         {
+            register_event(t_10_ms);
+            register_event(t_100_ms);
+            register_event(t_1_s);
+            register_event(t_10_s);
         }
 
         TimerManager::~TimerManager()

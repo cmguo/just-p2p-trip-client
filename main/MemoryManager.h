@@ -4,7 +4,7 @@
 #define _TRIP_CLIENT_MAIN_MEMORY_MANAGER_H_
 
 #include <util/daemon/Module.h>
-#include <util/event/Event.h>
+#include <util/event/EventEx.h>
 #include <util/event/Observable.h>
 
 namespace trip
@@ -13,9 +13,11 @@ namespace trip
     {
 
         struct OutOfMemoryEvent
-            : util::event::Event
+            : util::event::EventEx<OutOfMemoryEvent>
         {
             size_t level;
+            OutOfMemoryEvent(char const * name) 
+                : util::event::EventEx<OutOfMemoryEvent>(name) {}
         };
 
         class MemoryManager

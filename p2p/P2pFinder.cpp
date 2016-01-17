@@ -151,6 +151,9 @@ namespace trip
             Url url("p2p:///");
             for (size_t i = 0; i < find.endpoints.size(); ++i) {
                 UdpEndpoint const & endpoint = find.endpoints[i];
+                Uuid const & lid(umgr_.local_endpoint().id);
+                if (endpoint.id == lid)
+                    continue;
                 umgr_.get_tunnel(endpoint);
                 url.param("pid", format(endpoint.id));
                 urls.push_back(url);

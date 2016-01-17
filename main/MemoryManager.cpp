@@ -6,7 +6,11 @@
 #include "trip/client/core/BlockData.h"
 #include "trip/client/core/Block.h"
 #include "trip/client/core/Resource.h"
+#include "trip/client/core/ResourceEvent.hpp"
 #include "trip/client/core/Memory.h"
+
+#include <util/event/EventEx.hpp>
+#include <util/serialization/NVPair.h>
 
 #include <framework/logger/Logger.h>
 #include <framework/logger/StreamRecord.h>
@@ -18,9 +22,20 @@ namespace trip
 
         FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("trip.client.MemoryManager", framework::logger::Debug);
 
+        template <typename Archive>
+        void serialize(
+            Archive & ar, 
+            OutOfMemoryEvent & t)
+        {
+            ar & SERIALIZATION_NVP_1(t, level)
+                ;
+        }
+
         MemoryManager::MemoryManager(
             util::daemon::Daemon & daemon)
-            : util::daemon::ModuleBase<MemoryManager>(daemon, "MemoryManager")
+            : util::daemon::ModuleBase<MemoryManager>(daemon, "trip.client.MemoryManager")
+            , util::event::Observable("trip.client.MemoryManager")
+            , out_of_memory("out_of_memory")
         {
             LOG_INFO("[sizeof]"                                 // 64bit    32bit   pool
                 << " Segment:" << sizeof(Segment)               // 1032     520     1
@@ -33,6 +48,7 @@ namespace trip
                 << " SegmentMeta:" << sizeof(SegmentMeta)       // 24       24      x
                 //<< "Resource::Lock:" << sizeof(Resource::Lock)  // 16       16      x
                 );
+            register_event(out_of_memory);
         }
 
         MemoryManager::~MemoryManager()

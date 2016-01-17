@@ -4,6 +4,7 @@
 #include "trip/client/cache/ResourceCache.h"
 #include "trip/client/cache/CacheManager.h"
 #include "trip/client/core/Resource.h"
+#include "trip/client/core/Serialize.h"
 #include "trip/client/proto/MessageResource.h"
 
 #include <util/archive/XmlIArchive.h>

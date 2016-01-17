@@ -21,7 +21,14 @@ namespace trip
             , public util::event::Observable
         {
         public:
-            struct Event : util::event::Event {} ready;
+            struct Event : util::event::Event
+            {
+                Event(
+                    char const * name)
+                    : util::event::Event(name)
+                {
+                }
+            } ready;
 
         public:
             Bootstrap(

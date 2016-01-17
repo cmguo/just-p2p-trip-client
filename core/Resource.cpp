@@ -2,6 +2,9 @@
 
 #include "trip/client/Common.h"
 #include "trip/client/core/Resource.h"
+#include "trip/client/core/ResourceEvent.hpp"
+
+#include <util/event/EventEx.hpp>
 
 #include <algorithm>
 
@@ -11,8 +14,16 @@ namespace trip
     {
 
         Resource::Resource()
-            : meta_(NULL)
+            : merged("merged")
+            , meta_changed("meta_changed")
+            , source_changed("source_changed")
+            , sink_changed("sink_changed")
+            , meta_(NULL)
         {
+            register_event(merged);
+            register_event(meta_changed);
+            register_event(source_changed);
+            register_event(sink_changed);
         }
 
         Resource::~Resource()

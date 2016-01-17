@@ -4,6 +4,9 @@
 #include "trip/client/main/ResourceManager.h"
 #include "trip/client/utils/Format.h"
 #include "trip/client/core/Resource.h"
+#include "trip/client/core/ResourceEvent.hpp"
+
+#include <util/event/EventEx.hpp>
 
 #include <framework/logger/Logger.h>
 #include <framework/logger/StreamRecord.h>
@@ -19,9 +22,14 @@ namespace trip
 
         ResourceManager::ResourceManager(
             util::daemon::Daemon & daemon)
-            : util::daemon::ModuleBase<ResourceManager>(daemon, "ResourceManager")
+            : util::daemon::ModuleBase<ResourceManager>(daemon, "trip.client.ResourceManager")
+            , util::event::Observable("trip.client.ResourceManager")
+            , resource_added("resource_added")
+            , resource_deleting("resource_deleting")
             , mapping_(io_svc())
         {
+            register_event(resource_added);
+            register_event(resource_deleting);
         }
 
         ResourceManager::~ResourceManager()
