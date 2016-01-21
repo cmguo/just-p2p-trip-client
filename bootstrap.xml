@@ -14,7 +14,7 @@
     <item>
         <first>tracker</first>
         <second>
-            <item>http://192.168.33.120:4111/trip/tracker/</item>
+            <item>http://192.168.33.130:4111/trip/tracker/</item>
         </second>
     </item>
     <item>

@@ -57,15 +57,25 @@ namespace trip
 				DataId pos;
 				DataId end;
   				std::deque<DataId> timeout_pieces_;
-				SegmentInfo() : meta_ready(false), pos(0), end(0) {}
+                size_t np2p;
+                size_t nsource;
+				SegmentInfo() 
+                    : meta_ready(false)
+                    , pos(0)
+                    , end(0)
+                    , np2p(0)
+                    , nsource(0)
+                {}
                 bool empty() { return meta_ready && timeout_pieces_.empty() && pos >= end; }
 			};
 			
-			std::vector<Source *> sources_;
+			std::vector<Source *> http_sources_;
+			std::vector<Source *> p2p_sources_;
 
             DataId win_beg_;
             DataId win_end_;
             std::deque<SegmentInfo *> segments_;
+            SegmentInfo * timeout_seg_;
             Resource::lock_t lock_;
             SegmentInfo * full_seg_;
         };

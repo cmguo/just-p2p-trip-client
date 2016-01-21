@@ -33,6 +33,11 @@ namespace trip
                 return resource_;
             }
 
+            boost::filesystem::path const & directory() const
+            {
+                return directory_;
+            }
+
             bool is_external() const
             {
                 return is_external_;

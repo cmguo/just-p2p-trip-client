@@ -71,22 +71,23 @@ namespace trip
             NetBuffer & buf)
         {
             Slot * slot(slot_at(id));
-            assert(slot);
-            slot->cell->on_recv(/*head, */buf);
+            if (slot)
+                slot->cell->on_recv(/*head, */buf);
         }
 
         void Bus::signal(
             Cell * cell)
         {
+            assert(!cell->empty());
             Slot & slot(slot_at(cell));
             bool s = signal_slots_ == NULL;
             if ((slot.flags & Slot::sfSignal) == 0) {
                 slot.flags |= Slot::sfSignal;
                 *signal_slots_tail_ = &slot;
                 signal_slots_tail_ = &slot.next;
+                if (s)
+                    signal();
             }
-            if (s)
-                signal();
         }
 
         void Bus::on_send(
@@ -95,14 +96,13 @@ namespace trip
         {
             if (signal_slots_) {
                 Slot * slot = signal_slots_;
-                signal_slots_ = signal_slots_->next;
-                if (signal_slots_ == NULL)
-                    signal_slots_tail_ = &signal_slots_;
+                assert(slot->flags & Slot::sfSignal);
                 slot->cell->on_send(/*head, */buf);
-                if (!slot->cell->empty()) {
-                    *signal_slots_tail_ = slot;
-                    signal_slots_tail_ = &slot->next;
-                } else {
+                if (slot->cell->empty()) {
+                    signal_slots_ = slot->next;
+                    slot->next = NULL;
+                    if (signal_slots_ == NULL)
+                        signal_slots_tail_ = &signal_slots_;
                     slot->flags &= ~Slot::sfSignal;
                 }
             } else if (queue_) {
@@ -260,6 +260,10 @@ namespace trip
         void Bus::slot_free(
             Slot & slot)
         {
+            if (slot.flags & Slot::sfSignal) {
+                // TODO: remove from signal_slots_
+            }
+            slot.flags = Slot::sfUsed;
             Time expire = Time::now() + Duration::seconds(TIME_WAIT);
             slot.mark = 1;
             if (tmwait_slots_) {

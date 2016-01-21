@@ -26,6 +26,7 @@ namespace trip
                 Resource::lock_t lock; // memory cache
                 boost::uint64_t segid; // disk cache, segment, use block_piece from block count 
             };
+            size_t level;
             size_t lru;
 
             Cache()
@@ -33,6 +34,7 @@ namespace trip
                 , rcache(NULL)
                 , data(NULL)
                 , lock(NULL)
+                , level(0)
                 , lru(0)
             {
             }
@@ -86,6 +88,12 @@ namespace trip
 
             virtual bool free(
                 Cache * cache) = 0;
+
+        private:
+            template <typename Archive>
+            friend void serialize(
+                Archive & ar, 
+                CachePool & t);
 
         private:
             Cache * used_caches_;

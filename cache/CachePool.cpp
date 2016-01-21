@@ -78,7 +78,7 @@ namespace trip
             for (; *p; ) {
                 Cache * c = *p;
                 if (check(c)) {
-                    c->lru = 0;
+                    c->lru = c->level;
                     *p = c->next; // unlink
                     c->next = touched;
                     touched = c;  
@@ -119,6 +119,8 @@ namespace trip
             }
             Cache * c = free_caches_;
             free_caches_ = c->next;
+            c->level = level;
+            c->lru = level;
             c->next = NULL;
             Cache ** p = used_caches_tail_;
             *used_caches_tail_ = c;
@@ -137,6 +139,7 @@ namespace trip
             c->rcache = NULL;
             c->data = NULL;
             c->data2 = NULL;
+            c->level = 0;
             c->lru = 0;
             *cache = c->next;
             if (&c->next == used_caches_tail_) {

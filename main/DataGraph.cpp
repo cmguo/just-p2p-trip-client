@@ -1,8 +1,10 @@
+// DataGraph.cpp
 
 #include "trip/client/Common.h"
 #include "trip/client/main/DataGraph.h"
 #include "trip/client/main/Serialize.h"
 #include "trip/client/udp/Serialize.h"
+#include "trip/client/cache/Serialize.h"
 
 #include <util/datagraph/WalkArchive.h>
 #include <util/archive/JsonOArchive.h>
@@ -56,6 +58,7 @@ namespace trip
                 util::daemon::Daemon & daemon)
                 : resource(util::daemon::use_module<ResourceManager>(daemon))
                 , udp(util::daemon::use_module<UdpManager>(daemon))
+                , cache(util::daemon::use_module<CacheManager>(daemon))
             {
             }
 
@@ -65,11 +68,13 @@ namespace trip
             {
                 ar & SERIALIZATION_NVP(resource)
                     & SERIALIZATION_NVP(udp)
+                    & SERIALIZATION_NVP(cache)
                     ;
             }
 
             ResourceManager const & resource;
             UdpManager const & udp;
+            CacheManager const & cache;
 
             static DataRoot & inst(
                 util::daemon::Daemon & daemon = *(util::daemon::Daemon *)NULL)

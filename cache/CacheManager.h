@@ -44,6 +44,11 @@ namespace trip
                 util::event::Observable const & observable, 
                 util::event::Event const & event);
 
+            template <typename Archive>
+            friend void serialize(
+                Archive & ar, 
+                CacheManager & t);
+
         private:
             MemoryManager & mmgr_;
             ResourceManager & rmgr_;

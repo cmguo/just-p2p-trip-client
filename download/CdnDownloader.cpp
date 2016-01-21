@@ -22,10 +22,10 @@ namespace trip
             DownloadManager & mgr, 
             Resource & resource)
             : Downloader(mgr, resource)
+            , timeout_seg_(NULL)
             , lock_(NULL)
         {
-            //find_sources("http", 10);
-            find_sources("p2p", 10);
+            find_sources("http", 10);
             lock_ = resource.alloc_lock(win_beg_, win_end_);
             full_seg_ = new SegmentInfo();
             full_seg_->meta_ready = true;
@@ -41,13 +41,19 @@ namespace trip
             Source * source)
         {
             if (source->url().protocol() == "http") {
-                sources_.push_back(source);
+                http_sources_.push_back(source);
+            } else {
+                p2p_sources_.push_back(source);
             }
         }
 
         void CdnDownloader::del_source(
             Source * source)
         {
+            std::vector<Source *> & sources = 
+                source->url().protocol() == "http" ? http_sources_ : p2p_sources_;
+            sources.erase(
+                std::remove(sources.begin(), sources.end(), source), sources.end());
         }
 
         void CdnDownloader::update_segment(
@@ -73,25 +79,47 @@ namespace trip
                 return false;
 
             if (sinfo && sinfo->empty()) {
+                --sinfo->nsource;
+                LOG_DEBUG("[get_task] finish segment " << sinfo->pos.segment);
                 sinfo = NULL;
                 source.context(sinfo);
+            }
+
+            if (timeout_seg_ && timeout_seg_->empty()) {
+                timeout_seg_ = NULL;
+                for (size_t i = 0; i < segments_.size(); ++i) {
+                    SegmentInfo * seg2 = segments_[i];
+                    if (seg2->nsource == 0 && !seg2->timeout_pieces_.empty()) {
+                        timeout_seg_ = seg2;
+                        break;
+                    }
+                }
+            }
+
+            if (timeout_seg_ && source.has_segment(timeout_seg_->pos)) {
+                if (sinfo == NULL)
+                    source.context(timeout_seg_);
+                sinfo = timeout_seg_;
             }
 
             if (sinfo == NULL) {
                 for (size_t i = 0; i < segments_.size(); ++i) {
                     SegmentInfo * seg2 = segments_[i];
+                    // TODO: find better select algorithm, consider
+                    // seg2->time_expire, seg2->np2p, seg2->nsource
+                    // source->is_http
                     if (!seg2->empty() && source.has_segment(seg2->pos)) {
                         sinfo = seg2;
                         break;
                     }
                 }
+                source.context(sinfo);
                 if (sinfo == NULL) { // TODO: No tasks, how to resume?
                     LOG_DEBUG("[get_task] no task...");
                     return false;
                 }
+                ++sinfo->nsource;
             }
-
-            source.context(sinfo);
 
             std::deque<DataId>::iterator beg = sinfo->timeout_pieces_.begin();
             std::deque<DataId>::iterator end = sinfo->timeout_pieces_.end();
@@ -187,6 +215,10 @@ namespace trip
                         seg->seg->seek(sinfo->pos);
                         LOG_DEBUG("[prepare_taskwindow] segment=" << seg->seg << ", pos=" << sinfo->pos);
                     }
+                    for (size_t j = 0; j < p2p_sources_.size(); ++j) {
+                        if (p2p_sources_[j]->has_segment(sinfo->pos))
+                            ++sinfo->np2p;
+                    }
                     segments_[i] = sinfo;
                 } else {
                     if (sinfo->pos < play_pos)
@@ -196,14 +228,17 @@ namespace trip
                 play_beg = play_pos;
             }
 
+            if (p2p_sources_.size() < 50)
+                find_sources("p2p", 10);
+
             resource().modify_lock(lock_, win_beg_, win_end_);
 
             for (size_t i = 0; i < sources_.size(); ++i) {
                 Source * src = sources_[i];
                 if (src->context() == NULL) {
                     std::vector<DataId> requests;
-                    get_task(*src, requests);
-                    src->request(requests);
+                    if (get_task(*src, requests))
+                        src->request(requests);
                 }
             }
         }
@@ -216,15 +251,18 @@ namespace trip
                 prepare_taskwindow(0, 0);
         }
 
-        void CdnDownloader::on_timeout(DataId const& piece)
+        void CdnDownloader::on_timeout(
+            DataId const & piece)
         {
-            if (piece >= win_beg_ && piece < win_end_) {
-                SegmentInfo * seg = segments_[piece.segment - win_beg_.segment];
-                seg->timeout_pieces_.push_back(piece);
+            if (piece < win_beg_ && piece > win_end_) {
+                return;
+            }
+            SegmentInfo * seg = segments_[piece.segment - win_beg_.segment];
+            seg->timeout_pieces_.push_back(piece);
+            if (seg->nsource == 0 && timeout_seg_ == NULL) {
+                timeout_seg_ = seg;
             }
         }
-
-
 
     } // namespace client
 } // namespace trip

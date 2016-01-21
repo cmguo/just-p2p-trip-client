@@ -62,12 +62,12 @@ namespace trip
             Message * msg = alloc_message();
             MessageRequestData & req = 
                 msg->get<MessageRequestData>();
-            LOG_DEBUG("[request] id=" << pieces[0]);
+            //LOG_DEBUG("[request] id=" << pieces[0]);
             requests_.push_back(Request(pieces[0], now));
             boost::uint64_t index = pieces[0].id;
             req.index = index;
             for (size_t i = 1; i < pieces.size(); ++i) {
-                LOG_DEBUG("[request] id=" << pieces[i]);
+                //LOG_DEBUG("[request] id=" << pieces[i]);
                 requests_.push_back(Request(pieces[i], now));
                 now += delta_;
                 if (i > 0) {
@@ -127,14 +127,20 @@ namespace trip
             id.inc_segment(0);
             if (map_.empty() || id < map_id_ 
                 || id > map_id_ + DataId::segments(PREPARE_MAP_RANGE / 2)) {
+                // retry if no response during one second
                 map_req_.id = id;
-                map_req_.time = Time();
+                map_req_.time = Time() + Duration::seconds(1);
                 Message * msg = alloc_message();
                 MessageRequestMap & req = 
                     msg->get<MessageRequestMap>();
-                req.start = map_id_.id;
+                req.start = id.id;
                 req.count = PREPARE_MAP_RANGE;
                 send_msg(msg);
+            } else {
+                // we still have more than half valid map range
+                // start next check after 10 seconds with "resource_.data_ready.id"
+                map_req_.id.top = 1;
+                map_req_.time = Time() + Duration::seconds(10);
             }
         }
 
@@ -143,7 +149,7 @@ namespace trip
             Piece::pointer piece)
         {
             Time now;
-            LOG_DEBUG("[on_data] id=" << id);
+            //LOG_DEBUG("[on_data] id=" << id);
             std::deque<Request>::iterator iter = 
                 std::find(requests_.begin(), requests_.end(), Request(id, now));
             if (iter == requests_.end()) {
@@ -177,8 +183,9 @@ namespace trip
                 if (requests_.empty())
                     Source::on_ready();
             }
+            // start next check after 10 seconds with "resource_.data_ready.id"
             map_req_.id.top = 1;
-            map_req_.time += Duration::seconds(10);
+            map_req_.time = Time() + Duration::seconds(10);
         }
 
         void P2pSource::on_timer(
@@ -186,7 +193,7 @@ namespace trip
         {
             Time time = now - rtt_;
 
-            if (time < map_req_.time) {
+            if (time > map_req_.time) {
                 req_map(map_req_.id);
             }
 

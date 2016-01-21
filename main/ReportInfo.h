@@ -28,6 +28,7 @@ namespace trip
         {
             std::string name;
             std::string event;
+            std::vector<std::string> conds;
             Url url;
             std::vector<ReportParam> params;
 
@@ -37,6 +38,7 @@ namespace trip
             {
                 ar & SERIALIZATION_NVP(name)
                     & SERIALIZATION_NVP(event)
+                    & SERIALIZATION_NVP(conds)
                     & SERIALIZATION_NVP(url)
                     & SERIALIZATION_NVP(params);
             }

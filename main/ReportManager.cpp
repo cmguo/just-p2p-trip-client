@@ -9,6 +9,7 @@
 #include <framework/logger/Logger.h>
 #include <framework/logger/StreamRecord.h>
 #include <framework/logger/StringRecord.h>
+#include <framework/string/Slice.h>
 
 #include <util/protocol/pptv/Base64.h>
 #include <util/protocol/http/HttpClient.h>
@@ -18,7 +19,7 @@
 #include <boost/bind.hpp>
 #include <boost/asio/error.hpp>
 #include <boost/asio/streambuf.hpp>
-using namespace boost::system;
+#include <boost/regex.hpp>
 
 FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("trip.client.ReportManager", framework::logger::Debug);
 
@@ -45,13 +46,13 @@ namespace trip
         }
 
         bool ReportManager::startup(
-            error_code & ec)
+            boost::system::error_code & ec)
         {
             return true;
         }
 
         bool ReportManager::shutdown(
-            error_code & ec)
+            boost::system::error_code & ec)
         {
             return true;
         }
@@ -65,7 +66,7 @@ namespace trip
         }
 
         void ReportManager::handle_fetch_all(
-            error_code const & ec)
+            boost::system::error_code const & ec)
         {
             if (ec) {
                 LOG_WARN("[handle_fetch_all] error, ec: " << ec.message());
@@ -92,32 +93,55 @@ namespace trip
             }
         }
 
+        static void expand_value(
+            std::string & value, 
+            util::event::Event const & event)
+        {
+            std::string value2;
+            std::string::size_type p1 = value.find('$');
+            std::string::size_type p2 = 0;
+            while (p1 != std::string::npos && p1 + 2 < value.size() && value[p1 + 1] == '{') {
+                value2 += value.substr(p2, p1 - p2);
+                ++p1;
+                ++p1;
+                p2 = value.find('}', p1);
+                if (p2 == std::string::npos) {
+                    p2 = p1 - 2;
+                    break;
+                }
+                value2 += event.get_value(value.substr(p1, p2 - p1));
+                ++p2;
+                p1 = value.find('$', p2);
+            }
+            value2 += value.substr(p2);
+            value.swap(value2);
+        }
+
         void ReportManager::on_event(
             util::event::Observable const & observable, 
             util::event::Event const & event, 
             ReportInfo const & info)
         {
             ReportInfo info2(info);
-            for (size_t i = 0; i < info.params.size(); ++i) {
-                std::string const & param(info.params[i].path);
-                std::string param2;
-                std::string::size_type p1 = param.find('$');
-                std::string::size_type p2 = 0;
-                while (p1 != std::string::npos && p1 + 2 < param.size() && param[p1 + 1] == '{') {
-                    param2 += param.substr(p2, p1 - p2);
-                    ++p1;
-                    ++p1;
-                    p2 = param.find('}', p1);
-                    if (p2 == std::string::npos) {
-                        p2 = p1 - 2;
-                        break;
-                    }
-                    param2 += event.get_value(param.substr(p1, p2 - p1));
-                    ++p2;
-                    p1 = param.find('$', p2);
+            for (size_t i = 0; i < info.conds.size(); ++i) {
+                std::string cond(info.conds[i]);
+                expand_value(cond, event);
+                std::vector<std::string> args;
+                framework::string::slice<std::string>(cond, std::back_inserter(args), " ");
+                bool r = true;
+                if (args.size() == 3) {
+                    if (args[1] == "==" )
+                        r = args[0] == args[2];
+                    else if (args[1] == "!=" )
+                        r = args[0] != args[2];
+                    else if (args[1] == "=~" )
+                        r = boost::regex_match(args[0], boost::regex(args[2]));
                 }
-                param2 += param.substr(p2);
-                info2.params[i].path.swap(param2);
+                if (!r)
+                    return;
+            }
+            for (size_t i = 0; i < info2.params.size(); ++i) {
+                expand_value(info2.params[i].path, event);
             }
             submit(info2);
         }
@@ -132,7 +156,7 @@ namespace trip
         }
 
         void ReportManager::handle_fetch(
-            error_code const & ec)
+            boost::system::error_code const & ec)
         {
             if (ec) {
                 LOG_WARN("[handle_fetch] error, ec: " << ec.message());
@@ -174,6 +198,7 @@ namespace trip
         void ReportManager::submit(
             ReportInfo const & info)
         {
+            LOG_DEBUG("[submit] " << info.name);
             io_svc().post(boost::bind(&ReportManager::submit2, this, info));
         }
 

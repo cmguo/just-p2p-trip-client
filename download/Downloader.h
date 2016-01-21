@@ -62,11 +62,11 @@ namespace trip
 
         private:
             DownloadManager & mgr_;
-            std::vector<Source *> sources_;
         protected:
             Sink const * master_;
             DataId download_point_;
             DataId play_point_;
+            std::vector<Source *> sources_;
         };
 
     } // namespace client

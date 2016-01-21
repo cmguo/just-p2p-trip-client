@@ -48,6 +48,12 @@ namespace trip
                 bool result);
 
         private:
+            template <typename Archive>
+            friend void serialize(
+                Archive & ar, 
+                DiskCachePool & t);
+
+        private:
             WorkQueue * queue_;
             boost::uint64_t total_; // in blocks
             boost::uint64_t used_;

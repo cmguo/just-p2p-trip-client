@@ -8,8 +8,11 @@
 #include <util/serialization/Array.h>
 
 #include <framework/network/Endpoint.h>
+#include <framework/timer/ClockTime.h>
+#include <framework/system/HumanNumber.h>
 
 #include <boost/dynamic_bitset/dynamic_bitset.hpp>
+#include <boost/filesystem/path.hpp>
 
 namespace framework
 {
@@ -63,6 +66,79 @@ namespace framework
         }
 
     }
+
+    namespace timer
+    {
+
+        inline void from_string(
+            std::string const & str, 
+            Time & t)
+        {
+            Duration d;
+            if (d.from_string(str))
+                t = time_launch + d;
+        }
+
+        inline std::string  to_string(
+            Time const & t)
+        {
+            return (t - time_launch).to_string();
+        }
+
+        template <typename Archive>
+        void load(
+            Archive & ar, 
+            Time & t)
+        {
+            Duration d;
+            ar >> d;
+            if (ar)
+                t = time_launch + d;
+        }
+
+        template <typename Archive>
+        void save(
+            Archive & ar, 
+            Time const & t)
+        {
+            ar << (t - time_launch);
+        }
+
+        SERIALIZATION_SPLIT_FREE(Time);
+    }
+
+    namespace system
+    {
+
+        template <typename Archive, typename _Ty>
+        void load(
+            Archive & ar, 
+            HumanNumber<_Ty> & t)
+        {
+            _Ty d;
+            ar >> d;
+            if (ar)
+                t = d;
+        }
+
+        template <typename Archive, typename _Ty>
+        void save(
+            Archive & ar, 
+            HumanNumber<_Ty> const & t)
+        {
+            ar << t.value();;
+        }
+
+        template <typename Archive, typename _Ty>
+        void serialize(
+            Archive & ar, 
+            HumanNumber<_Ty> & t)
+        {
+            util::serialization::split_free(ar, t);
+        }
+
+    } // namespace system
+
 }
 
 namespace boost
@@ -107,7 +183,62 @@ namespace boost
 
     SERIALIZATION_SPLIT_FREE(dynamic_bitset<boost::uint32_t>);
 
+    namespace filesystem
+    {
+
+        template <typename Archive>
+        void load(
+            Archive & ar, 
+            path & p)
+        {
+            std::string str;
+            ar >> str;
+            if (ar) {
+                p = str;
+            }
+        }
+
+        template <typename Archive>
+        void save(
+            Archive & ar, 
+            path const & p)
+        {
+            std::string str = p.string();
+            ar << str;
+        }
+
+        SERIALIZATION_SPLIT_FREE(path);
+
+    } // namespace filesystem
 } // namespace boost
+
+namespace util
+{
+    namespace serialization
+    {
+
+        template <class Archive>
+        struct is_single_unit<Archive, boost::filesystem::path>
+            : boost::true_type
+        {
+        };
+
+        /*
+        template <typename Archive, typename _Ty>
+        struct is_single_unit<Archive, framework::system::HumanNumber<_Ty> >
+            : boost::true_type
+        {
+        };
+        */
+
+        template <class Archive>
+        struct is_single_unit<Archive, framework::timer::Time>
+            : boost::true_type
+        {
+        };
+
+    }
+}
 
 #endif // _TRIP_CLIENT_UTILS_SERIALIZE_H_
 

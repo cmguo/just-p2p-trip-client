@@ -78,7 +78,7 @@ namespace trip
             }
 
             if (!ec) {
-                LOG_DEBUG("[handle_recv] bytes=" << bytes_recved);
+                //LOG_DEBUG("[handle_recv] bytes=" << bytes_recved);
                 pkt->commit(bytes_recved);
                 if (pkt->decode()) {
                     TunnelIArchive ar(*pkt);
@@ -110,8 +110,8 @@ namespace trip
             UdpPacket pkt;
             while (!Bus::empty()) {
                 Bus::on_send(/*&pkt, */pkt);
-                //assert(pkt.in_avail());
-                LOG_DEBUG("[send] bytes=" << pkt.in_avail());
+                assert(pkt.in_avail());
+                //LOG_DEBUG("[send] bytes=" << pkt.in_avail());
                 if (pkt.encode()) {
                     //if (pkt.sender) {
                     //    pkt.sender(socket_, pkt, pkt.sendctx);

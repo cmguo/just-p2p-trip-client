@@ -154,6 +154,8 @@ namespace trip
                 Uuid const & lid(umgr_.local_endpoint().id);
                 if (endpoint.id == lid)
                     continue;
+                if (endpoint.endpoints.empty())
+                    continue;
                 umgr_.get_tunnel(endpoint);
                 url.param("pid", format(endpoint.id));
                 urls.push_back(url);

@@ -51,11 +51,19 @@ namespace trip
         template <typename Archive>
         void serialize(
             Archive & ar, 
+            ResourceData & t)
+        {
+        }
+
+        template <typename Archive>
+        void serialize(
+            Archive & ar, 
             Resource & t)
         {
             ar & SERIALIZATION_NVP_2(t, id)
                 & SERIALIZATION_NVP_2(t, meta)
                 & SERIALIZATION_NVP_2(t, urls);
+            serialize(ar, (ResourceData &)t);
         }
 
         template <typename Archive>

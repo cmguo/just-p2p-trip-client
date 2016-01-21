@@ -9,10 +9,15 @@
 #include "trip/client/proto/Message.h"
 #include "trip/client/proto/Message.hpp"
 
+#include <framework/logger/Logger.h>
+#include <framework/logger/StreamRecord.h>
+
 namespace trip
 {
     namespace client
     {
+
+        FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("trip.client.UdpSessionListener", framework::logger::Debug);
 
         UdpSessionListener::UdpSessionListener(
             UdpManager & manager, 
@@ -101,6 +106,7 @@ namespace trip
                         = msg->as<MessageRequestConnect>();
                     set_remote(req.tid);
                     MessageResponseConnect resp;
+                    resp.tid = tunnel().l_id();
                     msg->reset(resp);
                     send_msg(msg);
                 }
@@ -188,6 +194,7 @@ namespace trip
         void UdpSessionListener::set_remote(
             boost::uint16_t id)
         {
+            LOG_DEBUG("[set_remote], l_id: " << tunnel().l_id() << ", r_id: " << id);
             if (status_ == 0) {
                 status_ = 1;
                 tunnel().p_id(id);

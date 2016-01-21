@@ -2,6 +2,7 @@
 
 #include "trip/client/Common.h"
 #include "trip/client/timer/TimerManager.h"
+#include "trip/client/utils/Serialize.h"
 
 #include <util/event/EventEx.hpp>
 
@@ -20,8 +21,7 @@ namespace trip
             Archive & ar, 
             TimeEvent & t)
         {
-            //ar & SERIALIZATION_NVP_1(t, now)
-            //    ;
+            ar & SERIALIZATION_NVP_1(t, now);
         }
 
         TimerManager::TimerManager(
@@ -88,18 +88,24 @@ namespace trip
 
         void TimerManager::handle_tick()
         {
-            expire_10ms_ += Duration::milliseconds(10);
-            t_10_ms.now = Time::now();
-            if (t_10_ms.now >= expire_100ms_) {
-                expire_100ms_ += Duration::milliseconds(100);
-                t_100_ms.now = t_10_ms.now;
-                if (t_100_ms.now >= expire_1s_) {
-                    expire_1s_ += Duration::seconds(1);
-                    t_1_s.now = t_10_ms.now;
-                    if (t_1_s.now >= expire_10s_) {
-                        expire_10s_ += Duration::seconds(10);
+            Time now;
+            do { expire_10ms_ += Duration::milliseconds(10); }
+            while (now >= expire_10ms_);
+            t_10_ms.now = now;
+            if (now >= expire_100ms_) {
+                do { expire_100ms_ += Duration::milliseconds(100); }
+                while (now >= expire_100ms_);
+                t_100_ms.now = now;
+                if (now >= expire_1s_) {
+                    do { expire_1s_ += Duration::seconds(1); }
+                    while (now >= expire_1s_);
+                    t_1_s.now = now;
+                    if (now >= expire_10s_) {
+                        do { expire_10s_ += Duration::seconds(10); }
+                        while (now >= expire_10s_);
+                        t_10_s.now = now;
                         raise(t_10_s);
-                        get_daemon().dump();
+                        //get_daemon().dump();
                     }
                     raise(t_1_s);
                 }

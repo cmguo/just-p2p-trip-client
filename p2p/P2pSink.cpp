@@ -47,10 +47,6 @@ namespace trip
             } else {
                 sink = new P2pSink(*res, tunnel);
                 sink->p_id(req.sid);
-                MessageResponseBind & resp = 
-                    msg.get<MessageResponseBind>();
-                resp.sid = sink->l_id();
-                sink->send_msg(&msg);
             }
             return sink;
         }
@@ -77,7 +73,7 @@ namespace trip
                     }
                     for (size_t i = 0; i < req.offsets.size(); ++i) {
                         req.index += req.offsets[i];
-                        LOG_DEBUG("[on_msg] index=" << req.index);
+                        //LOG_DEBUG("[on_msg] index[" << i << "]=" << req.index);
                         Piece::pointer piece = resource_.get_piece(req.index, 1);
                         if (piece) {
                             msg = alloc_message();
@@ -106,6 +102,14 @@ namespace trip
             case REQ_Meta:
                 {
                     free_message(msg);
+                }
+                break;
+            case REQ_Bind:
+                {
+                    MessageResponseBind & resp = 
+                        msg->get<MessageResponseBind>();
+                    resp.sid = l_id();
+                    send_msg(msg);
                 }
                 break;
             case REQ_Unbind:
