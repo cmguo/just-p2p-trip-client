@@ -3,6 +3,7 @@
 #ifndef _TRIP_CLIENT_CDN_CDN_SOURCE_H_
 #define _TRIP_CLIENT_CDN_CDN_SOURCE_H_
 
+#include "trip/client/ssp/SspSession.h"
 #include "trip/client/core/Source.h"
 
 #include <util/protocol/http/HttpClient.h>
@@ -12,14 +13,15 @@ namespace trip
     namespace client
     {
 
-        class CdnTunnel;
+        class SspTunnel;
 
         class CdnSource
             : public Source
+            , SspSession
         {
         public:
             CdnSource(
-                CdnTunnel & tunnel, 
+                SspTunnel & tunnel, 
                 Resource & resource, 
                 Url const & url);
 
@@ -61,12 +63,10 @@ namespace trip
                 util::protocol::HttpHead & head);
 
         private:
-            friend class CdnTunnel;
-            void on_timer(
+            virtual void on_timer(
                 Time const & now);
 
         private:
-            CdnTunnel & tunnel_;
             util::protocol::HttpClient http_;
             Piece::pointer piece_;
             Time next_;

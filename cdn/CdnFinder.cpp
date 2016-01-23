@@ -5,6 +5,8 @@
 #include "trip/client/cdn/CdnSource.h"
 #include "trip/client/cdn/CdnManager.h"
 #include "trip/client/cdn/Error.h"
+#include "trip/client/ssp/SspManager.h"
+#include "trip/client/ssp/SspEndpoint.h"
 #include "trip/client/main/Bootstrap.h"
 #include "trip/client/utils/Serialize.h"
 #include "trip/client/core/Resource.h"
@@ -13,6 +15,7 @@
 #include <util/serialization/NVPair.h>
 #include <util/serialization/stl/vector.h>
 
+#include <framework/string/Md5.h>
 #include <framework/logger/Logger.h>
 #include <framework/logger/StreamRecord.h>
 
@@ -25,9 +28,10 @@ namespace trip
 
         CdnFinder::CdnFinder(
             CdnManager & cmgr)
-            : url_("http://jump.trip.com/trip/jump.xml")
-            , cmgr_(cmgr)
+            : cmgr_(cmgr)
+            , smgr_(util::daemon::use_module<SspManager>(cmgr.io_svc()))
             , http_(cmgr.io_svc())
+            , url_("http://jump.trip.com/trip/jump.xml")
         {
             Bootstrap::instance(cmgr.io_svc()).ready.on(
                 boost::bind(&CdnFinder::on_event, this));
@@ -71,7 +75,10 @@ namespace trip
             Url const & url)
         {
             LOG_DEBUG("[create] rid=" << resource.id() << ", url=" << url.to_string());
-            return new CdnSource(cmgr_.get_tunnel(url), resource, url);
+            SspEndpoint ep;
+            ep.id.from_bytes(framework::string::md5(url.host_svc()).to_bytes());
+            ep.endpoint.from_string(url.host_svc());
+            return new CdnSource(smgr_.get_tunnel(ep), resource, url);
         }
 
         void CdnFinder::handle_fetch(

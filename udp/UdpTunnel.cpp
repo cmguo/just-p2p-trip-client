@@ -7,7 +7,7 @@
 #include "trip/client/udp/UdpPacket.h"
 #include "trip/client/proto/TunnelHeader.h"
 #include "trip/client/proto/Message.hpp"
-#include "trip/client/net/Queue.h"
+#include "trip/client/net/Fifo.h"
 
 #include <framework/logger/Logger.h>
 #include <framework/logger/StreamRecord.h>
@@ -23,7 +23,7 @@ namespace trip
 
         UdpTunnel::UdpTunnel(
             UdpSocket & socket)
-            : Tunnel(&socket)
+            : Bus(&socket, new Fifo)
             , l_seq_(0)
             , ep_pairs_(NULL)
         {
@@ -87,14 +87,14 @@ namespace trip
             ar << th;
             ar.seekp(pos2, std::ios::beg);
             //LOG_DEBUG("[on_send] tid=" << l_id() << "-" << p_id() << ", seq=" << th.seq);
-            Tunnel::on_send(/*head, */buf);
+            Bus::on_send(/*head, */buf);
         }
 
         void UdpTunnel::on_recv(
             //void * head, 
             NetBuffer & buf)
         {
-            Tunnel::on_recv(/*head, */buf);
+            Bus::on_recv(/*head, */buf);
             UdpPacket & pkt = static_cast<UdpPacket &>(buf);
             TunnelHeader & th = pkt.th;
             p_seq_ = th.seq;
@@ -113,7 +113,7 @@ namespace trip
                 pos += (8 + size);
                 buf.pubseekoff(pos, std::ios::beg, std::ios::out); // limit in this message
                 //LOG_DEBUG("[on_recv] size=" << size << ", sid=" << sid << ", type=" << msg_type_str(type));
-                Tunnel::on_recv(sid, /*head, */buf);
+                Bus::on_recv(sid, /*head, */buf);
                 ar.seekg(pos, std::ios::beg);
             }
         }
@@ -121,7 +121,7 @@ namespace trip
         void UdpTunnel::on_timer(
             Time const & now)
         {
-            Tunnel::on_timer(now);
+            Bus::on_timer(now);
         }
 
     } // namespace client

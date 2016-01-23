@@ -1,7 +1,7 @@
 // UdpPacket.h
 
-#ifndef _TRIP_P2P_UDP_PACKET_H_
-#define _TRIP_P2P_UDP_PACKET_H_
+#ifndef _TRIP_UDP_UDP_PACKET_H_
+#define _TRIP_UDP_UDP_PACKET_H_
 
 #include "trip/client/udp/UdpEndpoint.h"
 #include "trip/client/proto/Packet.h"
@@ -41,4 +41,4 @@ namespace trip
     } // namespace client
 } // namespace trip
 
-#endif // _TRIP_P2P_UDP_PACKET_H_
+#endif // _TRIP_UDP_UDP_PACKET_H_

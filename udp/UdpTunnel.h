@@ -4,7 +4,7 @@
 #define _TRIP_CLIENT_UDP_UDP_TUNNEL_H_
 
 #include "trip/client/udp/UdpEndpoint.h"
-#include "trip/client/net/Tunnel.h"
+#include "trip/client/net/Bus.h"
 
 namespace trip
 {
@@ -14,8 +14,15 @@ namespace trip
         class UdpSocket;
         class UdpSession;
 
+        struct TunnelStat
+        {
+            boost::uint32_t bw; // band width in bps
+            boost::uint32_t rtt; // in ms
+            boost::uint32_t rtt2;
+        };
+
         class UdpTunnel
-            : public Tunnel
+            : public Bus
         {
         public:
             UdpTunnel(
@@ -63,6 +70,7 @@ namespace trip
             boost::uint16_t l_seq_;
             boost::uint16_t p_seq_;
             UdpEndpointPairs const * ep_pairs_;
+            TunnelStat tunnel_stat_;
         };
 
     } // namespace client

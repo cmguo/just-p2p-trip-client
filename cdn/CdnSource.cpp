@@ -2,10 +2,12 @@
 
 #include "trip/client/Common.h"
 #include "trip/client/cdn/CdnSource.h"
-#include "trip/client/cdn/CdnTunnel.h"
+#include "trip/client/ssp/SspTunnel.h"
 #include "trip/client/core/Scheduler.h"
 #include "trip/client/core/PoolPiece.h"
 #include "trip/client/core/Segment.h"
+
+#include <util/archive/ArchiveBuffer.h>
 
 #include <framework/string/Format.h>
 #include <framework/logger/Logger.h>
@@ -22,22 +24,20 @@ namespace trip
         FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("trip.client.CdnSource", framework::logger::Debug);
 
         CdnSource::CdnSource(
-            CdnTunnel & tunnel, 
+            SspTunnel & tunnel, 
             Resource & resource, 
             Url const & url)
             : Source(resource, url)
-            , tunnel_(tunnel)
+            , SspSession(tunnel)
             , http_(tunnel.io_svc())
             , bytes_(0)
         {
             //io_svc.post(
             //    boost::bind(&Source::on_ready, this));
-            tunnel_.add(this);
         }
 
         CdnSource::~CdnSource()
         {
-            tunnel_.del(this);
         }
 
         bool CdnSource::open(
@@ -128,6 +128,9 @@ namespace trip
         void CdnSource::handle_open(
             boost::system::error_code ec)
         {
+            //SspSession::on_send();
+            //SspSession::on_recv();
+
             if (ranges_.empty()) {
                 LOG_TRACE("[handle_open] segno=???" 
                     << ", range=" << http_.request().head().range.get().to_string() 
@@ -163,6 +166,11 @@ namespace trip
             size_t bytes_read, 
             Piece::pointer piece)
         {
+            if (bytes_read) {
+                util::archive::ArchiveBuffer<boost::uint8_t> buf(piece->data(), bytes_read);
+                SspSession::on_recv(buf);
+            }
+
             if (piece && piece->size() == 0) {// canceled
                 LOG_TRACE("[handle_read] segno=" << ranges_.front().b.segment 
                     << ", range=" << http_.request().head().range.get().to_string() 

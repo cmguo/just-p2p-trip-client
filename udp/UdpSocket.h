@@ -1,7 +1,7 @@
 // UdpSocket.h
 
-#ifndef _TRIP_P2P_UDP_SOCKET_H_
-#define _TRIP_P2P_UDP_SOCKET_H_
+#ifndef _TRIP_UDP_UDP_SOCKET_H_
+#define _TRIP_UDP_UDP_SOCKET_H_
 
 #include "trip/client/net/Bus.h"
 
@@ -60,4 +60,4 @@ namespace trip
     } // namespace client
 } // namespace trip
 
-#endif // _TRIP_P2P_UDP_SOCKET_H_
+#endif // _TRIP_UDP_UDP_SOCKET_H_

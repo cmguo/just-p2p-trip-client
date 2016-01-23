@@ -81,6 +81,7 @@ namespace trip
                 //LOG_DEBUG("[handle_recv] bytes=" << bytes_recved);
                 pkt->commit(bytes_recved);
                 if (pkt->decode()) {
+                    Bus::on_recv(*pkt);
                     TunnelIArchive ar(*pkt);
                     boost::uint16_t ver;
                     boost::uint16_t tid;

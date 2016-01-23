@@ -12,6 +12,7 @@ namespace trip
     namespace client
     {
 
+        class SspManager;
         class CdnManager;
 
         class CdnFinder
@@ -41,9 +42,10 @@ namespace trip
                 boost::system::error_code ec);
 
         private:
-            Url url_;
             CdnManager & cmgr_;
+            SspManager & smgr_;
             util::protocol::HttpClient http_;
+            Url url_;
         };
 
     } // namespace client

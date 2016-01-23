@@ -11,9 +11,7 @@ namespace trip
     namespace client
     {
 
-        class TimerManager;
         class Finder;
-        class CdnTunnel;
 
         class CdnManager
             : public util::daemon::ModuleBase<CdnManager>
@@ -30,9 +28,6 @@ namespace trip
                 return finder_;
             }
 
-            CdnTunnel & get_tunnel(
-                Url const & url);
-
         private:
             virtual bool startup(
                 boost::system::error_code & ec);
@@ -41,14 +36,7 @@ namespace trip
                 boost::system::error_code & ec);
 
         private:
-            void on_event(
-                util::event::Observable const & observable, 
-                util::event::Event const & event);
-
-        private:
-            TimerManager & tmgr_;
             Finder * finder_;
-            std::map<std::string, CdnTunnel *> tunnels_;
         };
 
     } // namespace client
