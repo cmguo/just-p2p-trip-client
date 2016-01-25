@@ -167,7 +167,7 @@ namespace trip
             Piece::pointer piece)
         {
             if (bytes_read) {
-                util::archive::ArchiveBuffer<boost::uint8_t> buf(piece->data(), bytes_read);
+                util::archive::ArchiveBuffer<boost::uint8_t> buf((boost::uint8_t *)NULL, bytes_read, bytes_read);
                 SspSession::on_recv(buf);
             }
 

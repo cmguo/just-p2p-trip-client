@@ -46,8 +46,7 @@ namespace trip
             Archive & ar, 
             SspTunnel & t)
         {
-            ar & SERIALIZATION_NVP_NAME("l_id", t.l_id());
-            ar & SERIALIZATION_NVP_NAME("p_id", t.p_id());
+            serialize(ar, (Bus &)t);
         }
 
         template <typename Archive>

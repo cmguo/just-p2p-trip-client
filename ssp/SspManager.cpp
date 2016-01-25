@@ -56,10 +56,7 @@ namespace trip
             util::event::Event const & event)
         {
             if (observable == tmgr_) {
-                std::map<Uuid, SspTunnel *>::iterator iter = tunnels_.begin();
-                for (; iter != tunnels_.end(); ++iter) {
-                    iter->second->on_timer(tmgr_.t_100_ms.now);
-                }
+                bus_->handle_timer(tmgr_.t_100_ms.now);
             }
         }
 

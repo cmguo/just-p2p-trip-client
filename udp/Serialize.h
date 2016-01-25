@@ -46,8 +46,7 @@ namespace trip
             Archive & ar, 
             UdpTunnel & t)
         {
-            ar & SERIALIZATION_NVP_NAME("l_id", t.l_id());
-            ar & SERIALIZATION_NVP_NAME("p_id", t.p_id());
+            serialize(ar, (Bus &)t);
             ar & SERIALIZATION_NVP_NAME("l_seq", t.l_seq());
             ar & SERIALIZATION_NVP_NAME("p_seq", t.p_seq());
             ar & SERIALIZATION_NVP_NAME("ep_pairs", t.ep_pairs());
