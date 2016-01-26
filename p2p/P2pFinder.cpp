@@ -25,6 +25,14 @@ namespace trip
         {
             Bootstrap::instance(manager.io_svc()).ready.on(
                 boost::bind(&P2pFinder::on_event, this, _1, _2));
+
+            Message msg;
+            msg.reset(MessageResponseLogin());
+            msg.reset(MessageResponseSync());
+            msg.reset(MessageResponseLogout());
+            msg.reset(MessageResponseFind());
+            //msg.reset(MessageResponsePort());
+            //msg.reset(MessageResponsePass());
         }
 
         P2pFinder::~P2pFinder()
