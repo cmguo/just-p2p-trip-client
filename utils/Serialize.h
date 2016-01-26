@@ -153,8 +153,8 @@ namespace boost
 
         boost::uint32_t count;
         ar >> count;
-        boost::uint32_t count2 = count / sizeof(boost::uint32_t);
-        if (count & (sizeof(boost::uint32_t) - 1))
+        boost::uint32_t count2 = count / 32;
+        if (count & 31)
             ++count2;
         std::vector<boost::uint32_t> data;
         ar >> make_sized(data, count2);
@@ -172,8 +172,8 @@ namespace boost
         using util::serialization::make_sized;
 
         boost::uint32_t count = map.size();
-        boost::uint32_t count2 = count / sizeof(boost::uint32_t);
-        if (count & (sizeof(boost::uint32_t) - 1))
+        boost::uint32_t count2 = count / 32;
+        if (count & 31)
             ++count2;
         std::vector<boost::uint32_t> data(count2, 0);
         to_block_range(map, data.begin());

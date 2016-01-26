@@ -58,8 +58,8 @@ namespace trip
             DataRoot(
                 util::daemon::Daemon & daemon)
                 : resource(util::daemon::use_module<ResourceManager>(daemon))
-                , udp(util::daemon::use_module<UdpManager>(daemon))
                 , cache(util::daemon::use_module<CacheManager>(daemon))
+                , udp(util::daemon::use_module<UdpManager>(daemon))
                 , ssp(util::daemon::use_module<SspManager>(daemon))
             {
             }
