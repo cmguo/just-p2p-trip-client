@@ -61,7 +61,7 @@ namespace trip
                         msg->as<MessageRequestData>();
                     Piece::pointer piece = resource_.get_piece(req.index, 1);
                     if (piece) {
-                        LOG_DEBUG("[on_msg] index=" << req.index);
+                        //LOG_DEBUG("[on_msg] index=" << req.index);
                         MessageResponseData & resp(
                             msg->get<MessageResponseData>());
                         resp.index = req.index;

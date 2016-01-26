@@ -197,13 +197,10 @@ namespace trip
             LOG_DEBUG("[set_remote], l_id: " << tunnel().l_id() << ", r_id: " << id);
             if (status_ == 0) {
                 status_ = 1;
-                tunnel().p_id(id);
-                //tunnel().set_endpoints(&endpoints_);
-                endpoints_.clear();
-                endpoints_.push_back(std::make_pair(pkt_ep_, pkt_ep_));
-            } else if (tunnel().p_id() != id) {
-                assert(false);
             }
+	    tunnel().p_id(id);
+	    endpoints_.clear();
+	    endpoints_.push_back(std::make_pair(pkt_ep_, pkt_ep_));
         }
 
     } // namespace client
