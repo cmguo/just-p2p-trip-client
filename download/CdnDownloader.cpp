@@ -25,7 +25,7 @@ namespace trip
             , timeout_seg_(NULL)
             , lock_(NULL)
         {
-            find_sources("http", 10);
+            //find_sources("http", 10);
             lock_ = resource.alloc_lock(win_beg_, win_end_);
             full_seg_ = new SegmentInfo();
             full_seg_->meta_ready = true;
@@ -115,16 +115,17 @@ namespace trip
                 }
                 source.context(sinfo);
                 if (sinfo == NULL) { // TODO: No tasks, how to resume?
-                    LOG_DEBUG("[get_task] no task...");
+                    //LOG_DEBUG("[get_task] no task...");
                     return false;
                 }
                 ++sinfo->nsource;
             }
 
-            std::deque<DataId>::iterator beg = sinfo->timeout_pieces_.begin();
-            std::deque<DataId>::iterator end = sinfo->timeout_pieces_.end();
+            std::set<DataId>::iterator beg = sinfo->timeout_pieces_.begin();
+            std::set<DataId>::iterator end = sinfo->timeout_pieces_.end();
             if (sinfo->timeout_pieces_.size() > need_count) {
-                end = beg + need_count;
+                end = beg;
+                std::advance(end, need_count);
                 need_count = 0;
             } else {
                 need_count -= sinfo->timeout_pieces_.size();
@@ -258,7 +259,7 @@ namespace trip
                 return;
             }
             SegmentInfo * seg = segments_[piece.segment - win_beg_.segment];
-            seg->timeout_pieces_.push_back(piece);
+            seg->timeout_pieces_.insert(piece);
             if (seg->nsource == 0 && timeout_seg_ == NULL) {
                 timeout_seg_ = seg;
             }

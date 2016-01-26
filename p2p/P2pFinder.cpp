@@ -11,6 +11,8 @@
 #include "trip/client/main/ResourceManager.h"
 #include "trip/client/core/Resource.h"
 
+#include <framework/string/Format.h>
+
 namespace trip
 {
     namespace client
@@ -165,6 +167,8 @@ namespace trip
                 if (endpoint.endpoints.empty())
                     continue;
                 umgr_.get_tunnel(endpoint);
+                url.host(endpoint.endpoints[0].ip_str());
+                url.svc(framework::string::format(endpoint.endpoints[0].port()));
                 url.param("pid", format(endpoint.id));
                 urls.push_back(url);
             }

@@ -43,18 +43,25 @@ namespace trip
             bus_ = NULL;
         }
 
+        static boost::uint32_t in_avail(
+            NetBuffer & buf)
+        {
+            return buf.pubseekoff(0, std::ios::cur, std::ios::out)
+                - buf.pubseekoff(0, std::ios::cur, std::ios::in);
+        }
+
         void Cell::on_send(
             //void * head, 
             NetBuffer & buf)
         {
-            stat_.push_send(buf.in_avail());
+            stat_.push_send(in_avail(buf));
         }
 
         void Cell::on_recv(
             //void * head, 
             NetBuffer & buf)
         {
-            stat_.push_recv(buf.in_avail());
+            stat_.push_recv(in_avail(buf));
         }
 
         void Cell::on_timer(

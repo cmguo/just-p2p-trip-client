@@ -27,8 +27,8 @@ namespace trip
             : Source(resource, url)
             , UdpSession(tunnel)
             , map_id_(0)
-            , delta_(Duration::milliseconds(10))
-            , rtt_(Duration::milliseconds(100))
+            , delta_(Duration::milliseconds(50))
+            , rtt_(Duration::milliseconds(500))
             , map_req_(0, Time())
             , req_count_(0)
         {
@@ -46,6 +46,7 @@ namespace trip
                 msg->get<MessageRequestBind>();
             req.rid = resource_.id();
             req.sid = l_id();
+            map_req_.time = Time();
             return send_msg(msg);
         }
 
@@ -192,15 +193,19 @@ namespace trip
             Time const & now)
         {
             Time time = now - rtt_;
-
+            
             if (time > map_req_.time) {
+                if (p_id() == 0) {
+                    open(Url());
+                    return;
+                }
                 req_map(map_req_.id);
             }
 
             std::deque<Request>::iterator iter = requests_.begin();
             while (iter != requests_.end() && iter->time < time) {
                 if (iter->id.top == 0) {
-                    LOG_INFO("[on_timer] timeout piece, id=" << iter->id);
+                    //LOG_INFO("[on_timer] timeout piece, id=" << iter->id);
                     --req_count_;
                     on_timeout(iter->id);
                 }
@@ -238,6 +243,8 @@ namespace trip
                 {
                     MessageResponseBind const & rsp =
                         msg->as<MessageResponseBind>();
+                    if (p_id() == 0)
+                        LOG_DEBUG("[on_msg] bind succeed");
                     UdpSession::p_id(rsp.sid);
                     req_map(resource_.data_ready.id);
                 }
@@ -248,7 +255,7 @@ namespace trip
                 break;
             default:
                 assert(false);
-                return;
+                break;
             }
             free_message(msg);
         }

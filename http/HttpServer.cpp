@@ -43,15 +43,15 @@ namespace trip
 
         void HttpServer::local_process(response_type const & resp)
         {
-            LOG_DEBUG("[local_process]");
+            std::string peer_addr = framework::network::Endpoint(local_endpoint()).to_string().substr(5);
+            url_.from_string("http://" + request_head().host.get_value_or(peer_addr) + request_head().path);
+
+            LOG_DEBUG("[local_process] url:" << url_.to_string());
 
             LOG_ACCEPT_TRACE
                 request_head().get_content(std::cout);
 
             response_head().connection = http_field::Connection::close;
-
-            std::string peer_addr = framework::network::Endpoint(local_endpoint()).to_string().substr(5);
-            url_.from_string("http://" + request_head().host.get_value_or(peer_addr) + request_head().path);
 
             boost::system::error_code ec;
 

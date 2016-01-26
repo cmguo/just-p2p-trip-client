@@ -56,7 +56,7 @@ namespace trip
                 bool meta_ready;
 				DataId pos;
 				DataId end;
-  				std::deque<DataId> timeout_pieces_;
+  				std::set<DataId> timeout_pieces_;
                 size_t np2p;
                 size_t nsource;
 				SegmentInfo() 

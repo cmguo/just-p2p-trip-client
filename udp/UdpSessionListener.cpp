@@ -166,6 +166,8 @@ namespace trip
             if (now < msg_time_ + Duration::milliseconds(500))
                 return;
             if (status_ == 0) {
+                if (msg_try_)
+                    LOG_WARN("[on_timer] retry connect, ep:" << endpoint_.endpoints[0].to_string());
                 ++msg_try_;
                 msg_time_ = now;
                 Message * msg = alloc_message();

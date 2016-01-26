@@ -65,6 +65,8 @@ namespace trip
                 pkt.endpairs = ep_pairs_;
                 Message * msg = NULL;
                 while ((msg = (Message *)first())) {
+                    // for stat, mark begin of next message
+                    // ar.seekg(pos2, std::ios::beg);
                     ar << *msg;
                     if (ar) {
                         //LOG_DEBUG("[on_send] size=" << size_t(ar.tellp() - pos2) - sizeof(MessageHeader) << ", sid=" << msg->sid 
@@ -72,6 +74,8 @@ namespace trip
                         pop();
                         free_message(msg);
                         pos2 = ar.tellp();
+                        // update send stat
+                        // Bus::on_send(sid, buf);
                     } else {
                         ar.clear();
                         break;
