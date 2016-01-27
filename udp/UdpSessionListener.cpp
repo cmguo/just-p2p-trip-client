@@ -163,21 +163,26 @@ namespace trip
         void UdpSessionListener::on_timer(
             Time const & now)
         {
-            if (now < msg_time_ + Duration::milliseconds(500))
+            if (now < msg_time_)
                 return;
             if (status_ == 0) {
                 if (msg_try_)
                     LOG_WARN("[on_timer] retry connect, ep:" << endpoint_.endpoints[0].to_string());
                 ++msg_try_;
-                msg_time_ = now;
+                msg_time_ = now + Duration::milliseconds(500);
                 Message * msg = alloc_message();
                 MessageRequestConnect & req = 
                     msg->get<MessageRequestConnect>();
                 req.tid = tunnel().l_id();
                 req.uid = umgr_.local_endpoint().id;
                 send_msg(msg);
-            } else if (now >= tunnel().stat_.recv_bytes().time + Duration::seconds(5)
-                 && now >= tunnel().stat_.send_bytes().time + Duration::seconds(1)) {
+            } else if (now >= tunnel().stat_.recv_bytes().time + Duration::seconds(5)) {
+                if (now >= tunnel().stat_.recv_bytes().time + Duration::seconds(60)) {
+                    status_ = 0;
+                    on_timer(now);
+                    return;
+                }
+                msg_time_ = now + Duration::seconds(1);
                 Message * msg = alloc_message();
                 MessageRequestPing & req = 
                     msg->get<MessageRequestPing>();
@@ -200,9 +205,9 @@ namespace trip
             if (status_ == 0) {
                 status_ = 1;
             }
-	    tunnel().p_id(id);
-	    endpoints_.clear();
-	    endpoints_.push_back(std::make_pair(pkt_ep_, pkt_ep_));
+            tunnel().p_id(id);
+            endpoints_.clear();
+            endpoints_.push_back(std::make_pair(pkt_ep_, pkt_ep_));
         }
 
     } // namespace client
