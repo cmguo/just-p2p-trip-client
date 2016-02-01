@@ -29,7 +29,7 @@ namespace trip
                 UdpTunnel & tunnel, 
                 Message & msg);
 
-        private:
+        public:
             virtual void on_msg(
                 Message * msg);
 

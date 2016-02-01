@@ -10,10 +10,15 @@
 #include "trip/client/proto/MessageTunnel.h"
 #include "trip/client/proto/Message.hpp"
 
+#include <framework/logger/Logger.h>
+#include <framework/logger/StreamRecord.h>
+
 namespace trip
 {
     namespace client
     {
+
+        FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("trip.client.UdpTunnelListener", framework::logger::Debug);
 
         UdpTunnelListener::UdpTunnelListener(
             UdpManager & manager, 
@@ -30,7 +35,6 @@ namespace trip
         }
 
         void UdpTunnelListener::on_recv(
-            //void * head, 
             NetBuffer & buf)
         {
             UdpPacket & pkt = static_cast<UdpPacket &>(buf);
@@ -38,12 +42,7 @@ namespace trip
                 seq_ = pkt.th.seq;
                 recent_ = NULL;
             }
-            size_t pos = buf.pubseekoff(0, std::ios::cur, std::ios::in);
-            UdpSession::on_recv(/*head, */buf);
-            if (recent_) {
-                pos = buf.pubseekoff(pos, std::ios::beg, std::ios::in);
-                recent_->main_session()->on_recv(/*head, */buf);
-            }
+            UdpSession::on_recv(buf);
         }
 
         void UdpTunnelListener::on_msg(
@@ -60,8 +59,12 @@ namespace trip
                     endp.id = req.uid;
                     recent_ = &mgr_.get_tunnel(endp);
                 }
-                break;
             default:
+                if (recent_) {
+                    pass_msg_to(msg, recent_->main_session());
+                } else {
+                    LOG_DEBUG("[on_recv] unknown msg recv on main tunnel, type=" << msg_type_str(msg->type));
+                }
                 break;
             }
         }

@@ -5,6 +5,10 @@
 
 #include "trip/client/net/Cell.h"
 
+#include <framework/container/SparseArray.h>
+
+#include <boost/function.hpp>
+
 namespace trip
 {
     namespace client
@@ -28,13 +32,28 @@ namespace trip
             void signal(
                 Cell * cell);
 
+            boost::uint16_t count() const;
+
+            typedef boost::function<void (Cell &)> cell_visitor_t;
+
+            void foreach_cell(
+                cell_visitor_t const & visitor);
+
+            std::deque<boost::uint16_t> const & signal_slots()
+            {
+                return signal_slots_;
+            }
+
+            std::deque<boost::uint16_t> const & tmwait_slots()
+            {
+                return tmwait_slots_;
+            }
+
         public:
             virtual void on_send(
-                //void * head, 
                 NetBuffer & buf);
 
             virtual void on_recv(
-                //void * head, 
                 NetBuffer & buf);
 
             virtual void on_timer(
@@ -44,7 +63,6 @@ namespace trip
 
         protected:
             struct Slot;
-            struct Node;
 
             struct Slot
             {
@@ -57,37 +75,37 @@ namespace trip
 
                 Slot()
                 {
-                    next = NULL;
-                    flags = 0;
+                    id_flags = 0;
                     cell = NULL;
                 }
-                Slot * next;
-                boost::uint32_t flags;
+
+                friend bool operator==(
+                    Slot const & l, 
+                    Slot const & r)
+                {
+                    return l.id_flags == r.id_flags && l.cell == r.cell;
+                }
+
+                union {
+                    struct {
+                        boost::uint32_t id : 16;
+                        boost::uint32_t flags : 16;
+                    };
+                    boost::uint32_t id_flags;
+                };
                 union {
                     Cell * cell;
-                    Node * node;
-                    struct {
-                        boost::uint16_t id : 15;
-                        boost::uint16_t mark : 1;
-                        boost::uint16_t timeo;
-                    };
+                    boost::uint32_t timeo;
                 };
-            };
-
-            struct Node
-            {
-                Slot slots[32];
             };
 
         protected:
             void on_send(
                 boost::uint16_t id, 
-                //void * head, 
                 NetBuffer & buf);
 
             void on_recv(
                 boost::uint16_t id, 
-                //void * head, 
                 NetBuffer & buf);
 
             using Cell::signal;
@@ -100,6 +118,9 @@ namespace trip
 
             bool is_signal() const;
 
+            void send_signal(
+                NetBuffer & buf);
+
         private:
             Slot * slot_alloc();
 
@@ -110,12 +131,11 @@ namespace trip
                 Slot & slot);
 
         protected:
-            Slot root_;
+            typedef framework::container::SparseArray<Slot> array_t;
+            array_t array_;
             boost::uint16_t next_id_;
-            Slot * signal_slots_;
-            Slot ** signal_slots_tail_;
-            Slot * tmwait_slots_;
-            Slot ** tmwait_slots_tail_;
+            std::deque<boost::uint16_t> signal_slots_;
+            std::deque<boost::uint16_t> tmwait_slots_;
             Time time_base_;
             Time time_tail_;
         };

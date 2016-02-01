@@ -12,11 +12,15 @@
 #include "trip/client/core/Resource.h"
 
 #include <framework/string/Format.h>
+#include <framework/logger/Logger.h>
+#include <framework/logger/StreamRecord.h>
 
 namespace trip
 {
     namespace client
     {
+
+        FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("trip.client.P2pFinder", framework::logger::Debug);
 
         P2pFinder::P2pFinder(
             P2pManager & manager)
@@ -24,6 +28,7 @@ namespace trip
             , umgr_(util::daemon::use_module<UdpManager>(pmgr_.io_svc()))
             , rmgr_(util::daemon::use_module<ResourceManager>(pmgr_.io_svc()))
             , inited_(false)
+            , opened_(false)
         {
             Bootstrap::instance(manager.io_svc()).ready.on(
                 boost::bind(&P2pFinder::on_event, this, _1, _2));
@@ -54,6 +59,7 @@ namespace trip
 
         void P2pFinder::close()
         {
+            opened_ = false;
             MessageRequestLogout logout;
             send_msg(logout);
         }
@@ -82,10 +88,6 @@ namespace trip
                 }
                 if (!sync.rids.empty())
                     send_msg(sync);
-                rmgr_.resource_added.on(
-                    boost::bind(&P2pFinder::on_event, this, _1, _2));
-                rmgr_.resource_deleting.on(
-                    boost::bind(&P2pFinder::on_event, this, _1, _2));
             } else {
                 sync.rids.push_back(res->id());
                 send_msg(sync);
@@ -99,8 +101,13 @@ namespace trip
             if (observable == Bootstrap::instance(pmgr_.io_svc())) {
                 init();
                 inited_ = true;
-                open();
+                rmgr_.resource_added.on(
+                    boost::bind(&P2pFinder::on_event, this, _1, _2));
+                rmgr_.resource_deleting.on(
+                    boost::bind(&P2pFinder::on_event, this, _1, _2));
             } else if (observable == rmgr_) {
+                if (!opened_)
+                    return;
                 if (event == rmgr_.resource_added) {
                     sync(1, rmgr_.resource_added.resource);
                 } else {
@@ -157,6 +164,9 @@ namespace trip
         void P2pFinder::handle_find(
             MessageResponseFind const & find)
         {
+            if (find.endpoints.empty()) {
+                LOG_WARN("[handle_find] no endpoint");
+            }
             std::vector<Url> urls;
             Url url("p2p:///");
             for (size_t i = 0; i < find.endpoints.size(); ++i) {
@@ -164,8 +174,10 @@ namespace trip
                 Uuid const & lid(umgr_.local_endpoint().id);
                 if (endpoint.id == lid)
                     continue;
-                if (endpoint.endpoints.empty())
+                if (endpoint.endpoints.empty()) {
+                    LOG_WARN("[handle_find] empty endpoints, id: " << endpoint.id);
                     continue;
+                }
                 umgr_.get_tunnel(endpoint);
                 url.host(endpoint.endpoints[0].ip_str());
                 url.svc(framework::string::format(endpoint.endpoints[0].port()));

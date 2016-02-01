@@ -36,8 +36,13 @@ namespace trip
             virtual void on_msg(
                 Message * msg);
 
+            virtual void on_tunnel_connecting();
+
+            virtual void on_tunnel_disconnect();
+
         private:
             std::vector<UdpTunnel *> tunnels_;
+            std::vector<Message *> pending_msgs_;
         };
 
     } // namespace client

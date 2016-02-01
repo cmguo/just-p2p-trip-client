@@ -78,6 +78,7 @@ namespace trip
             UdpManager & umgr_;
             ResourceManager & rmgr_;
             bool inited_;
+            bool opened_;
         };
 
     } // namespace client

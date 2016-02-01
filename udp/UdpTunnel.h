@@ -33,6 +33,8 @@ namespace trip
         public:
             UdpSession * main_session();
 
+            bool is_open() const;
+
             boost::uint16_t l_seq() const
             {
                 return l_seq_;
@@ -63,6 +65,11 @@ namespace trip
 
             virtual void on_timer(
                 Time const & now);
+
+        private:
+            void on_connecting();
+
+            void on_disconnect();
 
         protected:
             friend class UdpSessionListener;

@@ -13,7 +13,6 @@
 #include <framework/logger/Logger.h>
 #include <framework/logger/StreamRecord.h>
 #include <framework/network/Interface.h>
-using namespace framework::network;
 
 #include <boost/bind.hpp>
 
@@ -55,12 +54,12 @@ namespace trip
                 local_endpoint_.id.generate();
                 config().set_force(name(), "uid", local_endpoint_.id.to_string(), true);
             }
-            std::vector<Interface> interfaces;
+            std::vector<framework::network::Interface> interfaces;
             enum_interface(interfaces);
             Endpoint ep;
             ep.port(addr_.port());
             for (size_t i = 0; i < interfaces.size(); ++i) {
-                Interface ifc(interfaces[i]);
+                framework::network::Interface ifc(interfaces[i]);
                 if ((ifc.flags & (ifc.up | ifc.loopback)) == ifc.up) {
                     ep.ip(ifc.addr);
                     local_endpoint_.endpoints.push_back(ep);

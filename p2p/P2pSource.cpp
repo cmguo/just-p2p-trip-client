@@ -41,18 +41,42 @@ namespace trip
         bool P2pSource::open(
             Url const & url)
         {
+            if (tunnel().is_open())
+                return open();
+            return false;
+        }
+
+        bool P2pSource::open()
+        {
             Message * msg = alloc_message();
             MessageRequestBind & req = 
                 msg->get<MessageRequestBind>();
             req.rid = resource_.id();
             req.sid = l_id();
-            map_req_.time = Time();
+            map_req_.time = Time() + Duration::seconds(1);
             return send_msg(msg);
         }
 
         bool P2pSource::close()
         {
-            return false;
+            std::deque<Request>::iterator iter = requests_.begin();
+            while (iter != requests_.end()) {
+                if (iter->id.top == 0) {
+                    //LOG_INFO("[on_timer] timeout piece, id=" << iter->id);
+                    --req_count_;
+                    on_timeout(iter->id);
+                }
+                ++iter;
+            }
+            requests_.clear();
+
+            if (attached())
+                return true;
+            Message * msg = alloc_message();
+            MessageRequestUnbind & req = 
+                msg->get<MessageRequestUnbind>();
+            (void)req;
+            return send_msg(msg);
         }
 
         bool P2pSource::request(
@@ -129,6 +153,7 @@ namespace trip
             if (map_.empty() || id < map_id_ 
                 || id > map_id_ + DataId::segments(PREPARE_MAP_RANGE / 2)) {
                 // retry if no response during one second
+                LOG_DEBUG("[req_map] update map, from segno=" << id);
                 map_req_.id = id;
                 map_req_.time = Time() + Duration::seconds(1);
                 Message * msg = alloc_message();
@@ -195,8 +220,11 @@ namespace trip
             Time time = now - rtt_;
             
             if (time > map_req_.time) {
-                if (p_id() == 0) {
-                    open(Url());
+                if (!is_open()) {
+                    if (tunnel().is_open()) {
+                        LOG_DEBUG("[on_timer] retry bind");
+                        open(Url());
+                    }
                     return;
                 }
                 req_map(map_req_.id);
@@ -258,6 +286,19 @@ namespace trip
                 break;
             }
             free_message(msg);
+        }
+
+        void P2pSource::on_tunnel_connecting()
+        {
+            UdpSession::on_tunnel_connecting();
+            if (attached())
+                open();
+        }
+
+        void P2pSource::on_tunnel_disconnect()
+        {
+            UdpSession::on_tunnel_disconnect();
+            close();
         }
 
     } // namespace client

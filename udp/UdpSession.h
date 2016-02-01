@@ -27,6 +27,8 @@ namespace trip
         public:
             UdpTunnel & tunnel();
 
+            bool is_open() const;
+
         public:
             virtual void on_send(
                 //void * head, 
@@ -35,6 +37,11 @@ namespace trip
             virtual void on_recv(
                 //void * head, 
                 NetBuffer & buf);
+
+        public:
+            virtual void on_tunnel_connecting();
+
+            virtual void on_tunnel_disconnect();
 
         protected:
             bool send_msg(

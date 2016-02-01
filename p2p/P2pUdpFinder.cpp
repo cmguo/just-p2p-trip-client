@@ -52,10 +52,15 @@ namespace trip
         {
             Message * copy = alloc_message();
             *copy = msg;
-            if (msg.type < REQ_Find)
-                UdpSession::send_msg(copy);
-            else
+            if (msg.type < REQ_Find) {
+                if (tunnel().is_open()) {
+                    UdpSession::send_msg(copy);
+                } else {
+                    pending_msgs_.push_back(copy);
+                }
+            } else {
                 tunnels_[0]->push(copy);
+            }
         }
 
         boost::uint16_t P2pUdpFinder::get_id()
@@ -78,6 +83,24 @@ namespace trip
                 return;
             }
             free_message(msg);
+        }
+
+        void P2pUdpFinder::on_tunnel_connecting()
+        {
+            UdpSession::on_tunnel_connecting();
+            open();
+            for (size_t i = 0; i < pending_msgs_.size(); ++i)
+                UdpSession::send_msg(pending_msgs_[i]);
+            pending_msgs_.clear();
+        }
+
+        void P2pUdpFinder::on_tunnel_disconnect()
+        {
+            UdpSession::on_tunnel_disconnect();
+            close();
+            for (size_t i = 0; i < pending_msgs_.size(); ++i)
+                free_message(pending_msgs_[i]);
+            pending_msgs_.clear();
         }
 
     } // namespace client

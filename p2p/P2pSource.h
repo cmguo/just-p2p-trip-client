@@ -52,6 +52,8 @@ namespace trip
                 DataId id);
 
         private:
+            bool open();
+
             void req_map(
                 DataId id);
 
@@ -65,6 +67,10 @@ namespace trip
 
             virtual void on_timer(
                 Time const & now);
+
+            virtual void on_tunnel_connecting();
+
+            virtual void on_tunnel_disconnect();
 
         private:
             void on_map(

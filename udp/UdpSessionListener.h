@@ -31,20 +31,14 @@ namespace trip
                 boost::uint16_t id);
 
         public:
-            /*
             virtual void on_send(
-                //void * head, 
                 NetBuffer & buf);
-                */
 
             virtual void on_recv(
-                //void * head, 
                 NetBuffer & buf);
 
             virtual void on_msg(
                 Message * msg);
-
-            //virtual bool empty() const;
 
             virtual void on_timer(
                 Time const & now);

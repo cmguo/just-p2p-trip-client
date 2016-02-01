@@ -9,6 +9,11 @@
 #include <framework/logger/Logger.h>
 #include <framework/logger/StreamRecord.h>
 
+#if 0
+#  undef LOG_DEBUG
+#  define LOG_DEBUG(xxx)
+#endif
+
 namespace trip
 {
     namespace client
@@ -35,22 +40,28 @@ namespace trip
             return *(UdpTunnel *)bus_;
         }
 
+        bool UdpSession::is_open() const
+        {
+            return p_id() != 0;
+        }
+
         void UdpSession::on_send(
-            //void * head, 
             NetBuffer & buf)
         {
-            Cell::on_send(/*head, */buf);
+            Cell::on_send(buf);
         }
 
         void UdpSession::on_recv(
-            //void * head, 
             NetBuffer & buf)
         {
-            Cell::on_recv(/*head, */buf);
+            Cell::on_recv(buf);
             MessageTraits::i_archive_t ar(buf);
             Message * msg = alloc_message();
             ar >> *msg;
-            //LOG_DEBUG("[on_msg] type=" << msg_type_str(msg->type));
+            LOG_DEBUG("[on_recv] "
+                << p_id() << " -> " << l_id()
+                << " size=" << msg->size
+                << ", type=" << msg_type_str(msg->type));
             on_msg(msg);
         }
 
@@ -72,6 +83,15 @@ namespace trip
         void UdpSession::on_msg(
             Message * msg)
         {
+        }
+
+        void UdpSession::on_tunnel_connecting()
+        {
+        }
+
+        void UdpSession::on_tunnel_disconnect()
+        {
+            p_id(0);
         }
 
     } // namespace client
