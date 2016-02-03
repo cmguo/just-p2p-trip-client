@@ -9,7 +9,7 @@
 #include <framework/logger/Logger.h>
 #include <framework/logger/StreamRecord.h>
 
-#if 0
+#if 1
 #  undef LOG_DEBUG
 #  define LOG_DEBUG(xxx)
 #endif

@@ -92,8 +92,11 @@ namespace trip
                 break;
             case REQ_Bind:
                 {
+                    MessageRequestBind req =
+                        msg->as<MessageRequestBind>();
                     MessageResponseBind & resp = 
                         msg->get<MessageResponseBind>();
+		    p_id(req.sid);
                     resp.sid = l_id();
                     send_msg(msg);
                 }
@@ -105,7 +108,7 @@ namespace trip
                 break;
             default:
                 free_message(msg);
-                assert(false);
+                //assert(false);
             }
         }
 

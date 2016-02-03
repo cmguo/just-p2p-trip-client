@@ -14,7 +14,7 @@
 
 #define SHARER_QUEUE_SIZE 16
 
-#if 0
+#if 1
 #  undef LOG_DEBUG
 #  define LOG_DEBUG(xxx)
 #endif
@@ -111,7 +111,7 @@ namespace trip
             size_t end = buf.pubseekoff(0, std::ios::cur, std::ios::out);
             TunnelIArchive ar(buf);
             ar >> th;
-            LOG_DEBUG("[on_recv] tid=" << l_id() << " -> " << p_id() << ", seq=" << th.seq);
+            LOG_DEBUG("[on_recv] tid=" << l_id() << " <- " << p_id() << ", seq=" << th.seq);
             size_t pos = ar.tellg();
             while (pos + 8 < end) {
                 boost::uint16_t size;
