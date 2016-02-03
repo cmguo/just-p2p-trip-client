@@ -148,6 +148,10 @@ namespace trip
             if (now < msg_time_)
                 return;
             if (status_ == 0) {
+                if (tunnel().count() == 1) {
+                    delete this;
+                    return;
+                }
                 if (msg_try_)
                     LOG_WARN("[on_timer] retry connect, ep:" << endpoint_.endpoints[0].to_string());
                 ++msg_try_;

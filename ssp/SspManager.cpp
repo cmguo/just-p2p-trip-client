@@ -46,7 +46,7 @@ namespace trip
         {
             std::map<Uuid, SspTunnel *>::iterator iter = tunnels_.find(ep.id);
             if (iter == tunnels_.end()) {
-                iter = tunnels_.insert(std::make_pair(ep.id, new SspTunnel(*bus_))).first;
+                iter = tunnels_.insert(std::make_pair(ep.id, new SspTunnel(*bus_, ep))).first;
             }
             return *iter->second;
         }

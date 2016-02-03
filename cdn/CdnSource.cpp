@@ -2,6 +2,7 @@
 
 #include "trip/client/Common.h"
 #include "trip/client/cdn/CdnSource.h"
+#include "trip/client/cdn/CdnManager.h"
 #include "trip/client/ssp/SspTunnel.h"
 #include "trip/client/core/Scheduler.h"
 #include "trip/client/core/PoolPiece.h"
@@ -24,11 +25,13 @@ namespace trip
         FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("trip.client.CdnSource", framework::logger::Debug);
 
         CdnSource::CdnSource(
+            CdnManager & manager, 
             SspTunnel & tunnel, 
             Resource & resource, 
             Url const & url)
             : Source(resource, url)
             , SspSession(tunnel)
+            , manager_(manager)
             , http_(tunnel.io_svc())
         {
             //io_svc.post(
@@ -37,6 +40,7 @@ namespace trip
 
         CdnSource::~CdnSource()
         {
+            manager_.del_source(this);
         }
 
         bool CdnSource::open(

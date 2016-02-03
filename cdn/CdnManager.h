@@ -14,6 +14,7 @@ namespace trip
         class Resource;
         class Source;
         class Finder;
+        class CdnSource;
         class CdnFinder;
         class SspManager;
 
@@ -31,7 +32,7 @@ namespace trip
 
         public:
             typedef std::map<Uuid, // rid
-                    std::map<Uuid, Source *> > source_map_t;
+                    std::map<Uuid, CdnSource *> > source_map_t;
 
             source_map_t const & sources() const
             {
@@ -40,10 +41,14 @@ namespace trip
 
         private:
             friend class CdnFinder;
+            friend class CdnSource;
 
-            Source * get_source(
+            CdnSource * get_source(
                 Resource & resource, 
                 Url const & url);
+
+            void del_source(
+                CdnSource * source);
 
         private:
             virtual bool startup(

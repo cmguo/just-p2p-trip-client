@@ -2,6 +2,7 @@
 
 #include "trip/client/Common.h"
 #include "trip/client/p2p/P2pSink.h"
+#include "trip/client/p2p/P2pManager.h"
 #include "trip/client/udp/UdpTunnel.h"
 #include "trip/client/proto/MessageSession.h"
 #include "trip/client/proto/Message.hpp"
@@ -19,15 +20,18 @@ namespace trip
         FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("trip.client.P2pSink", framework::logger::Debug);
 
         P2pSink::P2pSink(
+            P2pManager & manager, 
             Resource & resource, 
             UdpTunnel & tunnel)
             : UdpSession(tunnel)
+            , manager_(manager)
             , resource_(resource)
         {
         }
 
         P2pSink::~P2pSink()
         {
+            manager_.del_sink(this);
         }
 
         Uuid const & P2pSink::get_bind_rid(
@@ -110,6 +114,12 @@ namespace trip
                 free_message(msg);
                 //assert(false);
             }
+        }
+
+        void P2pSink::on_tunnel_disconnect()
+        {
+            UdpSession::on_tunnel_disconnect();
+            delete this;
         }
 
     } // namespace client

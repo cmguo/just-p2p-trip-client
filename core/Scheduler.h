@@ -35,6 +35,9 @@ namespace trip
 			virtual void on_timeout(
 				DataId const & piece) = 0;
 
+            virtual void on_source_lost(
+                Source & source) = 0;
+
         private:
             Resource & resource_;
         };

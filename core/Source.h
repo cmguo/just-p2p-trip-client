@@ -39,6 +39,8 @@ namespace trip
             void * context() const;
 
         public:
+            Resource & resource() const;
+
             Url const & url() const;
 
         public:

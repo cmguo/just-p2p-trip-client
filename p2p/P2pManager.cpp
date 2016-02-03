@@ -33,7 +33,7 @@ namespace trip
             , finder_(new P2pUdpFinder(*this))
         {
             umgr_.register_service(REQ_Bind, 
-                boost::bind(&P2pManager::create_session, this, _1, _2));
+                boost::bind(&P2pManager::get_sink, this, _1, _2));
         }
 
         P2pManager::~P2pManager()
@@ -75,7 +75,7 @@ namespace trip
             }
         }
 
-        Source * P2pManager::get_source(
+        P2pSource * P2pManager::get_source(
             Resource & resource, 
             UdpEndpoint const & endpoint)
         {
@@ -102,12 +102,31 @@ namespace trip
                 url.path("/" + endpoint.id.to_string());
                 LOG_DEBUG("[get_source] new source, rid=" << resource.id() << ", url=" << url.to_string());
                 UdpTunnel & tunnel = umgr_.get_tunnel(endpoint);
-                iter2 = iter1->second.insert(std::make_pair(pid, new P2pSource(resource, tunnel, url))).first;
+                iter2 = iter1->second.insert(std::make_pair(pid, new P2pSource(*this, resource, tunnel, url))).first;
             }
             return iter2->second;
         }
 
-        UdpSession * P2pManager::create_session(
+        void P2pManager::del_source(
+            P2pSource * source)
+        {
+            Uuid const & rid(source->resource().id());
+            Uuid const & pid(source->tunnel().pid());
+            source_map_t::iterator iter1 = sources_.find(rid);
+            if (iter1 == sources_.end()) {
+                return;
+            }
+            std::map<Uuid, P2pSource *>::iterator iter2 = iter1->second.find(pid);
+            if (iter2 == iter1->second.end()) {
+                return;
+            }
+            iter1->second.erase(iter2);
+            if (iter1->second.empty()) {
+                sources_.erase(iter1);
+            }
+        }
+
+        UdpSession * P2pManager::get_sink(
             UdpTunnel & tunnel, 
             Message & msg)
         {
@@ -123,9 +142,28 @@ namespace trip
             Uuid const & pid = tunnel.pid();
             std::map<Uuid, P2pSink *>::iterator iter2 = iter1->second.find(pid);
             if (iter2 == iter1->second.end()) {
-                iter2 = iter1->second.insert(std::make_pair(pid, new P2pSink(*resource, tunnel))).first;
+                iter2 = iter1->second.insert(std::make_pair(pid, new P2pSink(*this, *resource, tunnel))).first;
             }
             return iter2->second;
+        }
+
+        void P2pManager::del_sink(
+            P2pSink * sink)
+        {
+            Uuid const & rid(sink->resource().id());
+            Uuid const & pid(sink->tunnel().pid());
+            sink_map_t::iterator iter1 = sinks_.find(rid);
+            if (iter1 == sinks_.end()) {
+                return;
+            }
+            std::map<Uuid, P2pSink *>::iterator iter2 = iter1->second.find(pid);
+            if (iter2 == iter1->second.end()) {
+                return;
+            }
+            iter1->second.erase(iter2);
+            if (iter1->second.empty()) {
+                sinks_.erase(iter1);
+            }
         }
 
     } // namespace client

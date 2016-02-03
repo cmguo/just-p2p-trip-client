@@ -10,6 +10,7 @@ namespace trip
     namespace client
     {
 
+        class P2pManager;
         class ResourceManager;
         class Resource;
 
@@ -18,6 +19,7 @@ namespace trip
         {
         public:
             P2pSink(
+                P2pManager & manager, 
                 Resource & resource, 
                 UdpTunnel & tunnel);
 
@@ -27,11 +29,19 @@ namespace trip
             static Uuid const & get_bind_rid(
                 Message & msg);
 
+            Resource & resource() const
+            {
+                return resource_;
+            }
+
         public:
             virtual void on_msg(
                 Message * msg);
 
+            virtual void on_tunnel_disconnect();
+
         private:
+            P2pManager & manager_;
             Resource & resource_;
         };
 

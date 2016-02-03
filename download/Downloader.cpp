@@ -113,6 +113,14 @@ namespace trip
                 reset();
             }
         }
+ 
+        void Downloader::on_source_lost(
+            Source & source)
+        {
+            del_source(&source);
+            sources_.erase(
+                std::remove(sources_.begin(), sources_.end(), &source), sources_.end());
+        }
 
     } // namespace client
 } // namespace trip

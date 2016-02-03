@@ -54,6 +54,9 @@ namespace trip
                 source->url().protocol() == "http" ? http_sources_ : p2p_sources_;
             sources.erase(
                 std::remove(sources.begin(), sources.end(), source), sources.end());
+            SegmentInfo * sinfo = (SegmentInfo *)source->context();
+            if (sinfo)
+                --sinfo->nsource;
         }
 
         void CdnDownloader::update_segment(
@@ -174,6 +177,7 @@ namespace trip
 
             for (size_t i = 0; i < remove.size(); ++i) {
                 SegmentInfo * sinfo = remove[i];
+                LOG_DEBUG("[prepare_taskwindow] remove segment, info=" << sinfo << ", pos=" << sinfo->pos);
                 for (size_t i = 0; i < sources_.size(); ++i) {
                     Source * src = sources_[i];
                     if (src->context() == sinfo) {
@@ -214,7 +218,7 @@ namespace trip
                         sinfo->pos = sinfo->end;
                     } else {
                         seg->seg->seek(sinfo->pos);
-                        LOG_DEBUG("[prepare_taskwindow] segment=" << seg->seg << ", pos=" << sinfo->pos);
+                        LOG_DEBUG("[prepare_taskwindow] insert segment, info=" << sinfo << ", pos=" << sinfo->pos);
                     }
                     for (size_t j = 0; j < p2p_sources_.size(); ++j) {
                         if (p2p_sources_[j]->has_segment(sinfo->pos))

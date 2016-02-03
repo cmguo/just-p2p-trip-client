@@ -11,6 +11,7 @@ namespace trip
     namespace client
     {
 
+        class P2pManager;
         class Resource;
         class UdpTunnel;
 
@@ -20,6 +21,7 @@ namespace trip
         {
         public:
             P2pSource(
+                P2pManager & manager, 
                 Resource & resource,
                 UdpTunnel & tunnel, 
                 Url const & url);
@@ -97,6 +99,7 @@ namespace trip
                 P2pSource & t);
 
         private:
+            P2pManager & manager_;
             DataId map_id_;
             boost::dynamic_bitset<boost::uint32_t> map_;
             Duration delta_;

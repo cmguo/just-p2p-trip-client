@@ -37,6 +37,9 @@ namespace trip
             virtual void on_timer(
                 Time const & now);
 
+            virtual void on_source_lost(
+                Source & source);
+
         protected:
             virtual void add_source(
 				Source * source) = 0;

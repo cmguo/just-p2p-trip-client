@@ -27,6 +27,9 @@ namespace trip
 
         Source::~Source()
         {
+            if (scheduler_)
+                scheduler_->on_source_lost(*this);
+            scheduler_ = NULL;
         }
 
         void Source::attach(
@@ -52,6 +55,11 @@ namespace trip
         void * Source::context() const
         {
             return ctx_;
+        }
+
+        Resource & Source::resource() const
+        {
+            return resource_;
         }
 
         Url const & Source::url() const

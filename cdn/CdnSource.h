@@ -13,14 +13,16 @@ namespace trip
     namespace client
     {
 
+        class CdnManager;
         class SspTunnel;
 
         class CdnSource
             : public Source
-            , SspSession
+            , public SspSession
         {
         public:
             CdnSource(
+                CdnManager & manager, 
                 SspTunnel & tunnel, 
                 Resource & resource, 
                 Url const & url);
@@ -72,6 +74,7 @@ namespace trip
                 CdnSource & t);
 
         private:
+            CdnManager & manager_;
             util::protocol::HttpClient http_;
             Piece::pointer piece_;
             struct PieceRange

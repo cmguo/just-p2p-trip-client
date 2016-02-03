@@ -2,6 +2,7 @@
 
 #include "trip/client/Common.h"
 #include "trip/client/p2p/P2pSource.h"
+#include "trip/client/p2p/P2pManager.h"
 #include "trip/client/udp/UdpTunnel.h"
 #include "trip/client/proto/MessageSession.h"
 #include "trip/client/proto/Message.hpp"
@@ -21,11 +22,13 @@ namespace trip
         FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("trip.client.P2pSource", framework::logger::Debug);
 
         P2pSource::P2pSource(
+            P2pManager & manager, 
             Resource & resource,
             UdpTunnel & tunnel, 
             Url const & url)
             : Source(resource, url)
             , UdpSession(tunnel)
+            , manager_(manager)
             , map_id_(0)
             , delta_(Duration::milliseconds(50))
             , rtt_(Duration::milliseconds(500))
@@ -36,6 +39,7 @@ namespace trip
 
         P2pSource::~P2pSource()
         {
+            manager_.del_source(this);
         }
 
         bool P2pSource::open(

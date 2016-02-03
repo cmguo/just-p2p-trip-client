@@ -42,6 +42,8 @@ namespace trip
             Slot & slot(slot_at(cell));
             slot.flags &= ~Slot::sfActive;
             slot_free(slot);
+            if (count() == 0)
+                delete this;
             return true;
         }
 

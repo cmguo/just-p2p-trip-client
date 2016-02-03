@@ -20,9 +20,10 @@ namespace trip
         FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("trip.client.SspTunnel", framework::logger::Debug);
 
         SspTunnel::SspTunnel(
-            SspBus & bus)
+            SspBus & bus, 
+            SspEndpoint const & endp)
             : Bus(&bus)
-            , ep_pairs_(NULL)
+            , endp_(endp)
         {
         }
 
@@ -35,9 +36,9 @@ namespace trip
             return static_cast<SspBus *>(bus_)->io_svc();
         }
 
-        SspSession * SspTunnel::main_session()
+        Uuid const & SspTunnel::pid() const
         {
-            return static_cast<SspSession *>(slot_at(uint16_t(0))->cell);
+            return endp_.id;
         }
 
         void SspTunnel::on_send(

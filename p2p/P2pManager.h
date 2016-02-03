@@ -58,18 +58,23 @@ namespace trip
 
         private:
             friend class P2pFinder;
+            friend class P2pSource;
+            friend class P2pSink;
 
             void get_sources(
                 Uuid const & rid, 
                 std::vector<UdpEndpoint> const & endpoints, 
                 std::vector<Source *> & sources);
 
-            Source * get_source(
+            P2pSource * get_source(
                 Resource & resource, 
                 UdpEndpoint const & endpoint);
 
+            void del_source(
+                P2pSource * source);
+
         private:
-            UdpSession * create_session(
+            UdpSession * get_sink(
                 UdpTunnel & tunnel, 
                 Message & msg);
 
@@ -79,6 +84,9 @@ namespace trip
 
             virtual bool shutdown(
                 boost::system::error_code & ec);
+
+            void del_sink(
+                P2pSink * sink);
 
         private:
             ResourceManager & rmgr_;

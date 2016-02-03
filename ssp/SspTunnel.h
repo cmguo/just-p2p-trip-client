@@ -26,14 +26,15 @@ namespace trip
         {
         public:
             SspTunnel(
-                SspBus & socket);
+                SspBus & socket, 
+                SspEndpoint const & endp);
 
             virtual ~SspTunnel();
 
         public:
-            SspSession * main_session();
-
             boost::asio::io_service & io_svc();
+
+            Uuid const & pid() const;
 
         public:
             void set_endpoints(
@@ -54,7 +55,7 @@ namespace trip
             */
 
         protected:
-            SspEndpointPairs const * ep_pairs_;
+            SspEndpoint endp_;
             SspTunnelStat tunnel_stat_;
         };
 
