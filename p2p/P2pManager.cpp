@@ -99,7 +99,7 @@ namespace trip
                 Url url("p2p:///");
                 url.host(endpoint.endpoints[0].ip_str());
                 url.svc(framework::string::format(endpoint.endpoints[0].port()));
-                url.path(endpoint.id.to_string());
+                url.path("/" + endpoint.id.to_string());
                 LOG_DEBUG("[get_source] new source, rid=" << resource.id() << ", url=" << url.to_string());
                 UdpTunnel & tunnel = umgr_.get_tunnel(endpoint);
                 iter2 = iter1->second.insert(std::make_pair(pid, new P2pSource(resource, tunnel, url))).first;

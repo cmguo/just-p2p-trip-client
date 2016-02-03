@@ -42,7 +42,13 @@ namespace trip
                 seq_ = pkt.th.seq;
                 recent_ = NULL;
             }
-            UdpSession::on_recv(buf);
+            if (recent_ == NULL) {
+                size_t pos = buf.pubseekoff(0, std::ios::cur, std::ios::in);
+                UdpSession::on_recv(buf);
+                buf.pubseekoff(pos, std::ios::beg, std::ios::in);
+            }
+            if (recent_)
+                recent_->main_session()->on_recv(buf);
         }
 
         void UdpTunnelListener::on_msg(
@@ -60,11 +66,7 @@ namespace trip
                     recent_ = &mgr_.get_tunnel(endp);
                 }
             default:
-                if (recent_) {
-                    pass_msg_to(msg, recent_->main_session());
-                } else {
-                    LOG_DEBUG("[on_recv] unknown msg recv on main tunnel, type=" << msg_type_str(msg->type));
-                }
+                LOG_DEBUG("[on_recv] unknown msg recv on main tunnel, type=" << msg_type_str(msg->type));
                 break;
             }
         }
