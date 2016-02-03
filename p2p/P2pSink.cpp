@@ -30,7 +30,7 @@ namespace trip
         {
         }
 
-        Uuid const & get_bind_rid(
+        Uuid const & P2pSink::get_bind_rid(
             Message & msg)
         {
             MessageRequestBind const & req(msg.as<MessageRequestBind>());

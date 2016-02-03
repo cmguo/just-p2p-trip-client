@@ -30,6 +30,11 @@ namespace trip
             void set_fake_sid(
                 boost::uint16_t id);
 
+            UdpEndpoint const & endpoint() const
+            {
+                return endpoint_;
+            }
+
         public:
             virtual void on_send(
                 NetBuffer & buf);

@@ -111,10 +111,10 @@ namespace trip
             using Cell::signal;
 
             Slot & slot_at(
-                Cell * cell);
+                Cell * cell) const;
 
             Slot * slot_at(
-                boost::uint16_t id);
+                boost::uint16_t id) const;
 
             bool is_signal() const;
 

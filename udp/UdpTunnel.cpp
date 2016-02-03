@@ -3,6 +3,7 @@
 #include "trip/client/udp/UdpTunnel.h"
 #include "trip/client/udp/UdpSocket.h"
 #include "trip/client/udp/UdpSession.h"
+#include "trip/client/udp/UdpSessionListener.h"
 #include "trip/client/udp/UdpPacket.h"
 #include "trip/client/proto/TunnelHeader.h"
 #include "trip/client/proto/Message.hpp"
@@ -45,6 +46,11 @@ namespace trip
         bool UdpTunnel::is_open() const
         {
             return p_id() != 0;
+        }
+
+        Uuid const & UdpTunnel::pid() const
+        {
+            return static_cast<UdpSessionListener *>(slot_at(uint16_t(0))->cell)->endpoint().id;
         }
 
         void UdpTunnel::on_send(

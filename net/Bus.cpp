@@ -141,7 +141,7 @@ namespace trip
         }
 
         Bus::Slot & Bus::slot_at(
-            Cell * cell)
+            Cell * cell) const
         {
             Slot * slot(slot_at(cell->l_id()));
             assert(slot->cell == cell);
@@ -149,7 +149,7 @@ namespace trip
         }
 
         Bus::Slot * Bus::slot_at(
-            boost::uint16_t id)
+            boost::uint16_t id) const
         {
             return const_cast<Slot *>(&const_cast<array_t const &>(array_).at(id));
         }
