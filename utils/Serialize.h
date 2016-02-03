@@ -105,6 +105,27 @@ namespace framework
         }
 
         SERIALIZATION_SPLIT_FREE(Time);
+
+        template <typename Archive>
+        void load(
+            Archive & ar, 
+            Duration & t)
+        {
+            std::string str;
+            ar >> str;
+            if (ar)
+                t.from_string(str);
+        }
+
+        template <typename Archive>
+        void save(
+            Archive & ar, 
+            Duration const & t)
+        {
+            ar << t.to_string();
+        }
+
+        SERIALIZATION_SPLIT_FREE(Duration);
     }
 
     namespace system

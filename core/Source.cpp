@@ -20,6 +20,7 @@ namespace trip
             Url const & url)
             : resource_(resource)
             , url_(url)
+            , scheduler_(NULL)
             , ctx_(NULL)
         {
         }

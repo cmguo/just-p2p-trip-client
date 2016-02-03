@@ -14,7 +14,7 @@ namespace trip
         class Resource;
 
         class P2pSink
-            : UdpSession
+            : public UdpSession
         {
         public:
             P2pSink(
@@ -24,9 +24,7 @@ namespace trip
             virtual ~P2pSink();
 
         public:
-            static UdpSession * create_session(
-                ResourceManager & rmgr, 
-                UdpTunnel & tunnel, 
+            static Uuid const & get_bind_rid(
                 Message & msg);
 
         public:

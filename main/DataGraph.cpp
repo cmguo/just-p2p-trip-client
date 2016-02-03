@@ -5,6 +5,8 @@
 #include "trip/client/main/Serialize.h"
 #include "trip/client/udp/Serialize.h"
 #include "trip/client/ssp/Serialize.h"
+#include "trip/client/p2p/Serialize.h"
+#include "trip/client/cdn/Serialize.h"
 #include "trip/client/cache/Serialize.h"
 
 #include <util/datagraph/WalkArchive.h>
@@ -61,6 +63,8 @@ namespace trip
                 , cache(util::daemon::use_module<CacheManager>(daemon))
                 , udp(util::daemon::use_module<UdpManager>(daemon))
                 , ssp(util::daemon::use_module<SspManager>(daemon))
+                , p2p(util::daemon::use_module<P2pManager>(daemon))
+                , cdn(util::daemon::use_module<CdnManager>(daemon))
             {
             }
 
@@ -72,6 +76,8 @@ namespace trip
                     & SERIALIZATION_NVP(cache)
                     & SERIALIZATION_NVP(udp)
                     & SERIALIZATION_NVP(ssp)
+                    & SERIALIZATION_NVP(p2p)
+                    & SERIALIZATION_NVP(cdn)
                     ;
             }
 
@@ -79,6 +85,8 @@ namespace trip
             CacheManager const & cache;
             UdpManager const & udp;
             SspManager const & ssp;
+            P2pManager const & p2p;
+            CdnManager const & cdn;
 
             static DataRoot & inst(
                 util::daemon::Daemon & daemon = *(util::daemon::Daemon *)NULL)

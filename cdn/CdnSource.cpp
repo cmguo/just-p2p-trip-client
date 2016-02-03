@@ -30,7 +30,6 @@ namespace trip
             : Source(resource, url)
             , SspSession(tunnel)
             , http_(tunnel.io_svc())
-            , bytes_(0)
         {
             //io_svc.post(
             //    boost::bind(&Source::on_ready, this));
@@ -211,7 +210,6 @@ namespace trip
             }
 
             if (piece) {
-                bytes_ += (boost::uint32_t)bytes_read;
                 piece->set_size((boost::uint16_t)bytes_read);
                 PieceRange & r = ranges_.front();
                 on_data(r.b, piece);
@@ -243,21 +241,16 @@ namespace trip
         {
             if (ranges_.empty())
                 return;
-            if (now >= next_) {
-                if (bytes_ == 0) {
-                    if (piece_) {
-                        PieceRange & r = ranges_.front();
-                        LOG_WARN("[on_timer] segno=" << r.b.segment 
-                            << ", range=" << http_.request().head().range.get().to_string()
-                            << ", ec=timeout");
-                        piece_->set_size(0); // cancel
-                        boost::system::error_code ec;
-                        http_.cancel(ec);
-                    }
-                } else {
-                    bytes_ = 0;
+            if (now >= stat_.recv_bytes().time + Duration::milliseconds(1500)) {
+                if (piece_) {
+                    PieceRange & r = ranges_.front();
+                    LOG_WARN("[on_timer] segno=" << r.b.segment 
+                        << ", range=" << http_.request().head().range.get().to_string()
+                        << ", ec=timeout");
+                    piece_->set_size(0); // cancel
+                    boost::system::error_code ec;
+                    http_.cancel(ec);
                 }
-                next_ = now + Duration::milliseconds(1500);
             }
         }
 

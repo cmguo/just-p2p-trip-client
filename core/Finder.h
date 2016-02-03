@@ -18,7 +18,7 @@ namespace trip
         public:
             typedef boost::function<
                 void (
-                    std::vector<Url> const &)
+                    std::vector<Source *> const &)
             > resp_t;
 
         public:
@@ -37,14 +37,10 @@ namespace trip
             virtual void cancel(
                 Resource & resource);
             
-            virtual Source * create(
-                Resource & resource, 
-                Url const & url) = 0;
-
         protected:
             void found(
                 Uuid const & rid, 
-                std::vector<Url> const & urls);
+                std::vector<Source *> const & sources);
 
         private:
             virtual void find(

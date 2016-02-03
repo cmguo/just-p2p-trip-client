@@ -31,19 +31,15 @@ namespace trip
                 Resource & resource, 
                 size_t count);
             
-            virtual Source * create(
-                Resource & resource, 
-                Url const & url);
-
         private:
             void on_event();
 
             void handle_fetch(
+                Resource & resource, 
                 boost::system::error_code ec);
 
         private:
             CdnManager & cmgr_;
-            SspManager & smgr_;
             util::protocol::HttpClient http_;
             Url url_;
         };

@@ -66,11 +66,14 @@ namespace trip
             virtual void on_timer(
                 Time const & now);
 
+            template <typename Archive>
+            friend void serialize(
+                Archive & ar, 
+                CdnSource & t);
+
         private:
             util::protocol::HttpClient http_;
             Piece::pointer piece_;
-            Time next_;
-            boost::uint32_t bytes_; // bytes read from last timer tick
             struct PieceRange
             {
                 DataId b;

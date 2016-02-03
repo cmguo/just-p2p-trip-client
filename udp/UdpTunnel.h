@@ -33,6 +33,8 @@ namespace trip
         public:
             UdpSession * main_session();
 
+            Uuid const & pid() const;
+
             bool is_open() const;
 
             boost::uint16_t l_seq() const

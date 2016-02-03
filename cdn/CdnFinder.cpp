@@ -5,8 +5,6 @@
 #include "trip/client/cdn/CdnSource.h"
 #include "trip/client/cdn/CdnManager.h"
 #include "trip/client/cdn/Error.h"
-#include "trip/client/ssp/SspManager.h"
-#include "trip/client/ssp/SspEndpoint.h"
 #include "trip/client/main/Bootstrap.h"
 #include "trip/client/utils/Serialize.h"
 #include "trip/client/core/Resource.h"
@@ -29,7 +27,6 @@ namespace trip
         CdnFinder::CdnFinder(
             CdnManager & cmgr)
             : cmgr_(cmgr)
-            , smgr_(util::daemon::use_module<SspManager>(cmgr.io_svc()))
             , http_(cmgr.io_svc())
             , url_("http://jump.trip.com/trip/jump.xml")
         {
@@ -63,29 +60,22 @@ namespace trip
                 url.param("rid", resource.id().to_string());
                 url.param("count", framework::string::format(count));
                 http_.async_fetch(url, 
-                    boost::bind(&CdnFinder::handle_fetch, this, _1));
+                    boost::bind(&CdnFinder::handle_fetch, this, boost::ref(resource), _1));
             } else {
+                std::vector<Source *> sources;
+                for (size_t i = 0; i < urls.size(); ++i) {
+                    sources.push_back(cmgr_.get_source(resource, urls[i]));
+                }
                 http_.get_io_service().post(
-                    boost::bind(&CdnFinder::found, this, resource.id(), urls));
+                    boost::bind(&CdnFinder::found, this, resource.id(), sources));
             }
         }
 
-        Source * CdnFinder::create(
-            Resource & resource, 
-            Url const & url)
-        {
-            LOG_DEBUG("[create] rid=" << resource.id() << ", url=" << url.to_string());
-            SspEndpoint ep;
-            ep.id.from_bytes(framework::string::md5(url.host_svc()).to_bytes());
-            ep.endpoint.from_string(url.host_svc());
-            return new CdnSource(smgr_.get_tunnel(ep), resource, url);
-        }
-
         void CdnFinder::handle_fetch(
+            Resource & resource, 
             boost::system::error_code ec)
         {
             Url url("http://jump.trip.com" + http_.request_head().path);
-            Uuid rid(url.param("rid"));
             std::vector<Url> urls;
             if (!ec) {
                 util::archive::XmlIArchive<> ia(http_.response_data());
@@ -95,7 +85,11 @@ namespace trip
                 }
             }
             if (!ec) {
-                found(rid, urls);
+                std::vector<Source *> sources;
+                for (size_t i = 0; i < urls.size(); ++i) {
+                    sources.push_back(cmgr_.get_source(resource, urls[i]));
+                }
+                found(resource.id(), sources);
             } else {
                 LOG_DEBUG("[handle_fetch] rid=" << url.param("rid") << ", ec=" << ec.message());
             }

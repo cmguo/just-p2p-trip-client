@@ -37,10 +37,6 @@ namespace trip
                 Resource & resource, 
                 size_t count);
 
-            virtual Source * create(
-                Resource & resource, 
-                Url const & url);
-            
         protected:
             virtual void init() = 0;
 

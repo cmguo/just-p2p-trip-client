@@ -46,8 +46,7 @@ namespace trip
 
             void handle_find(
                 Uuid const & rid, 
-                Finder & finder, 
-                std::vector<Url> const & urls);
+                std::vector<Source *> const & sources);
 
         private:
             ResourceManager & rmgr_;

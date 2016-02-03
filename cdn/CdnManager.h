@@ -11,7 +11,11 @@ namespace trip
     namespace client
     {
 
+        class Resource;
+        class Source;
         class Finder;
+        class CdnFinder;
+        class SspManager;
 
         class CdnManager
             : public util::daemon::ModuleBase<CdnManager>
@@ -23,10 +27,23 @@ namespace trip
             ~CdnManager();
 
         public:
-            Finder * finder()
+            Finder * finder();
+
+        public:
+            typedef std::map<Uuid, // rid
+                    std::map<Uuid, Source *> > source_map_t;
+
+            source_map_t const & sources() const
             {
-                return finder_;
+                return sources_;
             }
+
+        private:
+            friend class CdnFinder;
+
+            Source * get_source(
+                Resource & resource, 
+                Url const & url);
 
         private:
             virtual bool startup(
@@ -36,7 +53,9 @@ namespace trip
                 boost::system::error_code & ec);
 
         private:
-            Finder * finder_;
+            SspManager & smgr_;
+            CdnFinder * finder_;
+            source_map_t sources_;
         };
 
     } // namespace client

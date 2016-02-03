@@ -126,16 +126,6 @@ namespace trip
             send_msg(find);
         }
 
-        Source * P2pFinder::create(
-            Resource & resource, 
-            Url const & url)
-        {
-            Uuid pid(url.param("pid"));
-            UdpTunnel * tunnel = umgr_.get_tunnel(pid);
-            assert(tunnel);
-            return new P2pSource(resource, *tunnel, url);
-        }
-
         bool P2pFinder::handle_msg(
             Message const & msg)
         {
@@ -167,24 +157,9 @@ namespace trip
             if (find.endpoints.empty()) {
                 LOG_WARN("[handle_find] no endpoint");
             }
-            std::vector<Url> urls;
-            Url url("p2p:///");
-            for (size_t i = 0; i < find.endpoints.size(); ++i) {
-                UdpEndpoint const & endpoint = find.endpoints[i];
-                Uuid const & lid(umgr_.local_endpoint().id);
-                if (endpoint.id == lid)
-                    continue;
-                if (endpoint.endpoints.empty()) {
-                    LOG_WARN("[handle_find] empty endpoints, id: " << endpoint.id);
-                    continue;
-                }
-                umgr_.get_tunnel(endpoint);
-                url.host(endpoint.endpoints[0].ip_str());
-                url.svc(framework::string::format(endpoint.endpoints[0].port()));
-                url.param("pid", format(endpoint.id));
-                urls.push_back(url);
-            }
-            found(find.rid, urls);
+            std::vector<Source *> sources;
+            pmgr_.get_sources(find.rid, find.endpoints, sources);
+            found(find.rid, sources);
         }
 
     } // namespace client

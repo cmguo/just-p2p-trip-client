@@ -91,30 +91,14 @@ namespace trip
         }
 
         void Downloader::on_sources(
-            Finder & finder, 
-            std::vector<Url> const & urls)
+            std::vector<Source *> const & sources)
         {
-            for (size_t i = 0; i < urls.size(); ++i) {
-                Url const & url(urls[i]);
-                bool found = false;
-                for (size_t j = 0; j < sources_.size(); ++j) {
-                    if (url == sources_[j]->url()) {
-                        LOG_DEBUG("[on_sources] old source " << url.to_string());
-                        if (!sources_[j]->attached()) {
-                            sources_[j]->attach(*this);
-                            add_source(sources_[j]);
-                        }
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found) {
-                    LOG_DEBUG("[active_sources] new source " << url.to_string());
-                    Source * s = finder.create(resource(), url);
-                    sources_.push_back(s);
-                    s->attach(*this);
-                    add_source(s);
-                }
+            for (size_t i = 0; i < sources.size(); ++i) {
+                Source * s = sources[i];
+                LOG_DEBUG("[on_sources] new source " << s->url().to_string());
+                sources_.push_back(s);
+                s->attach(*this);
+                add_source(s);
             }
         }
 

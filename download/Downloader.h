@@ -32,8 +32,7 @@ namespace trip
 
         public:
             void on_sources(
-                Finder & finder, 
-                std::vector<Url> const & urls);
+                std::vector<Source *> const & sources);
 
             virtual void on_timer(
                 Time const & now);

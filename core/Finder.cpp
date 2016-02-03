@@ -34,7 +34,7 @@ namespace trip
             
         void Finder::found(
             Uuid const & rid, 
-            std::vector<Url> const & urls)
+            std::vector<Source *> const & sources)
         {
             std::map<Uuid, std::pair<size_t, resp_t> >::iterator iter = 
                 requests_.find(rid);
@@ -42,7 +42,7 @@ namespace trip
                 resp_t resp;
                 resp.swap(iter->second.second);
                 requests_.erase(iter);
-                resp(urls);
+                resp(sources);
             }
         }
 

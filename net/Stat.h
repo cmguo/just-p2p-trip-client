@@ -43,14 +43,11 @@ namespace trip
                 Time const & now);
             
         public:
-            Time time() const { return time_; }
-
             StatValue const & recv_bytes() const { return recv_bytes_; }
 
             StatValue const & send_bytes() const { return send_bytes_; }
 
         private:
-            Time time_;
             Time time_next_;
             Time time_last_;
             StatValue recv_bytes_;            

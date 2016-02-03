@@ -30,25 +30,11 @@ namespace trip
         {
         }
 
-        UdpSession * P2pSink::create_session(
-            ResourceManager & rmgr, 
-            UdpTunnel & tunnel, 
+        Uuid const & get_bind_rid(
             Message & msg)
         {
             MessageRequestBind const & req(msg.as<MessageRequestBind>());
-            Resource * res = rmgr.find(req.rid);
-            P2pSink * sink = NULL;
-            if (res == NULL) {
-                msg.sid = req.sid;
-                MessageResponseBind & resp = 
-                    msg.get<MessageResponseBind>();
-                resp.sid = 0;
-                tunnel.push(&msg);
-            } else {
-                sink = new P2pSink(*res, tunnel);
-                sink->p_id(req.sid);
-            }
-            return sink;
+            return req.rid;
         }
 
         void P2pSink::on_msg(

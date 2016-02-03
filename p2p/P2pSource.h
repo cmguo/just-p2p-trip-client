@@ -16,7 +16,7 @@ namespace trip
 
         class P2pSource
             : public Source
-            , UdpSession
+            , public UdpSession
         {
         public:
             P2pSource(
@@ -90,6 +90,11 @@ namespace trip
                 DataId id;
                 Time time;
             };
+
+            template <typename Archive>
+            friend void serialize(
+                Archive & ar, 
+                P2pSource & t);
 
         private:
             DataId map_id_;
