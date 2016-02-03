@@ -65,6 +65,7 @@ namespace trip
                     endp.id = req.uid;
                     recent_ = &mgr_.get_tunnel(endp);
                 }
+                break;
             default:
                 LOG_DEBUG("[on_recv] unknown msg recv on main tunnel, type=" << msg_type_str(msg->type));
                 break;

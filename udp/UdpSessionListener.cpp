@@ -82,6 +82,10 @@ namespace trip
                 {
                     MessageRequestConnect & req
                         = msg->as<MessageRequestConnect>();
+                    if (endpoint_.endpoints.empty()) {
+                        endpoint_.id = req.uid;
+                        endpoint_.endpoints.push_back(pkt_ep_);
+                    }
                     set_remote(req.tid);
                     MessageResponseConnect resp;
                     resp.tid = tunnel().l_id();
