@@ -90,7 +90,7 @@ namespace trip
             head.path = url.path_all();
             make_range(head);
             LOG_TRACE("[request] segno=" << segno << ", range=" << head.range.get().to_string());
-            //head.get_content(std::cout);
+            head.get_content(std::cout);
             http_.async_open(head, boost::bind(
                     &CdnSource::handle_open, this, _1));
             return true;
@@ -154,7 +154,7 @@ namespace trip
                 return;
             }
 
-            //http_.response().head().get_content(std::cout);
+            http_.response().head().get_content(std::cout);
 
             SegmentMeta meta;
             meta.bytesize = http_.response().head().content_range.get().total();
@@ -205,11 +205,15 @@ namespace trip
                 LOG_WARN("[handle_read] segno=" << ranges_.front().b.segment 
                     << ", range=" << http_.request().head().range.get().to_string() 
                     << ", ec=" << ec.message());
-                util::protocol::HttpRequestHead head(http_.request().head());
-                http_.close(ec);
-                make_range(head);
-                http_.async_open(head, boost::bind(
-                        &CdnSource::handle_open, this, _1));
+                if (ranges_.empty()) {
+                    on_ready();
+                } else {
+                    util::protocol::HttpRequestHead head(http_.request_head());
+                    http_.close(ec);
+                    make_range(head);
+                    http_.async_open(head, boost::bind(
+                            &CdnSource::handle_open, this, _1));
+                }
                 return;
             }
 
@@ -227,6 +231,16 @@ namespace trip
                             << ", ec=finished");
                         http_.close(ec);
                         on_ready();
+                        return;
+                    } else {
+                        // next range
+                        // TODO: support multi-range
+                        util::protocol::HttpRequestHead head = http_.request_head();
+                        make_range(head);
+                        head.get_content(std::cout);
+                        http_.close(ec);
+                        http_.async_open(head, boost::bind(
+                                &CdnSource::handle_open, this, _1));
                         return;
                     }
                 }
@@ -263,10 +277,13 @@ namespace trip
         {
             head.range.reset(util::protocol::http_field::Range());
             util::protocol::http_field::Range & range = head.range.get();
-            for (size_t i = 0; i < ranges_.size(); ++i) {
-                PieceRange & r(ranges_[i]);
-                range.put(r.b.block_piece * PIECE_SIZE, r.e.block_piece * PIECE_SIZE);
-            }
+            // TODO: support multi-range
+            //for (size_t i = 0; i < ranges_.size(); ++i) {
+            //    PieceRange & r(ranges_[i]);
+            //    range.put(r.b.block_piece * PIECE_SIZE, r.e.block_piece * PIECE_SIZE);
+            //}
+            PieceRange & r(ranges_.front());
+            range.put(r.b.block_piece * PIECE_SIZE, r.e.block_piece * PIECE_SIZE);
         }
 
     } // namespace client
