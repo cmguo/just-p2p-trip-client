@@ -9,25 +9,24 @@
             <params>
                 <item>
                     <name>A</name>
-                    <path>/resource/@first=${/resource/id}/second/meta/segcount</path>
+                    <value>${/event/resource/meta/segcount}</value>
                 </item>
             </params>
         </item>
         <item>
             <name>test_timer</name>
             <event>trip.client.TimerManager/t_10_s</event>
-            <conds>
-                <item>${/now} =~ \d+:\d[0,5]:0\d\.\d+</item>
-            </conds>
             <url>http://192.168.33.63/trip/report.xml</url>
             <params>
                 <item>
                     <name>A</name>
-                    <path>/udp/socket/stat/send_bytes/total</path>
+                    <value>${/udp/socket/stat/send_bytes/total}</value>
+                    <procs>incremmental</procs>
                 </item>
                 <item>
                     <name>B</name>
-                    <path>/udp/socket/stat/recv_bytes/total</path>
+                    <value>${/udp/socket/stat/${/event/now}/recv_bytes/total}</value>
+                    <procs>incremmental</procs>
                 </item>
             </params>
         </item>

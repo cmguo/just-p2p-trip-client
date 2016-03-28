@@ -4,23 +4,52 @@
 #define _JUST_MAIN_REPORT_INFO_H_
 
 #include <util/serialization/stl/vector.h>
+#include <util/serialization/Optional.h>
+
+#include <framework/string/Format.h>
+#include <framework/string/Parse.h>
 
 namespace trip
 {
     namespace client
     {
 
+        struct ReportValueProc
+        {
+            typedef ReportValueProc * (*creater)();
+            virtual ~ReportValueProc() {};
+            virtual void calc(std::string &) = 0;
+        };
+        
+        struct ReportValueProc_incremmental : ReportValueProc
+        {
+            static ReportValueProc * create() {
+                return new ReportValueProc_incremmental;
+            }
+            boost::uint64_t last;
+            ReportValueProc_incremmental() { last = 0; }
+            virtual void calc(std::string & value) {
+                using namespace framework::string;
+                boost::uint64_t curt = parse<boost::uint64_t>(value);
+                value = format(curt - last);
+                last = curt;
+            }
+        };
+
         struct ReportParam
         {
             std::string name;
-            std::string path;
+            std::string value;
+            boost::optional<std::string> procs;
+            std::vector<ReportValueProc *> vprocs;
 
             template <typename Archive>
             void serialize(
                 Archive & ar)
             {
                 ar & SERIALIZATION_NVP(name)
-                    & SERIALIZATION_NVP(path);
+                    & SERIALIZATION_NVP(value)
+                    & SERIALIZATION_NVP(procs);
             }
         };
 

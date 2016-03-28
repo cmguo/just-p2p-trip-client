@@ -74,6 +74,7 @@ namespace trip
 
         private:
             util::protocol::HttpClient * http_client_;
+            std::map<std::string, ReportValueProc::creater> mProcs;
             ReportSet set_;
             std::deque<Url> tasks_;
         };
