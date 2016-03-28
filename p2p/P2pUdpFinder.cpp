@@ -23,6 +23,7 @@ namespace trip
            P2pManager & manager)
             : P2pFinder(manager)
         {
+            ::srand(::time(NULL));
         }
 
         P2pUdpFinder::~P2pUdpFinder()
@@ -38,7 +39,8 @@ namespace trip
             UdpEndpoint ep;
             ep.endpoints.resize(1);
             framework::network::Endpoint & ep2 = ep.endpoints[0];
-            ep2.from_string(urls[0].host_svc());
+            size_t index = ::rand() % urls.size();
+            ep2.from_string(urls[index].host_svc());
             attach(&umgr_.get_tunnel(ep));
             for (size_t i = 0; i < urls.size(); ++i) {
                 Url const & url(urls[i]);
@@ -50,16 +52,20 @@ namespace trip
         void P2pUdpFinder::send_msg(
             Message const & msg)
         {
-            Message * copy = alloc_message();
-            *copy = msg;
             if (msg.type < REQ_Find) {
+                Message * copy = alloc_message();
+                *copy = msg;
                 if (tunnel().is_open()) {
                     UdpSession::send_msg(copy);
                 } else {
                     pending_msgs_.push_back(copy);
                 }
             } else {
-                tunnels_[0]->push(copy);
+                for (size_t i = 0; i < tunnels_.size(); ++i) {
+                    Message * copy = alloc_message();
+                    *copy = msg;
+                    tunnels_[i]->push(copy);
+                }
             }
         }
 
