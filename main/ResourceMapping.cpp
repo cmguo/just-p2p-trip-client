@@ -4,6 +4,7 @@
 #include "trip/client/main/ResourceMapping.h"
 #include "trip/client/main/Bootstrap.h"
 #include "trip/client/proto/MessageResource.h"
+#include "trip/client/cdn/Error.h"
 #include "trip/client/core/Resource.h"
 
 #include <util/archive/XmlIArchive.h>
@@ -54,12 +55,18 @@ namespace trip
             boost::system::error_code ec, 
             Resource & resource)
         {
-            if (ec)
-                return;
-
-            util::archive::XmlIArchive<> ia(http_.response_data());
             ResourceInfo info;
-            ia >> info;
+            if (!ec) {
+                util::archive::XmlIArchive<> ia(http_.response_data());
+                ia >> info;
+                if (!ia)
+                    ec = cdn_error::xml_format_error;
+            }
+
+            if (ec) {
+                resource.set_error(ec);
+                return;
+            }
 
             resource.set_id(info.id);
             if (info.urls.is_initialized())

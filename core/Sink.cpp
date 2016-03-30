@@ -28,6 +28,8 @@ namespace trip
                 boost::bind(&Sink::on_event, this, _2));
             resource_->meta_changed.on(
                 boost::bind(&Sink::on_event, this, _2));
+            resource_->error_occurred.on(
+                boost::bind(&Sink::on_event, this, _2));
             resource_->data_seek.on(
                 boost::bind(&Sink::on_event, this, _2));
             lock_ = resource_->alloc_lock(beg_.id(), end_.id());
@@ -145,6 +147,9 @@ namespace trip
                 resource_->seg_meta_ready.on(
                     boost::bind(&Sink::on_event, this, _2));
                 resource_->add_sink(this);
+            } else if (event == resource_->error_occurred) {
+                LOG_TRACE("[on_event] error_occurred");
+                on_error(resource_->error_occurred.ec);
             }
         }
 

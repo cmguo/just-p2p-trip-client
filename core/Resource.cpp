@@ -16,12 +16,14 @@ namespace trip
         Resource::Resource()
             : merged("merged")
             , meta_changed("meta_changed")
+            , error_occurred("error_occurred")
             , source_changed("source_changed")
             , sink_changed("sink_changed")
             , meta_(NULL)
         {
             register_event(merged);
             register_event(meta_changed);
+            register_event(error_occurred);
             register_event(source_changed);
             register_event(sink_changed);
         }
@@ -59,6 +61,13 @@ namespace trip
             ResourceData::set_meta(meta);
             meta_changed.meta = meta_;
             raise(meta_changed);
+        }
+
+        void Resource::set_error(
+            boost::system::error_code const & ec)
+        {
+            error_occurred.ec = ec;
+            raise(error_occurred);
         }
 
         void Resource::merge(

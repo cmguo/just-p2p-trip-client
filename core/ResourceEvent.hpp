@@ -6,6 +6,8 @@
 #include "trip/client/core/ResourceEvent.h"
 #include "trip/client/core/Serialize.h"
 
+#include <util/serialization/ErrorCode.h>
+
 namespace trip
 {
     namespace client
@@ -23,7 +25,7 @@ namespace trip
         template <typename Archive>
         void serialize(
             Archive & ar, 
-            MetaChangedEvent & t)
+            ResourceMetaEvent & t)
         {
             ar & SERIALIZATION_NVP_1(t, meta)
                 ;
@@ -32,7 +34,16 @@ namespace trip
         template <typename Archive>
         void serialize(
             Archive & ar, 
-            DataEvent & t)
+            ResourceErrorEvent & t)
+        {
+            ar & SERIALIZATION_NVP_1(t, ec)
+                ;
+        }
+
+        template <typename Archive>
+        void serialize(
+            Archive & ar, 
+            ResourceDataEvent & t)
         {
             ar & SERIALIZATION_NVP_1(t, id)
                 & SERIALIZATION_NVP_1(t, degree)

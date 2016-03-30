@@ -162,13 +162,13 @@ namespace trip
                 Resource const & r = (Resource const &)observable;
                 ResourceCache * rcache = rcaches_[r.id()];
                 if (event == r.segment_full) {
-                    DataEvent const & e(r.segment_full);
+                    ResourceDataEvent const & e(r.segment_full);
                     //LOG_INFO("[on_event] segment_full, rid=" << r.id() << ", segment=" << e.id.segment);
                     if (disk_cache_) {
                         disk_cache_->alloc_cache(rcache, e.id, 0);
                     }
                 } else if (event == r.data_miss) {
-                    DataEvent const & e(r.data_miss);
+                    ResourceDataEvent const & e(r.data_miss);
                     //LOG_INFO("[on_event] data_miss, rid=" << r.id() << ", id=" << e.id);
                     memory_cache_->alloc_cache(rcache, e.id, e.degree * 5);
                 }

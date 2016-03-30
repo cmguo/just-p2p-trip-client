@@ -39,7 +39,9 @@ namespace trip
         public:
             ResourceChangedEvent merged;
 
-            MetaChangedEvent meta_changed;
+            ResourceMetaEvent meta_changed;
+
+            ResourceErrorEvent error_occurred;
 
             SourceChangedEvent source_changed;
 
@@ -54,6 +56,11 @@ namespace trip
             ResourceMeta const * meta() const
             {
                 return meta_;
+            }
+
+            boost::system::error_code error() const
+            {
+                return error_occurred.ec;
             }
 
             std::vector<Url> const & urls() const
@@ -72,6 +79,9 @@ namespace trip
 
             void set_meta(
                 ResourceMeta const & meta);
+
+            void set_error(
+                boost::system::error_code const & ec);
 
             void merge(
                 Resource & other);

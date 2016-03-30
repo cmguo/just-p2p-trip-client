@@ -49,6 +49,9 @@ namespace trip
             virtual void on_meta(
                 ResourceMeta const & meta) {};
 
+            virtual void on_error(
+                boost::system::error_code const & ec) {};
+
             virtual void on_segment_meta(
                 boost::uint64_t seg,  
                 SegmentMeta const & meta) {};

@@ -25,7 +25,7 @@
                 </item>
                 <item>
                     <name>B</name>
-                    <value>${/udp/socket/stat/${/event/now}/recv_bytes/total}</value>
+                    <value>${/udp/socket/stat/recv_bytes/total}</value>
                     <procs>incremmental</procs>
                 </item>
             </params>

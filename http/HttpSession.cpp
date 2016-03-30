@@ -65,6 +65,9 @@ namespace trip
             if (meta()) {
                 io_svc_.post(
                         boost::bind(resp, boost::system::error_code()));
+            } else if (error()) {
+                io_svc_.post(
+                        boost::bind(resp, error()));
             } else {
                 r.resp = resp;
             }
@@ -170,6 +173,11 @@ namespace trip
             return resource().meta();
         }
 
+        boost::system::error_code HttpSession::error()
+        {
+            return resource().error();
+        }
+
         SegmentMeta const * HttpSession::segment_meta(
             boost::uint64_t segm)
         {
@@ -190,6 +198,20 @@ namespace trip
                 resp.swap(iter->resp);
                 resp(ec);
             }
+        }
+
+        void HttpSession::on_error(
+            boost::system::error_code const & ec)
+        {
+            LOG_TRACE("[on_error] ec=" << ec.message());
+            std::list<Request>::iterator iter = open_requests_.begin();
+            for (; iter != open_requests_.end();) {
+                response_t resp;
+                resp.swap(iter->resp);
+                ++iter;
+                resp(ec);
+            }
+            open_requests_.clear();
         }
 
         void HttpSession::on_segment_meta(
@@ -253,6 +275,7 @@ namespace trip
                 LOG_WARN("[on_write] ec:" << ec.message());
                 response_t resp;
                 resp.swap(r.resp);
+                fetch_requests_.pop_front();
                 resp(ec);
                 return;
             }

@@ -63,12 +63,17 @@ namespace trip
         public:
             ResourceMeta const * meta();
 
+            boost::system::error_code error();
+
             SegmentMeta const * segment_meta(
                 boost::uint64_t segm);
 
         private:
             virtual void on_meta(
                 ResourceMeta const & meta);
+
+            virtual void on_error(
+                boost::system::error_code const & ec);
 
             virtual void on_segment_meta(
                 boost::uint64_t segm, 

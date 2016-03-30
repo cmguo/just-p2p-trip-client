@@ -30,13 +30,13 @@ namespace trip
         public:
             SegmentMetaEvent seg_meta_ready;
 
-            DataEvent data_ready;
+            ResourceDataEvent data_ready;
 
-            DataEvent data_miss;
+            ResourceDataEvent data_miss;
 
-            DataEvent data_seek;
+            ResourceDataEvent data_seek;
 
-            DataEvent segment_full;
+            ResourceDataEvent segment_full;
 
             static framework::memory::MemoryPool & mpool();
 

@@ -90,7 +90,7 @@ namespace trip
             head.path = url.path_all();
             make_range(head);
             LOG_TRACE("[request] segno=" << segno << ", range=" << head.range.get().to_string());
-            head.get_content(std::cout);
+            //head.get_content(std::cout);
             http_.async_open(head, boost::bind(
                     &CdnSource::handle_open, this, _1));
             return true;
@@ -154,7 +154,7 @@ namespace trip
                 return;
             }
 
-            http_.response().head().get_content(std::cout);
+            //http_.response().head().get_content(std::cout);
 
             SegmentMeta meta;
             meta.bytesize = http_.response().head().content_range.get().total();
@@ -237,7 +237,7 @@ namespace trip
                         // TODO: support multi-range
                         util::protocol::HttpRequestHead head = http_.request_head();
                         make_range(head);
-                        head.get_content(std::cout);
+                        //head.get_content(std::cout);
                         http_.close(ec);
                         http_.async_open(head, boost::bind(
                                 &CdnSource::handle_open, this, _1));

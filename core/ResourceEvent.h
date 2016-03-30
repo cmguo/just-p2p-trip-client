@@ -24,21 +24,29 @@ namespace trip
 
         struct ResourceMeta;
 
-        struct MetaChangedEvent
-            : util::event::EventEx<MetaChangedEvent>
+        struct ResourceMetaEvent
+            : util::event::EventEx<ResourceMetaEvent>
         {
             ResourceMeta const * meta;
-            MetaChangedEvent(char const * name) 
-                : util::event::EventEx<MetaChangedEvent>(name), meta(NULL) {}
+            ResourceMetaEvent(char const * name) 
+                : util::event::EventEx<ResourceMetaEvent>(name), meta(NULL) {}
         };
 
-        struct DataEvent
-            : util::event::EventEx<DataEvent>
+        struct ResourceErrorEvent
+            : util::event::EventEx<ResourceErrorEvent>
+        {
+            boost::system::error_code ec;
+            ResourceErrorEvent(char const * name) 
+                : util::event::EventEx<ResourceErrorEvent>(name) {}
+        };
+
+        struct ResourceDataEvent
+            : util::event::EventEx<ResourceDataEvent>
         {
             DataId id;
             size_t degree;
-            DataEvent(char const * name) 
-                : util::event::EventEx<DataEvent>(name), degree(0) {}
+            ResourceDataEvent(char const * name) 
+                : util::event::EventEx<ResourceDataEvent>(name), degree(0) {}
         };
 
         struct SegmentMeta;
