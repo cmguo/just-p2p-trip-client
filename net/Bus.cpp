@@ -134,11 +134,11 @@ namespace trip
                 if (iter->flags & Slot::sfActive)
                     iter->cell->on_timer(now);
             }
-            for (size_t i = 0; i < tmwait_slots_.size() && time_base_ < now; ++i) {
-                Slot * s = slot_at(tmwait_slots_[i]);
+            while (!tmwait_slots_.empty() && time_base_ < now) {
+                Slot * s = slot_at(tmwait_slots_.front());
                 tmwait_slots_.pop_front();
                 time_base_ += Duration::seconds(s->timeo);
-                slot_free(tmwait_slots_[i]);
+                slot_free(s->id);
             }
         }
 

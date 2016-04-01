@@ -149,6 +149,7 @@ namespace trip
                 return;
             if (status_ == 0) {
                 if (tunnel().count() == 1) {
+                    LOG_WARN("[on_timer] drop connection, ep:" << endpoint_.endpoints[0].to_string());
                     delete this;
                     return;
                 }
