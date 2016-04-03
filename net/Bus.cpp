@@ -27,21 +27,17 @@ namespace trip
         bool Bus::add(
             Cell * cell)
         {
-            Slot * slot(slot_alloc());
-            if (slot == NULL)
-                return false;
-            cell->l_id(slot->id);
-            slot->flags |= Slot::sfActive;
-            slot->cell = cell;
+            boost::uint16_t id(slot_alloc());
+            slot_attach(id, cell);
+            cell->l_id(id);
             return true;
         }
 
         bool Bus::del(
             Cell * cell)
         {
-            Slot & slot(slot_at(cell));
-            slot.flags &= ~Slot::sfActive;
-            slot_free(slot);
+            boost::uint16_t id(cell->l_id());
+            slot_detach(id, cell);
             return true;
         }
 
@@ -142,10 +138,13 @@ namespace trip
                     iter->cell->on_timer(now);
             }
             while (!tmwait_slots_.empty() && time_base_ < now) {
-                Slot * s = slot_at(tmwait_slots_.front());
+                boost::uint16_t id = tmwait_slots_.front();
                 tmwait_slots_.pop_front();
+                Slot * s = slot_at(id);
                 time_base_ += Duration::seconds(s->timeo);
-                slot_free(s->id);
+                //s->flags = 0; // slot_free will reset all
+                s->timeo = 0;
+                slot_free(id);
             }
             if (count() == 0)
                 delete this;
@@ -165,23 +164,25 @@ namespace trip
             return const_cast<Slot *>(&const_cast<array_t const &>(array_).at(id));
         }
 
-        Bus::Slot * Bus::slot_alloc()
+        boost::uint16_t Bus::slot_alloc()
         {
             if (array_.size() < 0xffff) {
                 Slot * s = &array_[next_id_++];
                 while (!(*s == Slot())) {
                     s = &array_[next_id_++];
                 }
-                s->id = next_id_ - 1;
                 s->flags = Slot::sfUsed;
-                return s;
+                return next_id_ - 1;
             } else if (!tmwait_slots_.empty()) {
-                Slot * s = slot_at(tmwait_slots_.front());
+                boost::uint16_t id = tmwait_slots_.front();
+                Slot * s = slot_at(id);
                 tmwait_slots_.pop_front();
                 time_base_ += Duration::seconds(s->timeo);
-                return s;
+                s->timeo = 0;
+                return id;
             } else {
-                return NULL;
+                assert(false);
+                return 0;
             }
         }
 
@@ -191,22 +192,36 @@ namespace trip
             array_.reset(id);
         }
 
-        void Bus::slot_free(
-            Slot & slot)
+        void Bus::slot_attach(
+            boost::uint16_t id, 
+            Cell * cell)
         {
+            Slot & slot(*slot_at(id));
+            slot.flags |= Slot::sfActive;
+            slot.cell = cell;
+        }
+
+        void Bus::slot_detach(
+            boost::uint16_t id, 
+            Cell * cell)
+        {
+            Slot & slot(*slot_at(id));
+            assert(slot.cell == cell);
             if (slot.flags & Slot::sfSignal) {
                 // TODO: remove from signal_slots_
             }
             Time expire = Time::now() + Duration::seconds(TIME_WAIT);
-            slot.cell = NULL; //  timeo = 0
+            slot.flags = Slot::sfUsed;
+            slot.timeo = 0;
+            slot.cell = NULL;
             if (tmwait_slots_.empty()) {
                 time_base_ = time_tail_ = expire;
             } else {
                 Slot * s = slot_at(tmwait_slots_.back());
-                s->timeo = (expire - time_tail_).total_seconds();
-                time_tail_ += Duration::seconds(slot.timeo);
+                s->timeo = (boost::uint16_t)(expire - time_tail_).total_seconds();
+                time_tail_ += Duration::seconds(s->timeo); // may not equal with exipre for second accuracy
             }
-            tmwait_slots_.push_back(slot.id);
+            tmwait_slots_.push_back(id);
         }
 
         void Bus::foreach_cell(

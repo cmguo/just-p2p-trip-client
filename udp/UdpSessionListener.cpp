@@ -139,9 +139,9 @@ namespace trip
         void UdpSessionListener::connect()
         {
             if (msg_try_) {
-                LOG_WARN("[on_timer] retry connect, ep:" << endpoint_.endpoints[0].to_string());
+                LOG_WARN("[connect] retry connect, ep:" << endpoint_.endpoints[0].to_string());
             } else {
-                LOG_DEBUG("[on_timer] try connect to " << endpoint_.endpoints[0].to_string() << ", l_id: " << tunnel().l_id());
+                LOG_DEBUG("[connect] try connect to " << endpoint_.endpoints[0].to_string() << ", l_id: " << tunnel().l_id());
             }
             ++msg_try_;
             Message * msg = alloc_message();

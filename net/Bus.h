@@ -75,7 +75,8 @@ namespace trip
 
                 Slot()
                 {
-                    id_flags = 0;
+                    flags = 0;
+                    timeo = 0;
                     cell = NULL;
                 }
 
@@ -83,20 +84,12 @@ namespace trip
                     Slot const & l, 
                     Slot const & r)
                 {
-                    return l.id_flags == r.id_flags && l.cell == r.cell;
+                    return l.flags == r.flags && l.cell == r.cell;
                 }
 
-                union {
-                    struct {
-                        boost::uint32_t id : 16;
-                        boost::uint32_t flags : 16;
-                    };
-                    boost::uint32_t id_flags;
-                };
-                union {
-                    Cell * cell;
-                    boost::uint32_t timeo;
-                };
+                boost::uint16_t flags;
+                boost::uint16_t timeo;
+                Cell * cell;
             };
 
         protected:
@@ -126,13 +119,18 @@ namespace trip
                 NetBuffer & buf);
 
         private:
-            Slot * slot_alloc();
+            boost::uint16_t slot_alloc();
 
             void slot_free(
                 boost::uint16_t id); // real free
 
-            void slot_free(
-                Slot & slot);
+            void slot_attach(
+                boost::uint16_t id, 
+                Cell * cell);
+
+            void slot_detach(
+                boost::uint16_t id, 
+                Cell * cell); // for check
 
         protected:
             typedef framework::container::SparseArray<Slot> array_t;

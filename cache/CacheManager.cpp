@@ -163,7 +163,7 @@ namespace trip
                 ResourceCache * rcache = rcaches_[r.id()];
                 if (event == r.segment_full) {
                     ResourceDataEvent const & e(r.segment_full);
-                    //LOG_INFO("[on_event] segment_full, rid=" << r.id() << ", segment=" << e.id.segment);
+                    LOG_INFO("[on_event] segment_full, rid=" << r.id() << ", segment=" << e.id.segment);
                     if (disk_cache_) {
                         disk_cache_->alloc_cache(rcache, e.id, 0);
                     }
