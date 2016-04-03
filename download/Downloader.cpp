@@ -27,7 +27,6 @@ namespace trip
             , mgr_(mgr)
             , master_(NULL)
         {
-            resource.sink_changed.on(boost::bind(&Downloader::on_event, this, _2));
             resource.seg_meta_ready.on(boost::bind(&Downloader::on_event, this, _2));
         }
 
@@ -42,49 +41,52 @@ namespace trip
             mgr_.find_sources(*this, proto, count);
         }
 
+        void Downloader::add_sink(
+            Sink * sink)
+        {
+            sinks_.push_back(sink);
+            if (master_ == NULL) {
+                master_ = sink;
+                master_->attach(*this);
+                play_point_ = download_point_ = master_->position();
+                resource().seek(download_point_);
+                reset();
+            }
+        }
+
+        void Downloader::del_sink(
+            Sink * sink)
+        {
+            if (master_ == sink) {
+                master_->detach();
+                master_ = NULL;
+            }
+            sinks_.erase(std::remove(sinks_.begin(), sinks_.end(), sink));
+            if (master_ == NULL && sinks_.size() > 0) {
+                master_ = sinks_[0]; 
+                master_->attach(*this);
+                play_point_ = download_point_ = master_->position();
+                resource().seek(download_point_);
+            }
+            reset();
+        }
+
+        void Downloader::update_sink(
+            Sink * sink)
+        {
+            if (master_ == sink) {
+                if (play_point_ != master_->position() || download_point_ != master_->position()) {
+                    play_point_ = download_point_ = master_->position();
+                    resource().seek(download_point_);
+                    reset();
+                }
+            }
+        }
+
         void Downloader::on_event(
             util::event::Event const & event)
         {
-            Resource & r = resource();
-            if (event == r.sink_changed) {
-                SinkChangedEvent const & e = (SinkChangedEvent const &)event;
-                LOG_INFO("[on_event] sink_changed, type=" << e.type);
-                LOG_INFO("[on_event] download_point_=" << download_point_);
-                switch(e.type){
-                case 0: // add.
-                    if (master_ == NULL) {
-                        master_ = e.sink;
-                        play_point_ = download_point_ = master_->position();
-                        r.seek(download_point_);
-                        reset();
-                    }
-                    break;
-                case 1:  // del.
-                    if (master_ != NULL
-                        && master_ == e.sink) {
-                        if (r.get_sinks().size() > 0) {
-                            master_ = r.get_sinks()[0]; 
-                            play_point_ = download_point_ = master_->position();
-                            r.seek(download_point_);
-                        } else { // To stop download.
-                            master_ = NULL;
-                        }
-                        reset();
-                    }
-                    break;
-                case 2: // modify.
-                    if (master_ == e.sink) {
-                        if (play_point_ != master_->position() || download_point_ != master_->position()) {
-                            play_point_ = download_point_ = master_->position();
-                            r.seek(download_point_);
-                            reset();
-                        }
-                    }
-                    break;
-                default:
-                    LOG_ERROR("[on_event] unexpect event:" << e.type);
-                }
-            } else if (event == r.seg_meta_ready) {
+            if (event == resource().seg_meta_ready) {
                 SegmentMetaEvent const & e = (SegmentMetaEvent const &)event;
                 update_segment(e.id, *e.meta);
             }

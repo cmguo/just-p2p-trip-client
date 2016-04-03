@@ -17,14 +17,15 @@ namespace trip
         }
 
         bool Shaping::push(
-            void * pkt)
+            Cell * c, 
+            void * p)
         {
-            return queue_->push(pkt);
+            return queue_->push(c, p);
         }
 
-        void * Shaping::first()
+        void * Shaping::first(Cell *& c)
         {
-            return queue_->first();
+            return queue_->first(c);
         }
 
         void Shaping::pop()

@@ -27,6 +27,10 @@ namespace trip
             ~DownloadManager();
 
         public:
+            Downloader * get(
+                Uuid const & rid);
+
+        public:
             void find_sources(
                 Downloader & downloader, 
                 std::string const & proto, 

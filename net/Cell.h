@@ -32,6 +32,8 @@ namespace trip
 
             void detach();
 
+            Bus * bus() const;
+
         public:
             boost::uint16_t l_id() const
             {
@@ -75,12 +77,17 @@ namespace trip
             virtual bool empty() const;
 
             bool push(
-                void * ptk);
+                void * pkt);
 
         protected:
             void signal();
 
-            void * first();
+            bool push(
+                Cell * c, 
+                void * p);
+
+            void * first(
+                Cell *& c);
 
             void pop();
 

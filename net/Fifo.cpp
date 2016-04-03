@@ -17,7 +17,7 @@ namespace trip
         }
 
         bool Fifo::push(
-            void * pkt)
+            Packet const & pkt)
         {
             if (pkts_.size() < limit_) {
                 pkts_.push_back(pkt);
@@ -27,9 +27,9 @@ namespace trip
             }
         }
 
-        void * Fifo::first() const
+        Queue::Packet const * Fifo::first() const
         {
-            return pkts_.empty() ? NULL : pkts_.front();
+            return pkts_.empty() ? NULL : &pkts_.front();
         }
 
         void Fifo::pop()

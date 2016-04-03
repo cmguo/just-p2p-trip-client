@@ -37,15 +37,9 @@ namespace trip
             ~Resource();
 
         public:
-            ResourceChangedEvent merged;
+            //ResourceErrorEvent error_occurred;
 
-            ResourceMetaEvent meta_changed;
-
-            ResourceErrorEvent error_occurred;
-
-            SourceChangedEvent source_changed;
-
-            SinkChangedEvent sink_changed;
+            //ResourceMetaEvent meta_changed;
 
         public:
             framework::string::Uuid const & id() const
@@ -56,16 +50,6 @@ namespace trip
             ResourceMeta const * meta() const
             {
                 return meta_;
-            }
-
-            boost::system::error_code error() const
-            {
-                return error_occurred.ec;
-            }
-
-            std::vector<Url> const & urls() const
-            {
-                return urls_;
             }
 
         public:
@@ -80,38 +64,12 @@ namespace trip
             void set_meta(
                 ResourceMeta const & meta);
 
-            void set_error(
-                boost::system::error_code const & ec);
-
-            void merge(
-                Resource & other);
-
-            void set_urls(
-                std::vector<Url> & urls);
-
-        public:
-            void add_sink(
-                Sink * sink);
-
-            void del_sink(
-                Sink * sink);
-
-            void update_sink(
-                Sink * sink);
-
-            std::vector<Sink *> & get_sinks()
-            {
-                return sinks_;
-            }
-
         private:
             Resource(Resource const &);
 
         private:
             Uuid id_;
             ResourceMeta const * meta_;
-            std::vector<Url> urls_;
-            std::vector<Sink *> sinks_;
         };
 
     } // namespace client

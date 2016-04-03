@@ -27,10 +27,12 @@ namespace trip
         template <typename Archive>
         void serialize(
             Archive & ar, 
-            SspEndpoint & endpoint)
+            SspEndpoint & t)
         {
-            ar & SERIALIZATION_NVP_NAME("id", endpoint.id);
-            ar & SERIALIZATION_NVP_NAME("endpoint", endpoint.endpoint);
+            ar
+                & SERIALIZATION_NVP_1(t, id)
+                & SERIALIZATION_NVP_1(t, endpoint)
+                ;
         }
 
         template <typename Archive>
@@ -47,6 +49,7 @@ namespace trip
             SspTunnel & t)
         {
             serialize(ar, (Bus &)t);
+            ar & SERIALIZATION_NVP_2(t, endpoint);
         }
 
         template <typename Archive>
@@ -54,9 +57,11 @@ namespace trip
             Archive & ar, 
             SspManager & t)
         {
-            ar & SERIALIZATION_NVP_NAME("local_endpoint", t.local_endpoint());
-            ar & SERIALIZATION_NVP_NAME("bus", t.bus());
-            ar & SERIALIZATION_NVP_NAME("tunnels", t.tunnels());
+            ar
+                & SERIALIZATION_NVP_2(t, local_endpoint)
+                & SERIALIZATION_NVP_2(t, bus)
+                & SERIALIZATION_NVP_2(t, tunnels)
+                ;
         }
 
     }

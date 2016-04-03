@@ -34,7 +34,7 @@ namespace trip
 
             ResourceDataEvent data_miss;
 
-            ResourceDataEvent data_seek;
+            //ResourceDataEvent data_seek;
 
             ResourceDataEvent segment_full;
 
@@ -100,7 +100,7 @@ namespace trip
                 DataId to);
 
             void release_lock(
-                lock_t lock);
+                lock_t & lock);
 
             void query_lock(
                 lock_t lock, 

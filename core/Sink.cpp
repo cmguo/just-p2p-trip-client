@@ -2,6 +2,7 @@
 
 #include "trip/client/Common.h"
 #include "trip/client/core/Sink.h"
+#include "trip/client/core/Scheduler.h"
 #include "trip/client/core/Resource.h"
 #include "trip/client/core/PartPiece.h"
 
@@ -18,27 +19,66 @@ namespace trip
         FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("trip.client.Sink", framework::logger::Debug);
 
         Sink::Sink(
-            Resource & resource)
+            Resource & resource, 
+            Url const & url)
             : resource_(&resource)
+            , url_(url)
+            , scheduler_(NULL)
             , off_(0)
             , off2_(0)
             , lock_(NULL)
         {
-            resource_->merged.on(
-                boost::bind(&Sink::on_event, this, _2));
-            resource_->meta_changed.on(
-                boost::bind(&Sink::on_event, this, _2));
-            resource_->error_occurred.on(
-                boost::bind(&Sink::on_event, this, _2));
-            resource_->data_seek.on(
-                boost::bind(&Sink::on_event, this, _2));
-            lock_ = resource_->alloc_lock(beg_.id(), end_.id());
         }
 
         Sink::~Sink()
         {
-            resource_->del_sink(this);
+        }
+
+        Resource const & Sink::resource() const
+        {
+            return *resource_;
+        }
+
+        Url const & Sink::url() const
+        {
+            return url_;
+        }
+
+        void Sink::attach(
+            Scheduler & scheduler)
+        {
+            LOG_TRACE("[attach]");
+            scheduler_ = &scheduler;
+            resource_ = &scheduler_->resource();
+            resource_->seg_meta_ready.on(
+                boost::bind(&Sink::on_event, this, _2));
+            lock_ = resource_->alloc_lock(beg_.id(), end_.id());
+            on_attach();
+        }
+
+        void Sink::detach()
+        {
+            LOG_TRACE("[detach]");
             resource_->release_lock(lock_);
+            scheduler_ = NULL;
+        }
+
+        void Sink::set_error(
+            boost::system::error_code const & ec)
+        {
+            error_ = ec;
+            on_error(ec);
+        }
+
+        bool Sink::attached() const
+        {
+            return scheduler_ != NULL;
+        }
+
+        void Sink::close()
+        {
+            if (scheduler_)
+                scheduler_->del_sink(this);
         }
 
         void Sink::seek_to(
@@ -59,7 +99,7 @@ namespace trip
             off_ = begin % PIECE_SIZE;
             off2_ = end % PIECE_SIZE;
             if (pos != ibegin) {
-                resource_->update_sink(this);
+                scheduler_->update_sink(this);
             }
             resource_->modify_lock(lock_, ibegin, iend);
         }
@@ -97,12 +137,28 @@ namespace trip
             return p;
         }
 
+        ResourceMeta const * Sink::meta()
+        {
+            return resource_ ? resource_->meta() : NULL;
+        }
+
+        boost::system::error_code Sink::error()
+        {
+            return error_;
+        }
+
+        SegmentMeta const * Sink::segment_meta(
+            boost::uint64_t segm)
+        {
+            return resource_ ? resource_->get_segment_meta(DataId(segm, 0, 0)) : NULL;
+        }
+
         bool Sink::at_end() const
         {
             return pos_.id() >= end_.id();
         }
 
-        DataId Sink::position() const
+        DataId const & Sink::position() const
         {
             return pos_.id();
         }
@@ -120,36 +176,6 @@ namespace trip
                     LOG_TRACE("[on_event] seg_meta_ready, segment=" << resource_->seg_meta_ready.id.segment);
                     on_segment_meta(resource_->seg_meta_ready.id.segment, *resource_->seg_meta_ready.meta);
                 }
-            } else if (event == resource_->merged) {
-                LOG_TRACE("[on_event] merged, id=" << resource_->merged.resource->id());
-                resource_->del_sink(this);
-                resource_->merged.un(
-                    boost::bind(&Sink::on_event, this, _2));
-                resource_->seg_meta_ready.un(
-                    boost::bind(&Sink::on_event, this, _2));
-                resource_->release_lock(lock_);
-                resource_ = resource_->merged.resource;
-                DataId id;
-                lock_ = resource_->alloc_lock(id, id);
-                resource_->seg_meta_ready.on(
-                    boost::bind(&Sink::on_event, this, _2));
-                resource_->add_sink(this);
-            } else if (event == resource_->data_seek) {
-                LOG_TRACE("[on_event] data_seek, id=" << resource_->data_seek.id);
-                //if (!at_end() && resource_->data_seek.id == beg_.id()) {
-                //    on_data();
-                //}
-            } else if (event == resource_->meta_changed) {
-                LOG_TRACE("[on_event] meta_changed");
-                on_meta(*resource_->meta_changed.meta);
-                resource_->meta_changed.un(
-                    boost::bind(&Sink::on_event, this, _2));
-                resource_->seg_meta_ready.on(
-                    boost::bind(&Sink::on_event, this, _2));
-                resource_->add_sink(this);
-            } else if (event == resource_->error_occurred) {
-                LOG_TRACE("[on_event] error_occurred");
-                on_error(resource_->error_occurred.ec);
             }
         }
 

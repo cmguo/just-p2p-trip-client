@@ -23,7 +23,7 @@ namespace trip
             , seg_meta_ready("seg_meta_ready") 
             , data_ready("data_ready")
             , data_miss("data_miss")
-            , data_seek("data_seek")
+            //, data_seek("data_seek")
             , segment_full("segment_full")
             , end_(0)
             , meta_dirty_(false)
@@ -32,7 +32,7 @@ namespace trip
             register_event(seg_meta_ready);
             register_event(data_ready);
             register_event(data_miss);
-            register_event(data_seek);
+            //register_event(data_seek);
             register_event(segment_full);
         }
 
@@ -226,9 +226,10 @@ namespace trip
         }
 
         void ResourceData::release_lock(
-            lock_t lock)
+            lock_t & lock)
         {
             Lock * l = (Lock * )lock;
+            lock = NULL;
             locks_.erase(l);
             remove_lock(l);
             delete l;
@@ -351,12 +352,12 @@ namespace trip
         void ResourceData::seek(
             DataId & id)
         {
-            data_seek.id = id;
+            //data_seek.id = id;
             priv_seek(id);
-            raise(data_seek);
+            //raise(data_seek);
             data_ready.id = id;
-            if (data_ready.id != data_seek.id)
-                raise(data_ready);
+            //if (data_ready.id != data_seek.id)
+            //    raise(data_ready);
         }
 
         void ResourceData::priv_seek(

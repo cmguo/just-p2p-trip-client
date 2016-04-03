@@ -40,6 +40,21 @@ namespace trip
             virtual void on_source_lost(
                 Source & source);
 
+        public:
+            void add_sink(
+                Sink * sink);
+
+            void del_sink(
+                Sink * sink);
+
+            void update_sink(
+                Sink * sink);
+
+            std::vector<Sink *> & get_sinks()
+            {
+                return sinks_;
+            }
+
         protected:
             virtual void add_source(
 				Source * source) = 0;
@@ -65,7 +80,8 @@ namespace trip
         private:
             DownloadManager & mgr_;
         protected:
-            Sink const * master_;
+            std::vector<Sink *> sinks_;
+            Sink * master_;
             DataId download_point_;
             DataId play_point_;
             std::vector<Source *> sources_;

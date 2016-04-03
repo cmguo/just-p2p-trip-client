@@ -42,8 +42,6 @@ namespace trip
             Slot & slot(slot_at(cell));
             slot.flags &= ~Slot::sfActive;
             slot_free(slot);
-            if (count() == 0)
-                delete this;
             return true;
         }
 
@@ -64,6 +62,15 @@ namespace trip
             Slot * slot(slot_at(id));
             assert(slot->cell);
             slot->cell->on_send(buf);
+        }
+
+        void Bus::on_send(
+            Cell * c, 
+            NetBuffer & buf)
+        {
+            do {
+                c->Cell::on_send(buf);
+            } while (c->bus() != this && (c = c->bus()));
         }
 
         void Bus::on_recv(
@@ -140,6 +147,8 @@ namespace trip
                 time_base_ += Duration::seconds(s->timeo);
                 slot_free(s->id);
             }
+            if (count() == 0)
+                delete this;
         }
 
         Bus::Slot & Bus::slot_at(

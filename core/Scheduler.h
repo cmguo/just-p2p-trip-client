@@ -12,6 +12,7 @@ namespace trip
     {
 
         class Source;
+        class Sink;
 
         class Scheduler
         {
@@ -26,6 +27,15 @@ namespace trip
             {
                 return resource_;
             }
+
+            virtual void add_sink(
+                Sink * sink) = 0;
+
+            virtual void del_sink(
+                Sink * sink) = 0;
+
+            virtual void update_sink(
+                Sink * sink) = 0;
 
         public:
             virtual bool get_task(

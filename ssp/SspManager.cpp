@@ -3,6 +3,7 @@
 #include "trip/client/Common.h"
 #include "trip/client/ssp/SspManager.h"
 #include "trip/client/ssp/SspBus.h"
+#include "trip/client/ssp/SspSession.h"
 #include "trip/client/ssp/SspTunnel.h"
 #include "trip/client/ssp/SspEndpoint.h"
 #include "trip/client/timer/TimerManager.h"
@@ -18,6 +19,8 @@ namespace trip
             , tmgr_(util::daemon::use_module<TimerManager>(daemon))
             , bus_(new SspBus(io_svc()))
         {
+            // Uuid::Null
+            get_tunnel(SspEndpoint());
         }
 
         SspManager::~SspManager()
@@ -46,7 +49,9 @@ namespace trip
         {
             std::map<Uuid, SspTunnel *>::iterator iter = tunnels_.find(ep.id);
             if (iter == tunnels_.end()) {
-                iter = tunnels_.insert(std::make_pair(ep.id, new SspTunnel(*bus_, ep))).first;
+                SspTunnel * tunnel = new SspTunnel(*bus_, ep);
+                new SspSession(*tunnel);
+                iter = tunnels_.insert(std::make_pair(ep.id, tunnel)).first;
             }
             return *iter->second;
         }

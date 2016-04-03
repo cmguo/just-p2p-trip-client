@@ -121,8 +121,15 @@ namespace trip
             UdpSession * session)
         {
             UdpTunnel * tunnel = new UdpTunnel(*socket_);
+            stateless_tunnels_.push_back(tunnel);
             new UdpSessionListener2(*this, *tunnel, endpoint, session);
             return *tunnel;
+        }
+
+        void UdpManager::free_tunnel(
+            Uuid const & uid)
+        {
+            tunnels_.erase(uid);
         }
 
         void UdpManager::on_event(

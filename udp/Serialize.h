@@ -77,10 +77,12 @@ namespace trip
             Archive & ar, 
             UdpManager & t)
         {
-            ar & SERIALIZATION_NVP_2(t, local_endpoint);
-            ar & SERIALIZATION_NVP_2(t, socket);
-            ar & SERIALIZATION_NVP_2(t, tunnels);
-            ar & SERIALIZATION_NVP_2(t, pulse_tunnels);
+            ar 
+                & SERIALIZATION_NVP_2(t, local_endpoint)
+                & SERIALIZATION_NVP_2(t, socket)
+                & SERIALIZATION_NVP_2(t, tunnels)
+                & SERIALIZATION_NVP_2(t, stateless_tunnels)
+                ;
         }
 
     }

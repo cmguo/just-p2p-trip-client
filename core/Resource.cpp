@@ -14,18 +14,8 @@ namespace trip
     {
 
         Resource::Resource()
-            : merged("merged")
-            , meta_changed("meta_changed")
-            , error_occurred("error_occurred")
-            , source_changed("source_changed")
-            , sink_changed("sink_changed")
-            , meta_(NULL)
+            : meta_(NULL)
         {
-            register_event(merged);
-            register_event(meta_changed);
-            register_event(error_occurred);
-            register_event(source_changed);
-            register_event(sink_changed);
         }
 
         Resource::~Resource()
@@ -59,56 +49,6 @@ namespace trip
             }
             meta_ = new ResourceMeta(meta);
             ResourceData::set_meta(meta);
-            meta_changed.meta = meta_;
-            raise(meta_changed);
-        }
-
-        void Resource::set_error(
-            boost::system::error_code const & ec)
-        {
-            error_occurred.ec = ec;
-            raise(error_occurred);
-        }
-
-        void Resource::merge(
-            Resource & other)
-        {
-            other.urls_.insert(other.urls_.end(),
-                urls_.begin(), urls_.end());
-            merged.resource = &other;
-            raise(merged);
-        }
-
-        void Resource::set_urls(
-            std::vector<Url> & urls)
-        {
-            urls_.swap(urls);
-        }
-
-        void Resource::add_sink(
-            Sink * sink)
-        {
-            sinks_.push_back(sink);
-            sink_changed.type = 0;
-            sink_changed.sink = sink;
-            raise(sink_changed);
-        }
-
-        void Resource::del_sink(
-            Sink * sink)
-        {
-            sinks_.erase(std::remove(sinks_.begin(), sinks_.end(), sink));
-            sink_changed.type = 1;
-            sink_changed.sink = sink;
-            raise(sink_changed);
-        }
-
-        void Resource::update_sink(
-            Sink * sink)
-        {
-            sink_changed.type = 2;
-            sink_changed.sink = sink;
-            raise(sink_changed);
         }
 
     } // namespace client

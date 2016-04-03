@@ -1,3 +1,4 @@
+// UdpTunnel.cpp
 
 #include "trip/client/Common.h"
 #include "trip/client/udp/UdpTunnel.h"
@@ -70,10 +71,11 @@ namespace trip
                 Bus::send_signal(buf);
                 pos2 = ar.tellp();
             }
+            Cell * c = NULL;
             Message * msg = NULL;
-            while ((msg = (Message *)first())) {
+            while ((msg = (Message *)first(c))) {
                 // for stat, mark begin of next message
-                // ar.seekg(pos2, std::ios::beg);
+                buf.pubseekpos(pos2, std::ios::in);
                 ar << *msg;
                 if (ar) {
                     LOG_DEBUG("[on_send] size=" << size_t(ar.tellp() - pos2) - sizeof(MessageHeader) << ", sid=" << msg->sid 
@@ -82,12 +84,14 @@ namespace trip
                     free_message(msg);
                     pos2 = ar.tellp();
                     // update send stat
-                    // Bus::on_send(sid, buf);
+                    Bus::on_send(c, buf);
                 } else {
                     ar.clear();
                     break;
                 }
             }
+            // restore read pos
+            buf.pubseekpos(pos, std::ios::in);
             ar.seekp(pos, std::ios::beg);
             if (pos2 == pos + (std::streamoff)sizeof(TunnelHeader)) {
                 assert(false);

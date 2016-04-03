@@ -16,7 +16,7 @@ namespace trip
         template <typename Archive>
         void serialize(
             Archive & ar, 
-            ResourceChangedEvent & t)
+            ResourceEvent & t)
         {
             ar & SERIALIZATION_NVP_1(t, resource)
                 ;

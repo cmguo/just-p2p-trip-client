@@ -19,9 +19,9 @@ namespace trip
 
         public:
             bool push(
-                void * pkt);
+                Packet const & pkt);
 
-            void * first() const;
+            Packet const * first() const;
 
             void pop();
 
@@ -29,7 +29,7 @@ namespace trip
 
         protected:
             size_t limit_;
-            std::deque<void *> pkts_;
+            std::deque<Packet> pkts_;
         };
 
     } // namespace client

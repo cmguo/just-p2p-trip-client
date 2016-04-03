@@ -7,6 +7,8 @@ namespace trip
 {
     namespace client
     {
+        
+        class Cell;
 
         class Queue
         {
@@ -14,16 +16,31 @@ namespace trip
             virtual ~Queue() {}
 
             virtual bool push(
-                void * p) = 0;
+                Cell * c, 
+                void * p);
 
-            virtual void * first() const = 0;
+            virtual void * first(Cell *& c) const;
 
             virtual void pop() = 0;
 
             virtual void on_timer(
-                Time const & now) {};
+                Time const & now);
             
-            virtual bool empty() const { return first() == NULL; }
+            virtual bool empty() const;
+
+        protected:
+            struct Packet
+            {
+                Cell * c;
+                void * p;
+            };
+
+        protected:
+            virtual bool push(
+                Packet const & pkt) = 0;
+
+            virtual Packet const * first() const = 0;
+
         };
 
     } // namespace client

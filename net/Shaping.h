@@ -19,9 +19,10 @@ namespace trip
 
         public:
             virtual bool push(
+                Cell * c, 
                 void * p);
 
-            virtual void * first();
+            virtual void * first(Cell *& c);
 
             virtual void pop();
 

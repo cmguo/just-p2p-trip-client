@@ -104,6 +104,10 @@ namespace trip
                 boost::uint16_t id, 
                 NetBuffer & buf);
 
+            void on_send(
+                Cell * c, 
+                NetBuffer & buf);
+
             void on_recv(
                 boost::uint16_t id, 
                 NetBuffer & buf);

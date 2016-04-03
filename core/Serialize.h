@@ -61,8 +61,7 @@ namespace trip
             Resource & t)
         {
             ar & SERIALIZATION_NVP_2(t, id)
-                & SERIALIZATION_NVP_2(t, meta)
-                & SERIALIZATION_NVP_2(t, urls);
+                & SERIALIZATION_NVP_2(t, meta);
             serialize(ar, (ResourceData &)t);
         }
 
@@ -81,7 +80,7 @@ namespace trip
             Archive & ar, 
             Sink & t)
         {
-            ar & SERIALIZATION_NVP_2(t, type)
+            ar & SERIALIZATION_NVP_2(t, url)
                 & SERIALIZATION_NVP_2(t, position);
         }
 

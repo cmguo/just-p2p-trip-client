@@ -24,8 +24,10 @@ namespace trip
             Archive & ar, 
             CdnSource::PieceRange & t)
         {
-            ar & SERIALIZATION_NVP_1(t, b)
-                & SERIALIZATION_NVP_1(t, e);
+            ar
+                & SERIALIZATION_NVP_1(t, b)
+                & SERIALIZATION_NVP_1(t, e)
+                ;
         }
 
         template <typename Archive>
@@ -33,6 +35,7 @@ namespace trip
             Archive & ar, 
             CdnSource & t)
         {
+            serialize(ar, (Source &)t);
             serialize(ar, (SspSession &)t);
             ar & SERIALIZATION_NVP_3(t, ranges);
         }

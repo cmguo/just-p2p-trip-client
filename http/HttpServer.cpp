@@ -60,7 +60,7 @@ namespace trip
             if (pos != std::string::npos)
                 option_.erase(pos);
 
-            if (option_.compare(0, 5, "/dump") == 0) {
+            if (option_.compare(0, 6, "/dump/") == 0) {
                 option_ = "/dump";
             }
 

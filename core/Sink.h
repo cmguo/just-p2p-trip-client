@@ -14,23 +14,39 @@ namespace trip
     namespace client
     {
 
+        class Scheduler;
+
         class Sink
         {
         public:
             Sink(
-                Resource & resource);
+                Resource & resource, 
+                Url const & url);
 
             virtual ~Sink();
 
         public:
+            Resource const & resource() const;
+
+            Url const & url() const;
+
+        public:
             boost::uint32_t type() const;
 
-            DataId position() const;
+            DataId const & position() const;
 
-            Resource const & resource() const
-            {
-                return *resource_;
-            }
+        public:
+            void attach(
+                Scheduler & scheduler);
+
+            void detach();
+
+            void set_error(
+                boost::system::error_code const & ec);
+
+            bool attached() const;
+
+            void close();
 
         protected:
             void seek_to(
@@ -45,9 +61,16 @@ namespace trip
 
             Piece::pointer read();
 
+        public:
+            ResourceMeta const * meta();
+
+            boost::system::error_code error();
+
+            SegmentMeta const * segment_meta(
+                boost::uint64_t segm);
+
         private:
-            virtual void on_meta(
-                ResourceMeta const & meta) {};
+            virtual void on_attach() {};
 
             virtual void on_error(
                 boost::system::error_code const & ec) {};
@@ -62,9 +85,14 @@ namespace trip
             void on_event(
                 util::event::Event const & event);
 
-        private:
+        protected:
             Resource * resource_;
-            boost::uint32_t type_;
+            Url const url_;
+
+        private:
+            Scheduler * scheduler_;
+            boost::system::error_code error_;
+            //boost::uint32_t type_;
             PieceIterator beg_;
             PieceIterator pos_;
             PieceIterator end_;

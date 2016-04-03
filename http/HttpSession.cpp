@@ -7,6 +7,7 @@
 
 #include <framework/logger/Logger.h>
 #include <framework/logger/StreamRecord.h>
+#include <framework/system/LogicError.h>
 
 #include <boost/bind.hpp>
 #include <boost/asio/write.hpp>
@@ -39,8 +40,8 @@ namespace trip
 
         HttpSession::HttpSession(
             boost::asio::io_service & io_svc, 
-            Resource & resource)
-            : Sink(resource)
+            Url const & url)
+            : Sink(*(Resource*)NULL, url)
             , io_svc_(io_svc)
         {
         }
@@ -62,12 +63,12 @@ namespace trip
             Request r;
             r.server = server;
             r.segm = MAX_SEGMENT;
-            if (meta()) {
-                io_svc_.post(
-                        boost::bind(resp, boost::system::error_code()));
-            } else if (error()) {
+            if (error()) {
                 io_svc_.post(
                         boost::bind(resp, error()));
+            } else if (meta()) {
+                io_svc_.post(
+                        boost::bind(resp, boost::system::error_code()));
             } else {
                 r.resp = resp;
             }
@@ -81,6 +82,15 @@ namespace trip
             response_t const & resp)
         {
             LOG_TRACE("[async_open] server=" << (void*)server << ", segment=" << segm << ", range=" << range.to_string());
+            if (error()) {
+                io_svc_.post(
+                        boost::bind(resp, error()));
+                return;
+            } else if (!meta()) {
+                io_svc_.post(
+                        boost::bind(resp, framework::system::logic_error::no_data));
+                return;
+            }
             Request r;
             r.server = server;
             r.segm = segm;
@@ -168,24 +178,7 @@ namespace trip
             return false;
         }
 
-        ResourceMeta const * HttpSession::meta()
-        {
-            return resource().meta();
-        }
-
-        boost::system::error_code HttpSession::error()
-        {
-            return resource().error();
-        }
-
-        SegmentMeta const * HttpSession::segment_meta(
-            boost::uint64_t segm)
-        {
-            return resource().get_segment_meta(DataId(segm, 0, 0));
-        }
-
-        void HttpSession::on_meta(
-            ResourceMeta const & meta)
+        void HttpSession::on_attach()
         {
             LOG_TRACE("[on_meta]");
             boost::system::error_code ec;

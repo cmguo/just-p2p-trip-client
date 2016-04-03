@@ -6,6 +6,7 @@
 #include "trip/client/cdn/CdnManager.h"
 #include "trip/client/cdn/Error.h"
 #include "trip/client/main/Bootstrap.h"
+#include "trip/client/main/ResourceManager.h"
 #include "trip/client/utils/Serialize.h"
 #include "trip/client/core/Resource.h"
 
@@ -53,7 +54,9 @@ namespace trip
             size_t count)
         {
             std::vector<Url> urls;
-            resource.set_urls(urls); // swap
+            ResourceManager & rmgr =
+                util::daemon::use_module<ResourceManager>(cmgr_.get_daemon());
+            rmgr.get_urls(resource.id(), urls);
             if (urls.empty()) {
                 LOG_DEBUG("[find] rid=" << resource.id());
                 Url url(url_);
@@ -91,7 +94,7 @@ namespace trip
                 }
                 found(resource.id(), sources);
             } else {
-                LOG_DEBUG("[handle_fetch] rid=" << url.param("rid") << ", ec=" << ec.message());
+                LOG_WARN("[handle_fetch] rid=" << url.param("rid") << ", ec=" << ec.message());
             }
         }
 

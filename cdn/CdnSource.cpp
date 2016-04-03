@@ -257,6 +257,7 @@ namespace trip
         void CdnSource::on_timer(
             Time const & now)
         {
+            Cell::on_timer(now);
             if (ranges_.empty())
                 return;
             if (now >= stat_.recv_bytes().time + Duration::milliseconds(1500)) {

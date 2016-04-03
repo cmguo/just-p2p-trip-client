@@ -221,6 +221,8 @@ namespace trip
         void P2pSource::on_timer(
             Time const & now)
         {
+            Cell::on_timer(now);
+
             Time time = now - rtt_;
             
             if (time > map_req_.time) {

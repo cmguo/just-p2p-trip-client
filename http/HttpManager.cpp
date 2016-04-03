@@ -4,7 +4,7 @@
 #include "trip/client/http/HttpManager.h"
 #include "trip/client/http/HttpServer.h"
 #include "trip/client/http/HttpSession.h"
-#include "trip/client/main/ResourceManager.h"
+#include "trip/client/sink/SinkManager.h"
 
 #include <framework/network/TcpSocket.hpp>
 #include <framework/logger/Logger.h>
@@ -78,18 +78,9 @@ namespace trip
             }
 
             if (session == NULL) {
-                ResourceManager & mgr(util::daemon::use_module<ResourceManager>(io_svc()));
-                std::vector<Url> urls;
-                for (Url::param_iterator i = url.param_begin(); i != url.param_end(); ++i) {
-                    if (i->key() == "url") {
-                        urls.push_back(Url(i->value()));
-                    }
-                }
-                if (urls.empty()) {
-                    ec = framework::system::logic_error::item_not_exist;
-                    return NULL;
-                }
-                session = new HttpSession(io_svc(), mgr.get(urls));
+                SinkManager & smgr(util::daemon::use_module<SinkManager>(io_svc()));
+                session = new HttpSession(io_svc(), url);
+                smgr.add_sink(session);
                 if (session_id.empty()) {
                     session_id = framework::string::format((long)session);
                     url.param("session", session_id);
@@ -110,8 +101,10 @@ namespace trip
         {
             std::vector<HttpSession *>::iterator iter = std::find(
                 closed_sessions_.begin(), closed_sessions_.end(), session);
-            if (iter != closed_sessions_.end() && (*iter)->empty()) {
-                delete *iter;
+            if (iter != closed_sessions_.end() && session->empty()) {
+                SinkManager & smgr(util::daemon::use_module<SinkManager>(io_svc()));
+                smgr.del_sink(session);
+                delete session;
                 closed_sessions_.erase(iter);
             }
         }

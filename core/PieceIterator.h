@@ -46,7 +46,7 @@ namespace trip
             }
 
         public:
-            DataId id() const
+            DataId const & id() const
             {
                 return id_;
             }

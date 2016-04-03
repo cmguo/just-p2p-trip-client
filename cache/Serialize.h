@@ -74,7 +74,9 @@ namespace trip
                 & SERIALIZATION_NVP_3(t, cache_memory)
                 & SERIALIZATION_NVP_3(t, rcaches)
                 & SERIALIZATION_NVP_NAME("memory_cache", (MemoryCachePool *)t.memory_cache_)
-                & SERIALIZATION_NVP_NAME("disk_cache", (DiskCachePool *)t.disk_cache_)
+                ;
+            if (t.disk_cache_)
+                ar & SERIALIZATION_NVP_NAME("disk_cache", (DiskCachePool *)t.disk_cache_)
                 ;
         }
 

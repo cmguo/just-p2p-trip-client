@@ -19,11 +19,14 @@ namespace trip
             Archive & ar, 
             StatValue & t)
         {
-            ar & SERIALIZATION_NVP_1(t, total)
+            ar 
+                & SERIALIZATION_NVP_1(t, total)
                 & SERIALIZATION_NVP_1(t, last)
                 & SERIALIZATION_NVP_1(t, speed)
                 & SERIALIZATION_NVP_1(t, speed_max)
-                & SERIALIZATION_NVP_1(t, speed_avg);
+                & SERIALIZATION_NVP_1(t, speed_avg)
+                & SERIALIZATION_NVP_1(t, time)
+                ;
         }
 
         template <typename Archive>
@@ -31,8 +34,12 @@ namespace trip
             Archive & ar, 
             Stat & t)
         {
-            ar & SERIALIZATION_NVP_NAME("send_bytes", t.send_bytes())
-                & SERIALIZATION_NVP_NAME("recv_bytes", t.recv_bytes());
+            ar 
+                & SERIALIZATION_NVP_2(t, time_next)
+                & SERIALIZATION_NVP_2(t, time_last)
+                & SERIALIZATION_NVP_2(t, send_bytes)
+                & SERIALIZATION_NVP_2(t, recv_bytes)
+                ;
         }
 
         template <typename Archive>
@@ -40,9 +47,12 @@ namespace trip
             Archive & ar, 
             Cell & t)
         {
-            ar & SERIALIZATION_NVP_NAME("l_id", t.l_id());
-            ar & SERIALIZATION_NVP_NAME("p_id", t.p_id());
-            ar & SERIALIZATION_NVP_NAME("stat", t.stat());
+            ar 
+                & SERIALIZATION_NVP_NAME("this", (intptr_t)&t)
+                & SERIALIZATION_NVP_2(t, l_id)
+                & SERIALIZATION_NVP_2(t, p_id)
+                & SERIALIZATION_NVP_2(t, stat)
+                ;
         }
 
         template <typename Archive, typename T = Cell>
@@ -92,9 +102,11 @@ namespace trip
             Bus & t)
         {
             serialize(ar, (Cell &)t);
-            ar & SERIALIZATION_NVP_NAME("cells", BusCells(t));
-            ar & SERIALIZATION_NVP_2(t, signal_slots);
-            ar & SERIALIZATION_NVP_2(t, tmwait_slots);
+            ar 
+                & SERIALIZATION_NVP_NAME("cells", BusCells(t))
+                & SERIALIZATION_NVP_2(t, signal_slots)
+                & SERIALIZATION_NVP_2(t, tmwait_slots)
+                ;
         }
 
     }

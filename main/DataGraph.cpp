@@ -8,6 +8,7 @@
 #include "trip/client/p2p/Serialize.h"
 #include "trip/client/cdn/Serialize.h"
 #include "trip/client/cache/Serialize.h"
+#include "trip/client/sink/Serialize.h"
 
 #include <util/datagraph/WalkArchive.h>
 #include <util/archive/JsonOArchive.h>
@@ -28,7 +29,8 @@ namespace trip
         public:
             WalkPrint(
                 std::ostream & os)
-                : json_(os)
+                : os_(os)
+                , found_(false)
             {
             }
 
@@ -42,17 +44,23 @@ namespace trip
             {
                 set_path(path);
                 (*this) << t;
+                if (!found_) {
+                    os_ << "<not found>";
+                }
             }
 
             template <typename T>
             void found(
                 T const & t)
             {
-                json_ << t;
+                util::archive::JsonOArchive<> json(os_);
+                json << t;
+                found_ = true;
             }
 
         private:
-            util::archive::JsonOArchive<> json_;
+            std::ostream & os_;
+            bool found_;
         };
 
         struct DataRoot
@@ -65,6 +73,7 @@ namespace trip
                 , ssp(util::daemon::use_module<SspManager>(daemon))
                 , p2p(util::daemon::use_module<P2pManager>(daemon))
                 , cdn(util::daemon::use_module<CdnManager>(daemon))
+                , sink(util::daemon::use_module<SinkManager>(daemon))
             {
             }
 
@@ -78,6 +87,7 @@ namespace trip
                     & SERIALIZATION_NVP(ssp)
                     & SERIALIZATION_NVP(p2p)
                     & SERIALIZATION_NVP(cdn)
+                    & SERIALIZATION_NVP(sink)
                     ;
             }
 
@@ -87,6 +97,7 @@ namespace trip
             SspManager const & ssp;
             P2pManager const & p2p;
             CdnManager const & cdn;
+            SinkManager const & sink;
 
             static DataRoot & inst(
                 util::daemon::Daemon & daemon = *(util::daemon::Daemon *)NULL)

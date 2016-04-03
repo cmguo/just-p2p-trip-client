@@ -43,6 +43,11 @@ namespace trip
             bus_ = NULL;
         }
 
+        Bus * Cell::bus() const
+        {
+            return bus_;
+        }
+
         static boost::uint32_t in_avail(
             NetBuffer & buf)
         {
@@ -51,14 +56,12 @@ namespace trip
         }
 
         void Cell::on_send(
-            //void * head, 
             NetBuffer & buf)
         {
             stat_.push_send(in_avail(buf));
         }
 
         void Cell::on_recv(
-            //void * head, 
             NetBuffer & buf)
         {
             stat_.push_recv(in_avail(buf));
@@ -84,23 +87,31 @@ namespace trip
         bool Cell::push(
             void * pkt)
         {
+            return push(this, pkt);
+        }
+ 
+        bool Cell::push(
+            Cell * c, 
+            void * pkt)
+        {
             if (queue_) {
-                if (queue_->push(pkt)) {
+                if (queue_->push(c, pkt)) {
                     signal();
                     return true;
                 } else {
                     return false;
                 }
             } else if (bus_) {
-                return bus_->push(pkt);
+                return bus_->push(c, pkt);
             } else {
                 return false;
             }
         }
 
-        void * Cell::first()
+        void * Cell::first(
+            Cell *& c)
         {
-            return queue_->first();
+            return queue_->first(c);
         }
 
         void Cell::pop()

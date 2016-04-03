@@ -57,9 +57,9 @@ namespace trip
                 return tunnels_;
             }
 
-            std::vector<UdpTunnel *> const & pulse_tunnels() const
+            std::vector<UdpTunnel *> const & stateless_tunnels() const
             {
-                return pulse_tunnels_;
+                return stateless_tunnels_;
             }
 
         public:
@@ -73,6 +73,9 @@ namespace trip
             UdpTunnel & get_tunnel(
                 UdpEndpoint const & endpoint, 
                 UdpSession * session);
+
+            void free_tunnel(
+                Uuid const & uid);
 
             UdpSession * get_session(
                 UdpTunnel & tunnel, 
@@ -98,7 +101,7 @@ namespace trip
             UdpSocket * socket_;
             std::map<boost::uint32_t, service_t> services_;
             std::map<Uuid, UdpTunnel *> tunnels_;
-            std::vector<UdpTunnel *> pulse_tunnels_;
+            std::vector<UdpTunnel *> stateless_tunnels_;
         };
 
     } // namespace client

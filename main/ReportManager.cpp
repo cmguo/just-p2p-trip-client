@@ -152,7 +152,7 @@ namespace trip
                 expand_value(cond, graph, event);
                 std::vector<std::string> args;
                 framework::string::slice<std::string>(cond, std::back_inserter(args), " ");
-                bool r = true;
+                bool r = false;
                 if (args.size() == 3) {
                     if (args[1] == "==" )
                         r = args[0] == args[2];

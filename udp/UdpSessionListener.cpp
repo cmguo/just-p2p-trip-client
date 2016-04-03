@@ -33,6 +33,7 @@ namespace trip
 
         UdpSessionListener::~UdpSessionListener()
         {
+            umgr_.free_tunnel(endpoint_.id);
         }
 
         void UdpSessionListener::set_remote(
@@ -145,6 +146,7 @@ namespace trip
         void UdpSessionListener::on_timer(
             Time const & now)
         {
+            Cell::on_timer(now);
             if (now < msg_time_)
                 return;
             if (status_ == 0) {
@@ -153,8 +155,11 @@ namespace trip
                     delete this;
                     return;
                 }
-                if (msg_try_)
+                if (msg_try_) {
                     LOG_WARN("[on_timer] retry connect, ep:" << endpoint_.endpoints[0].to_string());
+                } else {
+                    LOG_DEBUG("[on_timer] try connect to " << endpoint_.endpoints[0].to_string() << ", l_id: " << tunnel().l_id());
+                }
                 ++msg_try_;
                 msg_time_ = now + Duration::milliseconds(500);
                 Message * msg = alloc_message();
@@ -165,7 +170,7 @@ namespace trip
                 send_msg(msg);
                 tunnel().on_connecting();
             } else if (now >= tunnel().stat_.recv_bytes().time + Duration::seconds(5)) {
-                if (now >= tunnel().stat_.recv_bytes().time + Duration::seconds(60)) {
+                if (now >= tunnel().stat_.recv_bytes().time + Duration::seconds(30)) {
                     LOG_WARN("[on_timer] lost connection, ep:" << endpoint_.endpoints[0].to_string());
                     status_ = 0;
                     tunnel().on_disconnect();

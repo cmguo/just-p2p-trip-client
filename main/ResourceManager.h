@@ -3,13 +3,11 @@
 #ifndef _TRIP_CLIENT_MAIN_RESOURCE_MANAGER_H_
 #define _TRIP_CLIENT_MAIN_RESOURCE_MANAGER_H_
 
-#include "trip/client/main/ResourceMapping.h"
 #include "trip/client/core/ResourceEvent.h"
 
 #include <util/daemon/Module.h>
 #include <util/event/Observable.h>
-
-#include <boost/filesystem/path.hpp>
+#include <util/protocol/http/HttpClient.h>
 
 namespace trip
 {
@@ -29,9 +27,9 @@ namespace trip
             ~ResourceManager();
 
         public:
-            ResourceChangedEvent resource_added;
+            ResourceEvent resource_added;
 
-            ResourceChangedEvent resource_deleting;
+            ResourceEvent resource_deleting;
 
         public:
             Resource & get(
@@ -40,12 +38,22 @@ namespace trip
             Resource * find(
                 Uuid const & rid);
 
-            Resource & get(
+            void async_get(
+                std::vector<Url> & urls, 
+                ResourceEvent & event);
+
+            void get_urls(
+                Uuid const & rid, 
                 std::vector<Url> & urls);
 
             std::map<Uuid, Resource *> const & resources()
             {
                 return resources_;
+            }
+
+            boost::system::error_code const & last_error() const
+            {
+                return last_error_;
             }
 
         private:
@@ -58,14 +66,18 @@ namespace trip
             virtual void dump() const;
 
         private:
-            void on_event(
-                util::event::Observable const & observable, 
-                util::event::Event const & event);
+            void on_event();
+
+            void handle_fetch(
+                boost::system::error_code ec, 
+                ResourceEvent & event);
 
         private:
+            Url url_;
+            util::protocol::HttpClient http_;
             std::map<Uuid, Resource *> resources_;
-            std::vector<Resource *> other_resources_;
-            ResourceMapping mapping_;
+            std::map<Uuid, std::vector<Url> > resource_urls_;
+            boost::system::error_code last_error_;
         };
 
     } // namespace client

@@ -34,6 +34,8 @@ namespace trip
         public:
             boost::asio::io_service & io_svc();
 
+            SspEndpoint const & endpoint() const;
+
             Uuid const & pid() const;
 
         public:

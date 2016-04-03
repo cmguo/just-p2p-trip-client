@@ -33,7 +33,7 @@ namespace trip
         public:
             HttpSession(
                 boost::asio::io_service & io_svc, 
-                Resource & resource);
+                Url const & url);
 
             virtual ~HttpSession();
 
@@ -60,17 +60,8 @@ namespace trip
                 HttpServer * server, 
                 boost::system::error_code & ec);
 
-        public:
-            ResourceMeta const * meta();
-
-            boost::system::error_code error();
-
-            SegmentMeta const * segment_meta(
-                boost::uint64_t segm);
-
         private:
-            virtual void on_meta(
-                ResourceMeta const & meta);
+            virtual void on_attach();
 
             virtual void on_error(
                 boost::system::error_code const & ec);

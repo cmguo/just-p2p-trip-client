@@ -27,8 +27,10 @@ namespace trip
             Archive & ar, 
             P2pSource::Request & t)
         {
-            ar & SERIALIZATION_NVP_1(t, id)
-                & SERIALIZATION_NVP_1(t, time);
+            ar
+                & SERIALIZATION_NVP_1(t, id)
+                & SERIALIZATION_NVP_1(t, time)
+                ;
         }
 
         template <typename Archive>
@@ -37,7 +39,8 @@ namespace trip
             P2pSource & t)
         {
             serialize(ar, (UdpSession &)t);
-            ar & SERIALIZATION_NVP_3(t, map_id)
+            ar
+                & SERIALIZATION_NVP_3(t, map_id)
                 & SERIALIZATION_NVP_3(t, map)
                 & SERIALIZATION_NVP_3(t, delta)
                 & SERIALIZATION_NVP_3(t, rtt)
@@ -59,8 +62,10 @@ namespace trip
             Archive & ar, 
             P2pManager & t)
         {
-            ar & SERIALIZATION_NVP_2(t, sources);
-            ar & SERIALIZATION_NVP_2(t, sinks);
+            ar
+                & SERIALIZATION_NVP_2(t, sources)
+                & SERIALIZATION_NVP_2(t, sinks)
+                ;
         }
 
     }

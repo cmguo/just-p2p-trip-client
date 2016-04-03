@@ -36,6 +36,11 @@ namespace trip
             return static_cast<SspBus *>(bus_)->io_svc();
         }
 
+        SspEndpoint const & SspTunnel::endpoint() const
+        {
+            return endp_;
+        }
+
         Uuid const & SspTunnel::pid() const
         {
             return endp_.id;

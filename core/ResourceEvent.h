@@ -14,12 +14,12 @@ namespace trip
 
         class Resource;
 
-        struct ResourceChangedEvent
-            : util::event::EventEx<ResourceChangedEvent>
+        struct ResourceEvent
+            : util::event::EventEx<ResourceEvent>
         {
             Resource * resource;
-            ResourceChangedEvent(char const * name) 
-                : util::event::EventEx<ResourceChangedEvent>(name), resource(NULL) {}
+            ResourceEvent(char const * name) 
+                : util::event::EventEx<ResourceEvent>(name), resource(NULL) {}
         };
 
         struct ResourceMeta;

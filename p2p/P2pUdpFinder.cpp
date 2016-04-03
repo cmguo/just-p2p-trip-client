@@ -40,10 +40,12 @@ namespace trip
             ep.endpoints.resize(1);
             framework::network::Endpoint & ep2 = ep.endpoints[0];
             size_t index = ::rand() % urls.size();
+            ep.id.from_bytes(framework::string::md5(urls[index].host_svc()).to_bytes());
             ep2.from_string(urls[index].host_svc());
             attach(&umgr_.get_tunnel(ep));
             for (size_t i = 0; i < urls.size(); ++i) {
                 Url const & url(urls[i]);
+                ep.id.from_bytes(framework::string::md5(url.host_svc()).to_bytes());
                 ep2.from_string(url.host_svc());
                 tunnels_.push_back(&umgr_.get_tunnel(ep, this));
             }

@@ -44,6 +44,7 @@ namespace trip
         {
             LOG_TRACE("[detach]");
             close();
+            scheduler_ = NULL;
         }
 
         void Source::context(
