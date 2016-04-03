@@ -26,8 +26,7 @@ namespace trip
             , umgr_(manager)
             , msg_try_(0)
             , status_(0)
-            , seq_(0)
-            , recent_(NULL)
+            , pkt_(NULL)
         {
         }
 
@@ -58,20 +57,14 @@ namespace trip
             NetBuffer & buf)
         {
             assert(status_ == 0);
-            Time now;
-            msg_time_ = now - Duration::seconds(1);
-            on_timer(now);
+            connect();
         }
 
         void UdpSessionListener::on_recv(
             NetBuffer & buf)
         {
             UdpPacket & pkt = static_cast<UdpPacket &>(buf);
-            if (pkt.th.seq != seq_) {
-                pkt_ep_ = pkt.endp;
-                seq_ = pkt.th.seq;
-                recent_ = NULL;
-            }
+            pkt_ = &pkt;
             UdpSession::on_recv(buf);
         }
 
@@ -85,7 +78,7 @@ namespace trip
                         = msg->as<MessageRequestConnect>();
                     if (endpoint_.endpoints.empty()) {
                         endpoint_.id = req.uid;
-                        endpoint_.endpoints.push_back(pkt_ep_);
+                        endpoint_.endpoints.push_back(pkt_->endp);
                     }
                     set_remote(req.tid);
                     MessageResponseConnect resp;
@@ -133,14 +126,31 @@ namespace trip
                 }
                 break;
             default:
-                if (recent_ == NULL)
-                    recent_ = umgr_.get_session(tunnel(), *msg);
-                if (recent_)
-                    pass_msg_to(msg, recent_);
+                if (pkt_->recent2 == NULL)
+                    pkt_->recent2 = umgr_.get_session(tunnel(), *msg);
+                if (pkt_->recent2)
+                    pass_msg_to(msg, pkt_->recent2);
                 else
                     free_message(msg);
                 break;
             }
+        }
+
+        void UdpSessionListener::connect()
+        {
+            if (msg_try_) {
+                LOG_WARN("[on_timer] retry connect, ep:" << endpoint_.endpoints[0].to_string());
+            } else {
+                LOG_DEBUG("[on_timer] try connect to " << endpoint_.endpoints[0].to_string() << ", l_id: " << tunnel().l_id());
+            }
+            ++msg_try_;
+            Message * msg = alloc_message();
+            MessageRequestConnect & req = 
+                msg->get<MessageRequestConnect>();
+            req.tid = tunnel().l_id();
+            req.uid = umgr_.local_endpoint().id;
+            send_msg(msg);
+            tunnel().on_connecting();
         }
 
         void UdpSessionListener::on_timer(
@@ -155,26 +165,17 @@ namespace trip
                     delete this;
                     return;
                 }
-                if (msg_try_) {
-                    LOG_WARN("[on_timer] retry connect, ep:" << endpoint_.endpoints[0].to_string());
-                } else {
-                    LOG_DEBUG("[on_timer] try connect to " << endpoint_.endpoints[0].to_string() << ", l_id: " << tunnel().l_id());
-                }
-                ++msg_try_;
                 msg_time_ = now + Duration::milliseconds(500);
-                Message * msg = alloc_message();
-                MessageRequestConnect & req = 
-                    msg->get<MessageRequestConnect>();
-                req.tid = tunnel().l_id();
-                req.uid = umgr_.local_endpoint().id;
-                send_msg(msg);
-                tunnel().on_connecting();
+                connect();
             } else if (now >= tunnel().stat_.recv_bytes().time + Duration::seconds(5)) {
                 if (now >= tunnel().stat_.recv_bytes().time + Duration::seconds(30)) {
                     LOG_WARN("[on_timer] lost connection, ep:" << endpoint_.endpoints[0].to_string());
                     status_ = 0;
                     tunnel().on_disconnect();
-                    on_timer(now);
+                    msg_time_ = now + Duration::milliseconds(500);
+                    if (tunnel().count() >= 1) {
+                        connect();
+                    }
                     return;
                 }
                 msg_time_ = now + Duration::seconds(1);
@@ -197,12 +198,12 @@ namespace trip
             boost::uint16_t id)
         {
             if (status_ == 0) {
-                LOG_DEBUG("[set_remote] connected to " << pkt_ep_.to_string() << ", l_id: " << tunnel().l_id() << ", r_id: " << id);
+                LOG_DEBUG("[set_remote] connected to " << Endpoint(pkt_->endp).to_string() << ", l_id: " << tunnel().l_id() << ", r_id: " << id);
                 status_ = 1;
             }
             tunnel().p_id(id);
             endpoints_.clear();
-            endpoints_.push_back(std::make_pair(pkt_ep_, pkt_ep_));
+            endpoints_.push_back(std::make_pair(pkt_->endp, pkt_->endp));
         }
 
     } // namespace client

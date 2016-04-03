@@ -11,7 +11,7 @@ namespace trip
     {
 
         class UdpManager;
-        struct MessageRequestConnect;
+        class UdpPacket;
 
         class UdpTunnelListener
             : public UdpSession
@@ -33,8 +33,7 @@ namespace trip
 
         private:
             UdpManager & mgr_;
-            boost::uint16_t seq_;
-            UdpTunnel * recent_;
+            UdpPacket * pkt_;
         };
 
     } // namespace client

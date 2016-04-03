@@ -128,6 +128,8 @@ namespace trip
                 Bus::on_recv(sid, buf);
                 ar.seekg(pos, std::ios::beg);
             }
+            pkt.recent1 = NULL;
+            pkt.recent2 = NULL;
         }
 
         void UdpTunnel::on_connecting()

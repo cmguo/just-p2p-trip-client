@@ -12,6 +12,7 @@ namespace trip
     {
 
         class UdpManager;
+        class UdpPacket;
 
         class UdpSessionListener
             : public UdpSession
@@ -49,6 +50,8 @@ namespace trip
                 Time const & now);
 
         private:
+            void connect();
+
             void set_remote(
                 boost::uint16_t id);
 
@@ -59,9 +62,7 @@ namespace trip
             Time msg_time_;
             boost::uint16_t msg_try_;
             boost::uint16_t status_; // 0 - probing, 1 - connecting, 2 - connected
-            Endpoint pkt_ep_;
-            boost::uint16_t seq_;
-            UdpSession * recent_;
+            UdpPacket * pkt_;
         };
 
     } // namespace client

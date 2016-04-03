@@ -17,6 +17,9 @@ namespace trip
     namespace client
     {
 
+        struct UdpTunnel;
+        struct UdpSession;
+
         struct UdpPacket
             : Packet
             , framework::memory::MemoryPoolObject<
@@ -31,6 +34,8 @@ namespace trip
             boost::asio::ip::udp::endpoint endp;
             UdpEndpointPairs const * endpairs;
             TunnelHeader th;
+            UdpTunnel * recent1;
+            UdpSession * recent2;
             //void (*sender)(
             //    boost::asio::ip::udp::socket & socket, 
             //    UdpPacket & packet, 

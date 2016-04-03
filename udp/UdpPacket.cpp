@@ -12,6 +12,8 @@ namespace trip
             //: sender(NULL)
             //, sendctx(NULL)
             : endpairs(NULL)
+            , recent1(NULL)
+            , recent2(NULL)
         {
         }
 

@@ -83,7 +83,7 @@ namespace trip
 
             if (sinfo && sinfo->empty()) {
                 --sinfo->nsource;
-                LOG_DEBUG("[get_task] finish segment " << sinfo->pos.segment);
+                LOG_TRACE("[get_task] finish segment " << sinfo->pos.segment << " source:" + source.url().to_string());
                 sinfo = NULL;
                 source.context(sinfo);
             }

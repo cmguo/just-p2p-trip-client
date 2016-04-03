@@ -25,8 +25,6 @@ namespace trip
             UdpTunnel & tunnel)
             : UdpSession(tunnel)
             , mgr_(manager)
-            , seq_(0)
-            , recent_(NULL)
         {
         }
 
@@ -38,17 +36,14 @@ namespace trip
             NetBuffer & buf)
         {
             UdpPacket & pkt = static_cast<UdpPacket &>(buf);
-            if (pkt.th.seq != seq_) {
-                seq_ = pkt.th.seq;
-                recent_ = NULL;
-            }
-            if (recent_ == NULL) {
+            pkt_ = &pkt;
+            if (pkt.recent1 == NULL) {
                 size_t pos = buf.pubseekoff(0, std::ios::cur, std::ios::in);
                 UdpSession::on_recv(buf);
                 buf.pubseekoff(pos, std::ios::beg, std::ios::in);
             }
-            if (recent_)
-                recent_->main_session()->on_recv(buf);
+            if (pkt.recent1)
+                pkt.recent1->main_session()->on_recv(buf);
         }
 
         void UdpTunnelListener::on_msg(
@@ -63,7 +58,7 @@ namespace trip
                         break;
                     UdpEndpoint endp;
                     endp.id = req.uid;
-                    recent_ = &mgr_.get_tunnel(endp);
+                    pkt_->recent1 = &mgr_.get_tunnel(endp);
                 }
                 break;
             default:
