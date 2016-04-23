@@ -44,12 +44,14 @@ namespace trip
  
             REQ_Login       = 0x20, 
             REQ_Sync        = 0x21, 
+            REQ_KeepAlive   = 0x22, 
             REQ_Logout      = 0x23, 
 
             REQ_Find        = 0x28, 
 
             RSP_Login       = 0x0100 | REQ_Login, 
             RSP_Sync        = 0x0100 | REQ_Sync, 
+            RSP_KeepAlive   = 0x0100 | REQ_KeepAlive, 
             RSP_Logout      = 0x0100 | REQ_Logout, 
 
             RSP_Find        = 0x0100 | REQ_Find, 

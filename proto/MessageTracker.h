@@ -45,9 +45,11 @@ namespace trip
             : MessageData<MessageResponseLogin, RSP_Login>
         {
             boost::uint16_t sid;
+            boost::uint16_t keepalive;
 
             MessageResponseLogin()
                 : sid(0)
+                , keepalive(0)
             {
             }
 
@@ -56,6 +58,36 @@ namespace trip
                 Archive & ar)
             {
                 ar & SERIALIZATION_NVP(sid);
+                    // & SERIALIZATION_NVP(keepalive);
+            }
+        };
+
+        struct MessageRequestKeepAlive
+            : MessageData<MessageRequestKeepAlive, REQ_KeepAlive>
+        {
+            MessageRequestKeepAlive()
+                : sid(0)
+            {
+            }
+
+            template <typename Archive>
+            void serialize(
+                Archive & ar)
+            {
+            }
+        };
+
+        struct MessageResponseKeepAlive
+            : MessageData<MessageResponseKeepAlive, RSP_KeepAlive>
+        {
+            MessageResponseKeepAlive()
+            {
+            }
+
+            template <typename Archive>
+            void serialize(
+                Archive & ar)
+            {
             }
         };
 
