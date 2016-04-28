@@ -268,7 +268,7 @@ namespace trip
         void CdnDownloader::on_timeout(
             DataId const & piece)
         {
-            if (piece < win_beg_ && piece > win_end_) {
+            if (piece < win_beg_ || piece > win_end_) {
                 return;
             }
             SegmentInfo * seg = segments_[piece.segment - win_beg_.segment];
