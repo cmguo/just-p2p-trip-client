@@ -80,6 +80,8 @@ namespace trip
             boost::dynamic_bitset<boost::uint32_t> & map) const
         {
             boost::uint64_t start = from.top_segment;
+            if (start >= end_)
+                return;
             boost::uint64_t end = start + count;
             if (end > end_) end = end_;
             map.resize(end - start, false);

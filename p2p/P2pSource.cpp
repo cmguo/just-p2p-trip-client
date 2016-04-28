@@ -153,6 +153,10 @@ namespace trip
         {
             if (id.top)
                 id = resource_.data_ready.id;
+            if (id.top) {
+                map_req_.time = Time() + Duration::seconds(10);
+                return;
+            }
             id.inc_segment(0);
             if (map_.empty() || id < map_id_ 
                 || id > map_id_ + DataId::segments(PREPARE_MAP_RANGE / 2)) {
