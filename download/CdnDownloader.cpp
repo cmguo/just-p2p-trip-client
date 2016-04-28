@@ -68,6 +68,15 @@ namespace trip
                 seg->meta_ready = true;
                 seg->end.inc_segment(0);
                 seg->end.inc_block_piece(resource().get_segment(sid)->piece_count());
+
+                for (size_t i = 0; i < sources_.size(); ++i) {
+                    Source * src = sources_[i];
+                    if (src->context() == seg) {
+                        std::vector<DataId> requests;
+                        if (get_task(*src, requests))
+                            src->request(requests);
+                    }
+                }
             }
         }
 
@@ -142,8 +151,8 @@ namespace trip
                 --need_count;
             }
 
-            assert(!pieces.empty());
-            return true;
+            assert(!pieces.empty() || !sinfo->meta_ready);
+            return !pieces.empty();
         }
 
         void CdnDownloader::prepare_taskwindow(

@@ -142,11 +142,11 @@ namespace trip
             }
 
             Resource & resource = get(info.id);
-            resource.set_meta(info.meta);
             if (info.urls.is_initialized())
                 resource_urls_[info.id].swap(info.urls.get());
             if (info.segments.is_initialized())
                 resource.set_segments(info.segments.get());
+            resource.set_meta(info.meta);
 
             event.resource = &resource;
             raise(event);

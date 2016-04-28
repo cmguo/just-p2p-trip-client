@@ -66,7 +66,6 @@ namespace trip
             : MessageData<MessageRequestKeepAlive, REQ_KeepAlive>
         {
             MessageRequestKeepAlive()
-                : sid(0)
             {
             }
 
