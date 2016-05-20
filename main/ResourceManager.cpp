@@ -97,12 +97,19 @@ namespace trip
             std::vector<Url> & urls, 
             ResourceEvent & event)
         {
-            Url url(url_);
             for (size_t i = 0; i < urls.size(); ++i) {
-                url.param("url", urls[i].to_string());
+                if (urls[i].protocol() == "rid") {
+                    Uuid rid(urls[i].path().substr(1));
+                    Resource & resource = get(rid);
+                    event.resource = &resource;
+                    raise(event);
+                    return;
+                }
             }
-            http_.async_fetch(url, 
-                boost::bind(&ResourceManager::handle_fetch, this, _1, boost::ref(event)));
+            bool empty = async_requests_.empty();
+            async_requests_.push_back(std::make_pair(urls, &event));
+            if (!empty) return;
+            get_next();
         }
 
         void ResourceManager::get_urls(
@@ -122,10 +129,23 @@ namespace trip
             Bootstrap::instance(http_.get_io_service()).get("index", url_);
         }
 
-        void ResourceManager::handle_fetch(
-            boost::system::error_code ec, 
-            ResourceEvent & event)
+        void ResourceManager::get_next()
         {
+            Url url(url_);
+            std::vector<Url> & urls = async_requests_.front().first;
+            for (size_t i = 0; i < urls.size(); ++i) {
+                url.param("url", urls[i].to_string());
+            }
+            http_.async_fetch(url, 
+                boost::bind(&ResourceManager::handle_fetch, this, _1));
+        }
+
+        void ResourceManager::handle_fetch(
+            boost::system::error_code ec)
+        {
+            ResourceEvent & event = *async_requests_.front().second;
+            async_requests_.pop_front();
+
             ResourceInfo info;
             if (!ec) {
                 util::archive::XmlIArchive<> ia(http_.response_data());
@@ -134,22 +154,25 @@ namespace trip
                     ec = cdn_error::xml_format_error;
             }
 
+            if (!ec) {
+                Resource & resource = get(info.id);
+                if (info.urls.is_initialized())
+                    resource_urls_[info.id].swap(info.urls.get());
+                if (info.segments.is_initialized())
+                    resource.set_segments(info.segments.get());
+                resource.set_meta(info.meta);
+                event.resource = &resource;
+            }
+
             if (ec) {
                 LOG_WARN("[handle_fetch] ec:" << ec.message());
                 last_error_ = ec;
-                raise(event);
-                return;
             }
 
-            Resource & resource = get(info.id);
-            if (info.urls.is_initialized())
-                resource_urls_[info.id].swap(info.urls.get());
-            if (info.segments.is_initialized())
-                resource.set_segments(info.segments.get());
-            resource.set_meta(info.meta);
-
-            event.resource = &resource;
             raise(event);
+
+            if (!async_requests_.empty())
+                get_next();
         }
 
     } // namespace client

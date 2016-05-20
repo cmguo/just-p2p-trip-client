@@ -68,13 +68,15 @@ namespace trip
         private:
             void on_event();
 
+            void get_next();
+
             void handle_fetch(
-                boost::system::error_code ec, 
-                ResourceEvent & event);
+                boost::system::error_code ec);
 
         private:
             Url url_;
             util::protocol::HttpClient http_;
+            std::deque<std::pair<std::vector<Url>, ResourceEvent *> > async_requests_;
             std::map<Uuid, Resource *> resources_;
             std::map<Uuid, std::vector<Url> > resource_urls_;
             boost::system::error_code last_error_;
