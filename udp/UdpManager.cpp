@@ -32,9 +32,9 @@ namespace trip
             , socket_(new UdpSocket(io_svc()))
         {
             module_config()
-                << CONFIG_PARAM_NAME_NOACC("addr", addr_)
-                << CONFIG_PARAM_NAME_NOACC("parallel", parallel_)
-                << CONFIG_PARAM_NAME_NOACC("uid", local_endpoint_.id);
+                << CONFIG_PARAM_NAME_RDWR("addr", addr_)
+                << CONFIG_PARAM_NAME_RDWR("parallel", parallel_)
+                << CONFIG_PARAM_NAME_RDWR("uid", local_endpoint_.id);
             UdpTunnel * tunnel = new UdpTunnel(*socket_);
             new UdpTunnelListener(*this, *tunnel);
             LOG_INFO("[sizeof] Message:" << sizeof(Message) << ", UdpPacket:" << sizeof(UdpPacket));

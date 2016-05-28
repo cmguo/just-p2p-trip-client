@@ -8,6 +8,10 @@
 
 #include <framework/logger/Logger.h>
 #include <framework/logger/StreamRecord.h>
+#include <framework/string/FormatStl.h>
+#include <framework/string/ParseStl.h>
+
+#include <boost/type_traits/remove_const.hpp>
 
 namespace trip
 {
@@ -87,6 +91,13 @@ namespace trip
 
             util::archive::XmlIArchive<> ia(http_.response_data());
             ia >> urls_;
+
+            framework::configure::ConfigModule & cfg = module_config();
+            std::map<std::string, std::vector<Url> >::const_iterator iter = urls_.begin();
+            for (; iter != urls_.end(); ++iter) {
+                cfg << CONFIG_PARAM_NAME_RDONLY(iter->first, const_cast<std::vector<Url> &>(iter->second));
+            }
+
             raise(ready);
         }
 
