@@ -3,6 +3,7 @@
 #ifndef _TRIP_CLIENT_MAIN_SERIALIZE_H_
 #define _TRIP_CLIENT_MAIN_SERIALIZE_H_
 
+#include "trip/client/main/Bootstrap.h"
 #include "trip/client/main/ResourceManager.h"
 #include "trip/client/core/Serialize.h"
 
@@ -12,6 +13,15 @@ namespace trip
 {
     namespace client
     {
+
+        template <typename Archive>
+        void serialize(
+            Archive & ar, 
+            Bootstrap & t)
+        {
+            ar & SERIALIZATION_NVP_3(t, url)
+                & SERIALIZATION_NVP_3(t, urls);
+        }
 
         template <typename Archive>
         void serialize(

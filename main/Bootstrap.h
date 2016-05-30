@@ -59,6 +59,11 @@ namespace trip
             void handle_fetch(
                 boost::system::error_code ec);
 
+            template <typename Archive>
+            friend void serialize(
+                Archive & ar, 
+                Bootstrap & t);
+
         private:
             Url url_;
             util::protocol::HttpClient http_;

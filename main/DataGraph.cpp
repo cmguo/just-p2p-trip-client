@@ -67,7 +67,8 @@ namespace trip
         {
             DataRoot(
                 util::daemon::Daemon & daemon)
-                : resource(util::daemon::use_module<ResourceManager>(daemon))
+                : bootstrap(util::daemon::use_module<Bootstrap>(daemon))
+                , resource(util::daemon::use_module<ResourceManager>(daemon))
                 , cache(util::daemon::use_module<CacheManager>(daemon))
                 , udp(util::daemon::use_module<UdpManager>(daemon))
                 , ssp(util::daemon::use_module<SspManager>(daemon))
@@ -81,7 +82,9 @@ namespace trip
             void serialize(
                 Archive & ar)
             {
-                ar & SERIALIZATION_NVP(resource)
+                ar 
+                    & SERIALIZATION_NVP(bootstrap)
+                    & SERIALIZATION_NVP(resource)
                     & SERIALIZATION_NVP(cache)
                     & SERIALIZATION_NVP(udp)
                     & SERIALIZATION_NVP(ssp)
@@ -91,6 +94,7 @@ namespace trip
                     ;
             }
 
+            Bootstrap const & bootstrap;
             ResourceManager const & resource;
             CacheManager const & cache;
             UdpManager const & udp;
