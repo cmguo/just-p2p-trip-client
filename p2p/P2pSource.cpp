@@ -35,6 +35,7 @@ namespace trip
             , map_req_(0, Time())
             , req_count_(0)
         {
+            next_ += Duration::seconds(1);
         }
 
         P2pSource::~P2pSource()
@@ -203,6 +204,8 @@ namespace trip
                 iter->id = DataId(MAX_SEGMENT, 0, 0);
             }
             --req_count_;
+            rtt_sum_ += now - iter->time;
+            ++count_;
             Source::on_data(id, piece);
             Source::on_ready();
         }
@@ -227,9 +230,7 @@ namespace trip
         {
             Cell::on_timer(now);
 
-            Time time = now - rtt_;
-            
-            if (time > map_req_.time) {
+            if (now > map_req_.time) {
                 if (!is_open()) {
                     if (tunnel().is_open()) {
                         LOG_DEBUG("[on_timer] retry bind");
@@ -240,6 +241,18 @@ namespace trip
                 req_map(map_req_.id);
             }
 
+            if (now >= next_) {
+                if (count_ > 0) {
+                    Duration rtt = rtt_sum_ / count_;
+                    Duration dt = (now - last_) / count_;
+                    rtt_ = (rtt_ * 9 + rtt) / 10;
+                    delta_ = (delta_ * 9 + dt) / 10;
+                }
+                next_ += Duration::seconds(1);
+            }
+
+            Time time = now - rtt_ - Duration::milliseconds(1200);
+            
             std::deque<Request>::iterator iter = requests_.begin();
             while (iter != requests_.end() && iter->time < time) {
                 if (iter->id.top == 0) {

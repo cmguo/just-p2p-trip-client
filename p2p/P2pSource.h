@@ -107,6 +107,11 @@ namespace trip
             Request map_req_; // timer for map request
             std::deque<Request> requests_;
             boost::uint32_t req_count_;
+
+            Time last_;
+            Time next_;
+            Duration rtt_sum_;
+            boost::uint32_t count_;
         };
 
     } // namespace client

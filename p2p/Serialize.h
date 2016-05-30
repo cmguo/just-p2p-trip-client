@@ -45,7 +45,10 @@ namespace trip
                 & SERIALIZATION_NVP_3(t, delta)
                 & SERIALIZATION_NVP_3(t, rtt)
                 & SERIALIZATION_NVP_3(t, requests)
-                & SERIALIZATION_NVP_3(t, req_count)
+                & SERIALIZATION_NVP_3(t, last)
+                & SERIALIZATION_NVP_3(t, next)
+                & SERIALIZATION_NVP_3(t, rtt_sum)
+                & SERIALIZATION_NVP_3(t, count)
                 ;
         }
 

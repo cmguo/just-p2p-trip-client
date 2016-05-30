@@ -69,6 +69,12 @@ namespace trip
                 bool empty() { return meta_ready && timeout_pieces_.empty() && pos >= end; }
 			};
 			
+        private:
+            size_t window_size_;
+            size_t p2p_max_count_;
+            size_t p2p_max_per_seg_;
+
+        private:
 			std::vector<Source *> http_sources_;
 			std::vector<Source *> p2p_sources_;
 

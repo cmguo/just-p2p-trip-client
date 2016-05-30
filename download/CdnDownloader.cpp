@@ -22,6 +22,9 @@ namespace trip
             DownloadManager & mgr, 
             Resource & resource)
             : Downloader(mgr, resource)
+            , window_size_(4)
+            , p2p_max_count_(20)
+            , p2p_max_per_seg_(6)
             , timeout_seg_(NULL)
             , lock_(NULL)
         {
@@ -115,14 +118,18 @@ namespace trip
             }
 
             if (sinfo == NULL) {
+                size_t prio_min = (size_t)-1;
                 for (size_t i = 0; i < segments_.size(); ++i) {
                     SegmentInfo * seg2 = segments_[i];
                     // TODO: find better select algorithm, consider
                     // seg2->time_expire, seg2->np2p, seg2->nsource
                     // source->is_http
                     if (!seg2->empty() && source.has_segment(seg2->pos)) {
-                        sinfo = seg2;
-                        break;
+                        size_t prio = i * 3 + seg2->np2p + seg2->nsource;
+                        if (prio < prio_min) {
+                            sinfo = seg2;
+                            prio_min = prio;
+                        }
                     }
                 }
                 source.context(sinfo);
@@ -242,7 +249,7 @@ namespace trip
                 play_beg = play_pos;
             }
 
-            if (p2p_sources_.size() < 50)
+            if (p2p_sources_.size() < p2p_max_count_)
                 find_sources("p2p", 10);
 
             resource().modify_lock(lock_, win_beg_, win_end_);
@@ -260,7 +267,7 @@ namespace trip
         void CdnDownloader::reset()
         {
             if (master_)
-                prepare_taskwindow(master_->position(), 4);
+                prepare_taskwindow(master_->position(), window_size_);
             else
                 prepare_taskwindow(0, 0);
         }
