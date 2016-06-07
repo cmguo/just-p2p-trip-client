@@ -9,8 +9,8 @@
         <file_extension>.ts</file_extension>
     </meta>
     <urls>
-        <item>http://192.168.33.63/ppbox2/movies/m3u8/cntv/?a=0</item>
-        <item>http://192.168.33.63/ppbox2/movies/m3u8/cntv/?a=1</item>
+        <item>http://10.200.69.53/ppbox2/movies/m3u8/cntv/?a=0</item>
+        <item>http://10.200.69.53/ppbox2/movies/m3u8/cntv/?a=1</item>
     </urls>
     <segments>
         <item>

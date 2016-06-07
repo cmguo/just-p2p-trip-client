@@ -93,6 +93,16 @@ namespace trip
             return *iter->second;
         }
 
+        static void merge_urls(
+            std::vector<Url> & l, 
+            std::vector<Url> & r)
+        {
+            if (l.empty())
+                l.swap(r);
+            else
+                l.insert(l.end(), r.begin(), r.end());
+        }
+
         void ResourceManager::async_get(
             std::vector<Url> & urls, 
             ResourceEvent & event)
@@ -101,6 +111,8 @@ namespace trip
                 if (urls[i].protocol() == "rid") {
                     Uuid rid(urls[i].path().substr(1));
                     Resource & resource = get(rid);
+                    std::vector<Url> & rurls(resource_urls_[rid]);
+                    merge_urls(rurls, urls);
                     event.resource = &resource;
                     raise(event);
                     return;
@@ -143,6 +155,8 @@ namespace trip
         void ResourceManager::handle_fetch(
             boost::system::error_code ec)
         {
+            std::vector<Url> urls;
+            urls.swap(async_requests_.front().first);
             ResourceEvent & event = *async_requests_.front().second;
             async_requests_.pop_front();
 
@@ -156,8 +170,10 @@ namespace trip
 
             if (!ec) {
                 Resource & resource = get(info.id);
+                std::vector<Url> & rurls(resource_urls_[info.id]);
+                merge_urls(rurls, urls);
                 if (info.urls.is_initialized())
-                    resource_urls_[info.id].swap(info.urls.get());
+                    merge_urls(rurls, info.urls.get());
                 if (info.segments.is_initialized())
                     resource.set_segments(info.segments.get());
                 resource.set_meta(info.meta);

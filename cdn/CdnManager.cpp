@@ -58,7 +58,7 @@ namespace trip
             if (iter1 == sources_.end()) {
                 iter1 = sources_.insert(std::make_pair(rid, std::map<Uuid, CdnSource *>())).first;
             }
-            Uuid pid; pid.from_bytes(framework::string::md5(url.host_svc()).to_bytes());
+            Uuid pid; pid.from_bytes(framework::string::md5(url.to_string()).to_bytes());
             std::map<Uuid, CdnSource *>::iterator iter2 = iter1->second.find(pid);
             if (iter2 == iter1->second.end()) {
                 LOG_DEBUG("[get_source] new source, rid=" << resource.id() << ", url=" << url.to_string());

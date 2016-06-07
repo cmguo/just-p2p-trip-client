@@ -2,25 +2,25 @@
     <item>
         <first>index</first>
         <second>
-            <item>http://hsptp.c4hcdn.com:8000/api/v1/data/idx.xml</item>
-        </second>
-    </item>
-    <item>
-        <first>jump</first>
-        <second>
-            <item>http://192.168.33.63/trip/jump.xml</item>
+            <item>http://index.trip.com/trip/resource.xml</item>
         </second>
     </item>
     <item>
         <first>tracker</first>
         <second>
-            <item>http://192.168.33.130:4111/trip/tracker/</item>
+            <item>http://114.112.56.41:4111/trip/tracker/</item>
         </second>
     </item>
     <item>
         <first>report</first>
         <second>
             <item>http://192.168.33.63/trip/report.xml</item>
+        </second>
+    </item>
+    <item>
+        <first>upgrade</first>
+        <second>
+            <item>http://192.168.33.63/trip/</item>
         </second>
     </item>
 </root>

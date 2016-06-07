@@ -1,5 +1,6 @@
 <root>
     <version>1.2.1</version>
+    <config>force</config>
     <url>libjust-arm-android-r9-gcc46-mt-1.so</url>
     <md5>cb83563aea0d1ea07839bb4dfcd838dc</md5>
 </root>

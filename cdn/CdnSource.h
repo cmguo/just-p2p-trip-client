@@ -15,6 +15,7 @@ namespace trip
 
         class CdnManager;
         class SspTunnel;
+        class M3u8Media;
 
         class CdnSource
             : public Source
@@ -51,7 +52,15 @@ namespace trip
             
             virtual void cancel();
 
+        protected:
+            virtual void segment_url(
+                Url & url, 
+                size_t seg);
+
         private:
+            void handle_m3u8_open(
+                boost::system::error_code ec);
+
             void handle_open(
                 boost::system::error_code ec);
 
@@ -76,6 +85,10 @@ namespace trip
         private:
             CdnManager & manager_;
             util::protocol::HttpClient http_;
+            M3u8Media * m3u8_;
+            bool m3u8_is_open_;
+
+        private:
             Piece::pointer piece_;
             struct PieceRange
             {

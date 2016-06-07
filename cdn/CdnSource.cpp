@@ -3,6 +3,7 @@
 #include "trip/client/Common.h"
 #include "trip/client/cdn/CdnSource.h"
 #include "trip/client/cdn/CdnManager.h"
+#include "trip/client/cdn/M3u8Media.h"
 #include "trip/client/ssp/SspTunnel.h"
 #include "trip/client/core/Scheduler.h"
 #include "trip/client/core/PoolPiece.h"
@@ -33,6 +34,8 @@ namespace trip
             , SspSession(tunnel)
             , manager_(manager)
             , http_(tunnel.io_svc())
+            , m3u8_(NULL)
+            , m3u8_is_open_(false)
         {
             //io_svc.post(
             //    boost::bind(&Source::on_ready, this));
@@ -41,13 +44,21 @@ namespace trip
         CdnSource::~CdnSource()
         {
             manager_.del_source(this);
+            if (m3u8_)
+                delete m3u8_;
         }
 
         bool CdnSource::open(
             Url const & url)
         {
             LOG_DEBUG("[open] url=" << url.to_string());
-            on_ready();
+            if (url.path()[url.path().size() - 1] == '/') {
+                on_ready();
+            } else {
+                m3u8_ = new M3u8Media(tunnel().io_svc(), url);
+                m3u8_->async_open(
+                    boost::bind(&CdnSource::handle_m3u8_open, this, _1));
+            }
             return true;
         }
 
@@ -83,8 +94,8 @@ namespace trip
             assert(r.e > r.b);
             ranges_.push_back(r);
 
-            Url url(url_);
-            url.path(url.path() + framework::string::format(segno) + resource_.meta()->file_extension);
+            Url url;
+            segment_url(url, segno);
             util::protocol::HttpRequestHead head;
             head.host = url.host_svc();
             head.path = url.path_all();
@@ -104,6 +115,8 @@ namespace trip
             ranges_.clear();
             boost::system::error_code ec;
             http_.cancel(ec);
+            if (m3u8_)
+                m3u8_->cancel(ec);
         }
 
         bool CdnSource::has_segment(
@@ -125,7 +138,31 @@ namespace trip
 
         boost::uint32_t CdnSource::window_left() const
         {
+            if (m3u8_ && !m3u8_is_open_)
+                return 0;
             return window_size();
+        }
+
+        void CdnSource::segment_url(
+            Url & url,
+            size_t segno)
+        {
+            if (m3u8_ == NULL) {
+                url = url_;
+                url.path(url.path() + framework::string::format(segno) + resource_.meta()->file_extension);
+            } else {
+                boost::system::error_code ec;
+                m3u8_->segment_url(segno, url, ec);
+            }
+        }
+ 
+        void CdnSource::handle_m3u8_open(
+            boost::system::error_code ec)
+        {
+            if (!ec) {
+                m3u8_is_open_ = true;
+                on_ready();
+            }
         }
 
         void CdnSource::handle_open(
@@ -149,6 +186,7 @@ namespace trip
                     << ", ec=" << ec.message());
                 util::protocol::HttpRequestHead head(http_.request().head());
                 http_.close(ec);
+                return;
                 http_.async_open(head, boost::bind(
                         &CdnSource::handle_open, this, _1));
                 return;
