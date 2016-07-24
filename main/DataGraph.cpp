@@ -111,11 +111,52 @@ namespace trip
             }
         };
 
+        class ConfigModule
+            : public framework::configure::ConfigModuleBase
+        {
+        public:
+            ConfigModule(
+                DataGraph & graph)
+                : graph_(graph)
+            {
+            }
+
+            boost::system::error_code set(
+                std::string const & key, 
+                std::string const & value)
+            {
+                return framework::system::logic_error::no_permission;
+            }
+
+            boost::system::error_code get(
+                std::string const & key, 
+                std::string & value) const
+            {
+                std::ostringstream os;
+                if (graph_.dump(key, os)) {
+                    value = os.str();
+                    return boost::system::error_code();
+                } else {
+                    return framework::system::logic_error::item_not_exist;
+                }
+            }
+
+            boost::system::error_code get(
+                std::map<std::string, std::string> & kvs) const
+            {
+                return boost::system::error_code();
+            }
+
+        private:
+            DataGraph & graph_;
+        };
+
         DataGraph::DataGraph(
             util::daemon::Daemon & daemon)
-            : util::daemon::ModuleBase<DataGraph>(daemon, "DataGraph")
+            : util::daemon::ModuleBase<DataGraph>(daemon, "trip.client.DataGraph")
         {
             DataRoot::inst(daemon);
+            config().register_module(name(), new ConfigModule(*this));
         }
 
         DataGraph::~DataGraph()
@@ -135,8 +176,8 @@ namespace trip
         }
 
         bool DataGraph::dump(
-                std::string const & path, 
-                std::ostream & os)
+            std::string const & path, 
+            std::ostream & os)
         {
             WalkPrint wp(os);
             wp.print(DataRoot::inst(), path);
