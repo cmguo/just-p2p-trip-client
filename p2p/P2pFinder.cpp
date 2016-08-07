@@ -156,6 +156,7 @@ namespace trip
         {
             if (find.endpoints.empty()) {
                 LOG_WARN("[handle_find] no endpoint");
+                return;
             }
             std::vector<Source *> sources;
             pmgr_.get_sources(find.rid, find.endpoints, sources);

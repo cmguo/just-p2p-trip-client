@@ -231,7 +231,7 @@ namespace trip
             Cell::on_timer(now);
 
             if (now > map_req_.time) {
-                if (!is_open()) {
+                if (attached() && !is_open()) {
                     if (tunnel().is_open()) {
                         LOG_DEBUG("[on_timer] retry bind");
                         open(Url());
