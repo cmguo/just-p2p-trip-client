@@ -2,6 +2,7 @@
 
 #include "trip/client/Common.h"
 #include "trip/client/cdn/M3u8Media.h"
+#include "trip/client/cdn/Error.h"
 
 #include <util/stream/UrlSource.h>
 
@@ -138,6 +139,32 @@ namespace trip
             }
         }
 
+        struct completion_condition
+        {
+            completion_condition(
+                boost::asio::streambuf & buf)
+                : buf_(buf)
+            {
+            }
+            boost::asio::streambuf & buf_;
+            size_t operator()(
+                boost::system::error_code const & error, 
+                size_t bytes_transferred)
+            {
+                if (error) return 0;
+                if (bytes_transferred < 7) {
+                    return 7 - bytes_transferred;
+                } else if (bytes_transferred == 7) {
+                    if (strncmp(boost::asio::buffer_cast<char const *>(buf_.data()), "#EXTM3U", 7) != 0)
+                        return 0;
+                    else
+                        return 1024;
+                } else {
+                    return 1024;
+                }
+            }
+        };
+
         void M3u8Media::handle_open(
             boost::system::error_code ec)
         {
@@ -155,12 +182,8 @@ namespace trip
                 handle_read(ec);
                 return;
             }
-            boost::uint64_t total = source_->total(ec);
             if (ec) {
-                boost::asio::async_read(*source_, buf_, 
-                    boost::bind(&M3u8Media::handle_read, this, _1));
-            } else {
-                boost::asio::async_read(*source_, buf_, boost::asio::transfer_at_least(total), 
+                boost::asio::async_read(*source_, buf_, completion_condition(buf_), 
                     boost::bind(&M3u8Media::handle_read, this, _1));
             }
         }
@@ -198,13 +221,11 @@ namespace trip
                 return;
             }
 
-            if (!has_end_) {
+            if (!ec && !has_end_) {
                 timer_.expires_from_now(
                     boost::posix_time::seconds(duration_));
                 timer_.async_wait(
                     boost::bind(&M3u8Media::handle_timer, this, _1));
-            } else {
-                closed_ = true;
             }
             
             lc.unlock();
@@ -244,6 +265,11 @@ namespace trip
             char const * const M3U8_EXTSTREAMINF = "#EXT-X-STREAM-INF";
             char const * const M3U8_EXTINF = "#EXTINF";
             char const * const M3U8_END  = "#EXT-X-ENDLIST";
+
+            if (buf_.size() < 10) {
+                ec = cdn_error::xml_format_error;
+                return;
+            }
 
             std::string line;
             std::istream is(&buf_);
