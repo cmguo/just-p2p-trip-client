@@ -80,11 +80,7 @@ namespace trip
             BlockPiece(
                 boost::intrusive_ptr<BlockData> block, 
                 boost::uint8_t * data, 
-                boost::uint16_t size)
-                : Piece(1, data, size)
-                , block_(block)
-            {
-            }
+                boost::uint16_t size);
 
             ~BlockPiece() {}
 

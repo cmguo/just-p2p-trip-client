@@ -16,7 +16,9 @@ namespace trip
 
         CachePool::CachePool(
             size_t size)
-            : used_caches_(NULL)
+            : total_(size)
+            , used_(0)
+            , used_caches_(NULL)
             , used_caches_tail_(&used_caches_)
         {
             caches_.resize(size);
@@ -125,6 +127,7 @@ namespace trip
             Cache ** p = used_caches_tail_;
             *used_caches_tail_ = c;
             used_caches_tail_ = &c->next;
+            ++used_;
             return p;
         }
 
@@ -134,6 +137,7 @@ namespace trip
             Cache * c = *cache;
             if (c->data && !free(c))
                 return;
+            --used_;
             if (c->lock)
                 c->rcache->resource().release_lock(c->lock);
             c->rcache = NULL;
@@ -165,6 +169,7 @@ namespace trip
             } else {
                 Cache ** p = &cache;
                 free_cache(p);
+                ++total_;
             }
         }
 

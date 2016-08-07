@@ -100,7 +100,9 @@ namespace trip
             Piece::pointer piece)
         {
             //LOG_INFO("[on_data] id=" << id);
-            resource_.set_piece(id, piece);
+            if (!resource_.set_piece(id, piece)) {
+                LOG_WARN("[on_data] set piece failed id=" << id << " piece_size=" << piece->size());
+            }
             // scheduler_->on_piece(id);
         }
 

@@ -7,6 +7,9 @@
 #include <util/event/EventEx.h>
 #include <util/event/Observable.h>
 
+#include <framework/container/Array.h>
+#include <framework/memory/MemoryPool.h>
+
 namespace trip
 {
     namespace client
@@ -37,6 +40,15 @@ namespace trip
             static void check_memory(
                 void const * obj);
 
+        public:
+            struct Pool
+            {
+                char const * name;
+                framework::memory::MemoryPool const * pool;
+            };
+
+            framework::container::Array<Pool const> pools();
+
         private:
             static void oom_handler(
                 void const * ctx, 
@@ -50,6 +62,9 @@ namespace trip
                 boost::system::error_code & ec);
 
             virtual void dump() const;
+
+        private:
+            static Pool const pools_[];
         };
 
     } // namespace client

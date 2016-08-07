@@ -17,7 +17,7 @@ namespace trip
 
         FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("trip.client.BlockData", framework::logger::Debug);
 
-        static framework::memory::SmallFixedPool pool(framework::memory::PrivateMemory(), -1, sizeof(BlockPiece));
+        static framework::memory::SmallFixedPool blk_pool(framework::memory::PrivateMemory(), -1, sizeof(BlockPiece));
 
         BlockData::BlockData(
             void * map_addr, 
@@ -50,7 +50,7 @@ namespace trip
                 LOG_WARN("[alloc] map failed, ec:" << ec.message());
                 return NULL;
             }
-            void * ptr = pool.alloc(sizeof(BlockData));
+            void * ptr = blk_pool.alloc(sizeof(BlockData));
             if (ptr) {
                 LOG_TRACE("[alloc] ptr:" << addr << ", size:" << size);
                 return new (ptr) BlockData(addr, offset, size);
@@ -69,7 +69,7 @@ namespace trip
             boost::system::error_code ec;
             file.unmap(p->map_addr_, p->offset_, p->size_, ec);
             p->~BlockData();
-            pool.free(p);
+            blk_pool.free(p);
         }
 
         BlockPiece * BlockPiece::alloc(
@@ -77,7 +77,7 @@ namespace trip
             boost::uint8_t * data, 
             boost::uint16_t size)
         {
-            void * ptr = pool.alloc(sizeof(BlockPiece));
+            void * ptr = blk_pool.alloc(sizeof(BlockPiece));
             if (ptr) {
                 return new (ptr) BlockPiece(block, data, size);
             } else {
@@ -86,16 +86,25 @@ namespace trip
             }
         }
 
+        BlockPiece::BlockPiece(
+            boost::intrusive_ptr<BlockData> block, 
+            boost::uint8_t * data, 
+            boost::uint16_t size)
+            : Piece(1, data, size)
+            , block_(block)
+        {
+        }
+
         void BlockPiece::free(
             BlockPiece * p)
         {
             p->~BlockPiece();
-            pool.free(p);
+            blk_pool.free(p);
         }
 
         framework::memory::MemoryPool & BlockData::mpool()
         {
-            return pool;
+            return blk_pool;
         }
 
     } // namespace client

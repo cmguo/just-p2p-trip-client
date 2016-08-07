@@ -96,6 +96,8 @@ namespace trip
                 CachePool & t);
 
         private:
+            size_t total_;
+            size_t used_;
             Cache * used_caches_;
             Cache ** used_caches_tail_;
             Cache * free_caches_;

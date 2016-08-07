@@ -68,20 +68,22 @@ namespace trip
             return true;
         }
 
-        static struct {
-            char const * name;
-            framework::memory::MemoryPool const * pool;
-        } const mpools[] = {
+        MemoryManager::Pool const MemoryManager::pools_[] = {
             {"PoolPiece", &PoolPiece::mpool()}, 
             {"ResourceData", &ResourceData::mpool()}, 
             {"BlockData", &BlockData::mpool()}
         };
 
+        framework::container::Array<MemoryManager::Pool const> MemoryManager::pools()
+        {
+            return framework::container::make_array(pools_);
+        }
+
         void MemoryManager::dump() const
         {
-            for (size_t i = 0; i < sizeof(mpools) / sizeof(mpools[0]); ++i) {
-                framework::memory::MemoryPool const & pool(*mpools[i].pool);
-                LOG_INFO("[dump] [mpool] " << mpools[i].name << ": "
+            for (size_t i = 0; i < sizeof(pools_) / sizeof(pools_[0]); ++i) {
+                framework::memory::MemoryPool const & pool(*pools_[i].pool);
+                LOG_INFO("[dump] [mpool] " << pools_[i].name << ": "
                     << pool.capacity() << "/" << pool.consumption() << "/" << pool.peek()
                     << " " << pool.num_block() << "/" << pool.num_object());
             }
@@ -99,11 +101,11 @@ namespace trip
         void MemoryManager::check_memory(
             void const * obj)
         {
-            for (size_t i = 0; i < sizeof(mpools) / sizeof(mpools[0]); ++i) {
-                framework::memory::MemoryPool const & pool(*mpools[i].pool);
+            for (size_t i = 0; i < sizeof(pools_) / sizeof(pools_[0]); ++i) {
+                framework::memory::MemoryPool const & pool(*pools_[i].pool);
                 int n = pool.check_object(obj);
                 if (n) {
-                    LOG_INFO("[check_memory] pool:" << mpools[i].name << ", status:" << n);
+                    LOG_INFO("[check_memory] pool:" << pools_[i].name << ", status:" << n);
                 }
             }
         }

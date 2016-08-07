@@ -4,6 +4,7 @@
 #define _TRIP_CLIENT_MAIN_SERIALIZE_H_
 
 #include "trip/client/main/Bootstrap.h"
+#include "trip/client/main/MemoryManager.h"
 #include "trip/client/main/ResourceManager.h"
 #include "trip/client/core/Serialize.h"
 
@@ -31,6 +32,28 @@ namespace trip
             ar & t.resources();
         }
 
+        template <typename Archive>
+        void serialize(
+            Archive & ar, 
+            MemoryManager::Pool & t)
+        {
+            ar & SERIALIZATION_NVP_1(t, name);
+            framework::memory::MemoryPool const & p(*t.pool);
+            ar & SERIALIZATION_NVP_2(p, capacity);
+            ar & SERIALIZATION_NVP_2(p, consumption);
+            ar & SERIALIZATION_NVP_2(p, peek);
+            ar & SERIALIZATION_NVP_2(p, num_block);
+            ar & SERIALIZATION_NVP_2(p, num_object);
+        }
+
+        template <typename Archive>
+        void serialize(
+            Archive & ar, 
+            MemoryManager & t)
+        {
+            ar & t.pools();
+        }
+
     }
 }
 
@@ -41,6 +64,12 @@ namespace util
 
         template <class Archive>
         struct is_single_unit<Archive, trip::client::ResourceManager>
+            : boost::true_type
+        {
+        };
+
+        template <class Archive>
+        struct is_single_unit<Archive, trip::client::MemoryManager>
             : boost::true_type
         {
         };

@@ -42,8 +42,10 @@ namespace trip
             Archive & ar, 
             CachePool & t)
         {
+            ar & SERIALIZATION_NVP_3(t, total)
+                & SERIALIZATION_NVP_3(t, used);
             if (t.used_caches_)
-            ar & SERIALIZATION_NVP_3(t, used_caches);
+                ar & SERIALIZATION_NVP_3(t, used_caches);
         }
 
         template <typename Archive>
@@ -79,20 +81,6 @@ namespace trip
                 ar & SERIALIZATION_NVP_NAME("disk_cache", (DiskCachePool *)t.disk_cache_)
                 ;
         }
-
-    }
-}
-
-namespace util
-{
-    namespace serialization
-    {
-
-        template <class Archive>
-        struct is_single_unit<Archive, trip::client::MemoryCachePool>
-            : boost::true_type
-        {
-        };
 
     }
 }

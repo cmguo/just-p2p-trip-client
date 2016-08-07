@@ -76,6 +76,12 @@ namespace trip
                 DataId to);
 
         private:
+            template <typename Archive>
+            friend void serialize(
+                Archive & ar, 
+                Block & t);
+
+        private:
             boost::uint16_t left_;
             mutable boost::uint16_t touched_;
             boost::uint16_t piece_count_;

@@ -69,6 +69,7 @@ namespace trip
                 util::daemon::Daemon & daemon)
                 : bootstrap(util::daemon::use_module<Bootstrap>(daemon))
                 , resource(util::daemon::use_module<ResourceManager>(daemon))
+                , memory(util::daemon::use_module<MemoryManager>(daemon))
                 , cache(util::daemon::use_module<CacheManager>(daemon))
                 , udp(util::daemon::use_module<UdpManager>(daemon))
                 , ssp(util::daemon::use_module<SspManager>(daemon))
@@ -85,6 +86,7 @@ namespace trip
                 ar 
                     & SERIALIZATION_NVP(bootstrap)
                     & SERIALIZATION_NVP(resource)
+                    & SERIALIZATION_NVP(memory)
                     & SERIALIZATION_NVP(cache)
                     & SERIALIZATION_NVP(udp)
                     & SERIALIZATION_NVP(ssp)
@@ -96,6 +98,7 @@ namespace trip
 
             Bootstrap const & bootstrap;
             ResourceManager const & resource;
+            MemoryManager const & memory;
             CacheManager const & cache;
             UdpManager const & udp;
             SspManager const & ssp;

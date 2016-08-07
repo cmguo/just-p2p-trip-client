@@ -158,6 +158,12 @@ namespace trip
                 DataId to);
 
         private:
+            typedef framework::container::Ordered<
+                Segment2, 
+                Segment2::idkey
+            > segment_map_t;
+
+        private:
             struct Lock
                 : framework::container::OrderedHook<Lock>::type
             {
@@ -171,25 +177,33 @@ namespace trip
                 }
             };
 
+            typedef framework::container::Ordered<Lock, 
+                framework::container::identity<Lock>, 
+                std::less<Lock>, 
+                framework::container::ordered_non_unique_tag
+            > locks_map_t; 
+
             void insert_lock(
                 Lock * l);
 
             void remove_lock(
                 Lock * l);
 
+            locks_map_t & locks()
+            {
+                return locks_;
+            }
+
         private:
+            template <typename Archive>
+            friend void serialize(
+                Archive & ar, 
+                ResourceData & t);
+
             boost::uint64_t next_;
             boost::uint64_t end_;
-            typedef framework::container::Ordered<
-                Segment2, 
-                Segment2::idkey
-            > segment_map_t;
             segment_map_t segments_;
-            framework::container::Ordered<Lock, 
-                framework::container::identity<Lock>, 
-                std::less<Lock>, 
-                framework::container::ordered_non_unique_tag
-            > locks_;
+            locks_map_t locks_;
             mutable bool meta_dirty_;
             boost::uint64_t meta_ready_;
         };
