@@ -34,6 +34,7 @@ namespace trip
             , rtt_(Duration::milliseconds(500))
             , map_req_(0, Time())
             , req_count_(0)
+            , count_(0)
         {
             next_ += Duration::seconds(1);
         }
@@ -248,6 +249,8 @@ namespace trip
                     rtt_ = (rtt_ * 9 + rtt) / 10;
                     delta_ = (delta_ * 9 + dt) / 10;
                 }
+                last_ = now;
+                count_ = 0;
                 next_ += Duration::seconds(1);
             }
 
