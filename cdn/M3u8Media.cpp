@@ -168,6 +168,7 @@ namespace trip
         void M3u8Media::handle_open(
             boost::system::error_code ec)
         {
+            LOG_DEBUG("[handle_open] ec: " << ec.message());
             boost::mutex::scoped_lock lc(mutex_);
 
             if (closed_) {
@@ -182,15 +183,15 @@ namespace trip
                 handle_read(ec);
                 return;
             }
-            if (ec) {
-                boost::asio::async_read(*source_, buf_, completion_condition(buf_), 
-                    boost::bind(&M3u8Media::handle_read, this, _1));
-            }
+            boost::asio::async_read(*source_, buf_, completion_condition(buf_), 
+                boost::bind(&M3u8Media::handle_read, this, _1));
         }
 
         void M3u8Media::handle_read(
             boost::system::error_code ec)
         {
+            LOG_DEBUG("[handle_read] ec: " << ec.message());
+            
             boost::mutex::scoped_lock lc(mutex_);
 
             if (closed_) {
@@ -265,6 +266,8 @@ namespace trip
             char const * const M3U8_EXTSTREAMINF = "#EXT-X-STREAM-INF";
             char const * const M3U8_EXTINF = "#EXTINF";
             char const * const M3U8_END  = "#EXT-X-ENDLIST";
+
+            LOG_DEBUG("[parse_m3u8]");
 
             if (buf_.size() < 10) {
                 ec = cdn_error::xml_format_error;
