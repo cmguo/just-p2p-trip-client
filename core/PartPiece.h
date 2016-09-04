@@ -27,7 +27,7 @@ namespace trip
                 Piece::pointer piece, 
                 boost::uint16_t offset, 
                 boost::uint16_t size)
-                : Piece(2, piece->data() + offset, size)
+                : Piece(2, (boost::uint8_t *)piece->data() + offset, size)
                 , piece_(piece)
             {
                 assert(offset < piece->size());

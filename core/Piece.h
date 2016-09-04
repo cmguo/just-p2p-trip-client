@@ -28,7 +28,12 @@ namespace trip
                 return nref_;
             }
 
-            boost::uint8_t * data() const
+            boost::uint8_t type() const
+            {
+                return type_;
+            }
+
+            void * data() const
             {
                 return data_;
             }
@@ -48,7 +53,7 @@ namespace trip
         protected:
             Piece(
                 boost::uint8_t type,
-                boost::uint8_t * data, 
+                void * data, 
                 boost::uint16_t size)
                 : nref_(0)
                 , type_(type)
@@ -78,10 +83,16 @@ namespace trip
             }
 
         private:
+            template <typename Archive>
+            friend void serialize(
+                Archive & ar, 
+                Piece & t);
+
+        private:
             boost::uint8_t nref_;
             boost::uint8_t type_;
             boost::uint16_t size_;
-            boost::uint8_t * data_;
+            void * data_;
         };
 
     } // namespace client

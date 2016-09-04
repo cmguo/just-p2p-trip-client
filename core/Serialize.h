@@ -9,6 +9,7 @@
 
 #include <util/serialization/NVPair.h>
 #include <util/serialization/stl/vector.h>
+#include <util/serialization/boost/intrusive_ptr.h>
 #include <util/serialization/Url.h>
 #include <util/serialization/Uuid.h>
 #include <util/serialization/Ordered.h>
@@ -47,11 +48,23 @@ namespace trip
         template <typename Archive>
         void serialize(
             Archive & ar, 
+            Piece & t)
+        {
+            ar & SERIALIZATION_NVP_3(t, nref)
+		& SERIALIZATION_NVP_3(t, type)
+		& SERIALIZATION_NVP_3(t, data)
+		& SERIALIZATION_NVP_3(t, size);
+        }
+
+        template <typename Archive>
+        void serialize(
+            Archive & ar, 
             Block & t)
         {
-            ar & SERIALIZATION_NVP_1(t, left_)
-                & SERIALIZATION_NVP_1(t, piece_count_)
-                & SERIALIZATION_NVP_1(t, last_piece_size_);
+            ar & SERIALIZATION_NVP_3(t, left)
+                & SERIALIZATION_NVP_3(t, piece_count)
+                & SERIALIZATION_NVP_3(t, last_piece_size);
+            ar & SERIALIZATION_NVP_NAME("pieces", framework::container::make_array(t.pieces_));
         }
 
         template <typename Archive>
@@ -59,9 +72,9 @@ namespace trip
             Archive & ar, 
             Segment & t)
         {
-            ar & SERIALIZATION_NVP_1(t, left_)
-                & SERIALIZATION_NVP_1(t, block_count_)
-                & SERIALIZATION_NVP_1(t, last_block_size_);
+            ar & SERIALIZATION_NVP_3(t, left)
+                & SERIALIZATION_NVP_3(t, block_count)
+                & SERIALIZATION_NVP_3(t, last_block_size);
             ar & SERIALIZATION_NVP_NAME("blocks", framework::container::make_array(t.blocks_));
         }
 

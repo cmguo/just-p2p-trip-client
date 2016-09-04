@@ -22,7 +22,7 @@ namespace trip
 
         Segment::~Segment()
         {
-            for (boost::uint16_t i = 0; i < block_count_ - 1; ++i) {
+            for (boost::uint16_t i = 0; i < block_count_; ++i) {
                 if (blocks_[i])
                     Block::free(blocks_[i]);
             }
@@ -73,7 +73,7 @@ namespace trip
             for (boost::uint16_t i = 0; i < block_count_; ++i) {
                 Block::piece_array_t pieces(blocks_[i]->pieces());
                 for (boost::uint16_t j = 0; j < (boost::uint16_t)pieces.size(); ++j) {
-                    md5.update(pieces[j]->data(), pieces[j]->size());
+                    md5.update((boost::uint8_t const *)pieces[j]->data(), pieces[j]->size());
                 }
             }
             md5.final();

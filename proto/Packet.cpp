@@ -66,8 +66,8 @@ namespace trip
 
         void PacketBufferIterator::increment()
         {
-            boost::uint8_t * p = 
-                boost::asio::buffer_cast<boost::uint8_t *>(buf_);
+            void * p = 
+                boost::asio::buffer_cast<void *>(buf_);
             size_t n = 0;
             if (p == NULL) {
                 p = pkt_->head_;
