@@ -22,7 +22,8 @@ namespace trip
         public:
             bool dump(
                 std::string const & path, 
-                std::ostream & os);
+                std::ostream & os, 
+                int depth = 65536);
 
         private:
             virtual bool startup(

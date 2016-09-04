@@ -40,9 +40,11 @@ namespace trip
             template <typename T>
             void print(
                 T const & t, 
-                std::string const & path)
+                std::string const & path, 
+                int depth = 65536)
             {
                 set_path(path);
+                depth_ = depth;
                 (*this) << t;
                 if (!found_) {
                     os_ << "<not found>";
@@ -54,6 +56,7 @@ namespace trip
                 T const & t)
             {
                 util::archive::JsonOArchive<> json(os_);
+                json.set_depth(depth_);
                 json << t;
                 found_ = true;
             }
@@ -61,6 +64,7 @@ namespace trip
         private:
             std::ostream & os_;
             bool found_;
+            int depth_;
         };
 
         struct DataRoot
@@ -180,10 +184,11 @@ namespace trip
 
         bool DataGraph::dump(
             std::string const & path, 
-            std::ostream & os)
+            std::ostream & os, 
+            int depth)
         {
             WalkPrint wp(os);
-            wp.print(DataRoot::inst(), path);
+            wp.print(DataRoot::inst(), path, depth);
             return wp;
         }
 

@@ -95,7 +95,9 @@ namespace trip
             if (option_ == "/dump") {
                 std::ostream os(&response_data());
                 DataGraph & graph(util::daemon::use_module<DataGraph>(get_io_service()));
-                if (!graph.dump(url_.path().substr(5), os)) {
+                std::string depth_str = url_.param_or("depth", "65536");
+                int depth = framework::string::parse<int>(depth_str);
+                if (!graph.dump(url_.path().substr(5), os, depth)) {
                     ec = http_error::not_found;
                     make_error(ec);
                 }
