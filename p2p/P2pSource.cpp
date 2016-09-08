@@ -232,14 +232,17 @@ namespace trip
             Cell::on_timer(now);
 
             if (now > map_req_.time) {
-                if (attached() && !is_open()) {
-                    if (tunnel().is_open()) {
-                        LOG_DEBUG("[on_timer] retry bind");
-                        open(Url());
+                if (attached()) {
+                    if (!is_open()) {
+                        if (tunnel().is_open()) {
+                            LOG_DEBUG("[on_timer] retry bind");
+                            open(Url());
+                        }
+                        return;
+                    } else {
+                        req_map(map_req_.id);
                     }
-                    return;
                 }
-                req_map(map_req_.id);
             }
 
             if (now >= next_) {

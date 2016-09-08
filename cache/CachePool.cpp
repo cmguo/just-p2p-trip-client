@@ -167,9 +167,12 @@ namespace trip
                     p = &(*p)->next;
                 }
             } else {
+                // from DiskCachePool
                 Cache ** p = &cache;
                 free_cache(p);
                 ++total_;
+                // not really used
+                ++used_;
             }
         }
 
