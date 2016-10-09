@@ -55,6 +55,37 @@ namespace trip
             return open_requests_.empty() && fetch_requests_.empty();
         }
 
+        bool HttpSession::cancel(
+            boost::system::error_code & ec)
+        {
+            LOG_TRACE("[cancel]");
+            ec = boost::asio::error::operation_aborted;
+            std::list<Request>::iterator iter = open_requests_.begin();
+            for (; iter != open_requests_.end(); ++iter) {
+                if (!iter->resp.empty()) {
+                    response_t resp;
+                    resp.swap(iter->resp);
+                    io_svc_.post(
+                        boost::bind(resp, ec));
+                }
+            }
+            iter = fetch_requests_.begin();
+            for (; iter != fetch_requests_.end(); ++iter) {
+                bool first = (iter == fetch_requests_.begin());
+                if (first && piece_) {
+                    if (iter->sink) {
+                        iter->sink->cancel(ec);
+                    }
+                } else if (!iter->resp.empty()) {
+                    response_t resp;
+                    resp.swap(iter->resp);
+                    io_svc_.post(
+                        boost::bind(resp, ec));
+                }
+            }
+            return true;
+        }
+
         void HttpSession::async_open(
             HttpServer * server, 
             response_t const & resp)
@@ -154,7 +185,7 @@ namespace trip
                 }
                 bool first = (iter == open_requests_.begin());
                 open_requests_.erase(iter);
-                if (first && fetch_requests_.empty()) fetch_next();
+                if (first && !fetch_requests_.empty()) fetch_next();
                 return true;
             }
             iter = std::find_if(fetch_requests_.begin(), fetch_requests_.end(), find_request(server));
@@ -163,7 +194,10 @@ namespace trip
                 if (first && iter->sink)
                     Sink::seek_end(iter->segm);
                 if (first && piece_) {
-                    iter->sink = NULL;
+                    if (iter->sink) {
+                        iter->sink->cancel(ec);
+                        iter->sink = NULL;
+                    }
                 } else {
                     if (!iter->resp.empty()) {
                         io_svc_.post(

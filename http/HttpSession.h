@@ -40,6 +40,9 @@ namespace trip
         public:
             bool empty() const;
 
+            bool cancel(
+                boost::system::error_code & ec);
+
         public:
             void async_open(
                 HttpServer * server,

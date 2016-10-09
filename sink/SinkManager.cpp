@@ -114,7 +114,7 @@ namespace trip
                 if (e.sink == NULL) {
                 } else if (e.resource) {
                     Resource & r = *e.resource;
-                    LOG_DEBUG("[on_event] resource_merged, id=" << r.id());
+                    LOG_DEBUG("[on_event] got resource id=" << r.id());
                     Downloader * downloader = dmgr_.get(r.id());
                     downloader->add_sink(e.sink);
                 } else {

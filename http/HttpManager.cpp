@@ -48,7 +48,20 @@ namespace trip
         bool HttpManager::shutdown(
             boost::system::error_code & ec)
         {
-            stop();
+            stop(ec);
+            for (size_t i = 0; i < closed_sessions_.size(); ++i) {
+                closed_sessions_[i]->cancel(ec);
+            }
+            session_map_t::iterator iter = session_map_.begin();
+            for (; iter != session_map_.end(); ++iter) {
+                if (iter->second->empty()) {
+                    delete iter->second;
+                } else {
+                    iter->second->cancel(ec);
+                    closed_sessions_.push_back(iter->second);
+                }
+            }
+            session_map_.clear();
             return true;
         }
 
