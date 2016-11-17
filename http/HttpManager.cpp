@@ -5,6 +5,7 @@
 #include "trip/client/http/HttpServer.h"
 #include "trip/client/http/HttpSession.h"
 #include "trip/client/sink/SinkManager.h"
+#include "trip/client/timer/TimerManager.h"
 
 #include <framework/network/TcpSocket.hpp>
 #include <framework/logger/Logger.h>
@@ -23,9 +24,12 @@ namespace trip
             : util::daemon::ModuleBase<HttpManager>(daemon, "HttpManager")
             , framework::network::ServerManager<HttpServer, HttpManager>(daemon.io_svc())
             , addr_("0.0.0.0:2015+")
+            , keep_alive_(Duration::seconds(10))
+            , tmgr_(util::daemon::use_module<TimerManager>(daemon))
         {
             config().register_module("trip.client.HttpManager")
-                << CONFIG_PARAM_NAME_RDWR("addr", addr_);
+                << CONFIG_PARAM_NAME_RDWR("addr", addr_)
+                << CONFIG_PARAM_NAME_RDWR("keep_alive", keep_alive_);
         }
 
         HttpManager::~HttpManager()
@@ -42,12 +46,16 @@ namespace trip
             boost::system::error_code & ec)
         {
             start(addr_, ec);
+            tmgr_.t_1_s.on(
+                boost::bind(&HttpManager::on_event, this, _1, _2));
             return !ec;
         }
 
         bool HttpManager::shutdown(
             boost::system::error_code & ec)
         {
+            tmgr_.t_1_s.un(
+                boost::bind(&HttpManager::on_event, this, _1, _2));
             stop(ec);
             for (size_t i = 0; i < closed_sessions_.size(); ++i) {
                 closed_sessions_[i]->cancel(ec);
@@ -119,6 +127,26 @@ namespace trip
                 smgr.del_sink(session);
                 delete session;
                 closed_sessions_.erase(iter);
+            }
+        }
+
+        void HttpManager::on_event(
+            util::event::Observable const & observable, 
+            util::event::Event const & event)
+        {
+            if (keep_alive_ == Duration())
+                return;
+            session_map_t::iterator iter = session_map_.begin();
+            for (; iter != session_map_.end();) {
+                HttpSession * session = iter->second;
+                if (session->empty() && !session->attached() && session->last_alive() + keep_alive_ < tmgr_.t_1_s.now) {
+                    SinkManager & smgr(util::daemon::use_module<SinkManager>(io_svc()));
+                    smgr.del_sink(session);
+                    delete session;
+                    session_map_.erase(iter++);
+                } else {
+                    ++iter;
+                }
             }
         }
 

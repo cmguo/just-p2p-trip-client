@@ -43,6 +43,11 @@ namespace trip
             bool cancel(
                 boost::system::error_code & ec);
 
+            Time const & last_alive() const
+            {
+                return last_alive_;
+            }
+
         public:
             void async_open(
                 HttpServer * server,
@@ -65,6 +70,8 @@ namespace trip
 
         private:
             virtual void on_attach();
+
+            virtual void on_detach();
 
             virtual void on_error(
                 boost::system::error_code const & ec);
@@ -93,6 +100,7 @@ namespace trip
             std::list<Request> open_requests_;
             std::list<Request> fetch_requests_;
             Piece::pointer piece_;
+            Time last_alive_;
         };
 
     } // namespace dispatch

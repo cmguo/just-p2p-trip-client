@@ -31,7 +31,7 @@ namespace trip
             Url const & url() const;
 
         public:
-            boost::uint32_t type() const;
+            // boost::uint32_t type() const;
 
             DataId const & position() const;
 
@@ -71,6 +71,8 @@ namespace trip
 
         private:
             virtual void on_attach() {};
+
+            virtual void on_detach() {};
 
             virtual void on_error(
                 boost::system::error_code const & ec) {};

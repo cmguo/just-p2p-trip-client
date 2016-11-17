@@ -214,7 +214,7 @@ namespace trip
 
         void HttpSession::on_attach()
         {
-            LOG_TRACE("[on_meta]");
+            LOG_TRACE("[on_attach]");
             boost::system::error_code ec;
             std::list<Request>::iterator iter = open_requests_.begin();
             for (; iter != open_requests_.end(); ++iter) {
@@ -225,6 +225,11 @@ namespace trip
                 resp.swap(iter->resp);
                 resp(ec);
             }
+        }
+
+        void HttpSession::on_detach()
+        {
+            last_alive_ = Time::now();
         }
 
         void HttpSession::on_error(

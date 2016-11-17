@@ -148,7 +148,10 @@ namespace trip
             Sink & t)
         {
             ar & SERIALIZATION_NVP_2(t, url)
-                & SERIALIZATION_NVP_2(t, position);
+                & SERIALIZATION_NVP_2(t, resource)
+                // & SERIALIZATION_NVP_2(t, type)
+                & SERIALIZATION_NVP_2(t, position)
+                & SERIALIZATION_NVP_2(t, attached);
         }
 
     }

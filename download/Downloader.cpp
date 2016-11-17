@@ -44,14 +44,13 @@ namespace trip
         void Downloader::add_sink(
             Sink * sink)
         {
-            sinks_.push_back(sink);
-            if (master_ == NULL) {
-                master_ = sink;
-                master_->attach(*this);
-                play_point_ = download_point_ = master_->position();
-                resource().seek(download_point_);
-                reset();
-            }
+            // handle latest one
+            sinks_.push_front(sink);
+            master_ = sink;
+            master_->attach(*this);
+            play_point_ = download_point_ = master_->position();
+            resource().seek(download_point_);
+            reset();
         }
 
         void Downloader::del_sink(

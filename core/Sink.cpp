@@ -59,6 +59,7 @@ namespace trip
         void Sink::detach()
         {
             LOG_TRACE("[detach]");
+            on_detach();
             resource_->release_lock(lock_);
             scheduler_ = NULL;
         }

@@ -50,7 +50,7 @@ namespace trip
             void update_sink(
                 Sink * sink);
 
-            std::vector<Sink *> & get_sinks()
+            std::deque<Sink *> & get_sinks()
             {
                 return sinks_;
             }
@@ -80,7 +80,7 @@ namespace trip
         private:
             DownloadManager & mgr_;
         protected:
-            std::vector<Sink *> sinks_;
+            std::deque<Sink *> sinks_;
             Sink * master_;
             DataId download_point_;
             DataId play_point_;

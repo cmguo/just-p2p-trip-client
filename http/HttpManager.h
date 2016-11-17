@@ -4,6 +4,7 @@
 #define _TRIP_CLIENT_HTTP_HTTP_MANAGER_H_
 
 #include <util/daemon/Module.h>
+#include <util/event/Event.h>
 
 #include <framework/network/ServerManager.h>
 
@@ -14,6 +15,8 @@ namespace trip
 
         class HttpServer;
         class HttpSession;
+
+        class TimerManager;
 
         class HttpManager
             : public util::daemon::ModuleBase<HttpManager>
@@ -45,9 +48,16 @@ namespace trip
                 HttpSession * session);
 
         private:
-            framework::network::NetName addr_;
+            void on_event(
+                util::event::Observable const & observable, 
+                util::event::Event const & event);
 
         private:
+            framework::network::NetName addr_;
+            Duration keep_alive_;
+
+        private:
+            TimerManager & tmgr_;
             typedef std::map<std::string, HttpSession *> session_map_t;
             session_map_t session_map_;
             std::vector<HttpSession *> closed_sessions_;
