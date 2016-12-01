@@ -72,6 +72,9 @@ namespace trip
             std::vector<DataId> const & pieces)
         {
             LOG_TRACE("[request]");
+            assert(!piece_);
+            if (piece_)
+                return false;
             if (pieces.empty())
                 return true;
             boost::uint64_t segno = pieces[0].segment;
@@ -102,6 +105,7 @@ namespace trip
             make_range(head);
             LOG_TRACE("[request] segno=" << segno << ", range=" << head.range.get().to_string());
             //head.get_content(std::cout);
+            piece_ = PoolPiece::alloc();
             http_.async_open(head, boost::bind(
                     &CdnSource::handle_open, this, _1));
             return true;
@@ -176,6 +180,7 @@ namespace trip
                     << ", range=" << http_.request().head().range.get().to_string() 
                     << ", ec=canceled");
                 http_.close(ec);
+                piece_.reset();
                 on_ready();
                 return;
             }
@@ -186,6 +191,7 @@ namespace trip
                     << ", ec=" << ec.message());
                 util::protocol::HttpRequestHead head(http_.request().head());
                 http_.close(ec);
+                piece_.reset();
                 return;
                 http_.async_open(head, boost::bind(
                         &CdnSource::handle_open, this, _1));
@@ -199,20 +205,26 @@ namespace trip
             //assert(http_.request().head().range.get()[0] == http_.response().head().content_range.get().unit());
             on_segment_meta(ranges_.front().b, meta);
 
-            handle_read(ec, 1, NULL);
+            boost::asio::async_read(
+                http_.response_stream(), 
+                boost::asio::buffer(piece_->data(), piece_->size()), 
+                boost::asio::transfer_all(), 
+                boost::bind(&CdnSource::handle_read, this, _1, _2));
         }
 
         void CdnSource::handle_read(
             boost::system::error_code ec, 
-            size_t bytes_read, 
-            Piece::pointer piece)
+            size_t bytes_read)
         {
             if (bytes_read) {
                 util::archive::ArchiveBuffer<boost::uint8_t> buf((boost::uint8_t *)NULL, bytes_read, bytes_read);
                 SspSession::on_recv(buf);
             }
 
-            if (piece && piece->size() == 0) {// canceled
+            Piece::pointer piece;
+            piece.swap(piece_);
+
+            if (piece->size() == 0) {// canceled
                 LOG_TRACE("[handle_read] segno=" << ranges_.front().b.segment 
                     << ", range=" << http_.request().head().range.get().to_string() 
                     << ", ec=canceled");
@@ -227,8 +239,6 @@ namespace trip
                 }
                 return;
             }
-
-            piece_.reset();
 
             if (ranges_.empty()) {
                 LOG_TRACE("[handle_read] segno=???" 
@@ -249,47 +259,51 @@ namespace trip
                     util::protocol::HttpRequestHead head(http_.request_head());
                     http_.close(ec);
                     make_range(head);
+                    piece_.swap(piece);
                     http_.async_open(head, boost::bind(
                             &CdnSource::handle_open, this, _1));
                 }
                 return;
             }
 
-            if (piece) {
-                piece->set_size((boost::uint16_t)bytes_read);
-                PieceRange & r = ranges_.front();
-                on_data(r.b, piece);
-                r.b.inc_piece();
-                if (r.b == r.e) {
-                    DataId i(r.b);
-                    ranges_.pop_front();
-                    if (ranges_.empty()) {
-                        LOG_TRACE("[handle_read] segno=" << i.segment 
-                            << ", range=" << http_.request().head().range.get().to_string() 
-                            << ", ec=finished");
-                        http_.close(ec);
-                        on_ready();
-                        return;
-                    } else {
-                        // next range
-                        // TODO: support multi-range
-                        util::protocol::HttpRequestHead head = http_.request_head();
-                        make_range(head);
-                        //head.get_content(std::cout);
-                        http_.close(ec);
-                        http_.async_open(head, boost::bind(
-                                &CdnSource::handle_open, this, _1));
-                        return;
-                    }
+            PieceRange & r = ranges_.front();
+
+            piece->set_size((boost::uint16_t)bytes_read);
+            on_data(r.b, piece);
+            piece.reset();
+
+            r.b.inc_piece();
+            if (r.b == r.e) {
+                DataId i(r.b);
+                ranges_.pop_front();
+                if (ranges_.empty()) {
+                    LOG_TRACE("[handle_read] segno=" << i.segment 
+                        << ", range=" << http_.request().head().range.get().to_string() 
+                        << ", ec=finished");
+                    http_.close(ec);
+                    on_ready();
+                    return;
+                } else {
+                    // next range
+                    // TODO: support multi-range
+                    util::protocol::HttpRequestHead head = http_.request_head();
+                    make_range(head);
+                    //head.get_content(std::cout);
+                    http_.close(ec);
+                    piece_ = PoolPiece::alloc();
+                    http_.async_open(head, boost::bind(
+                            &CdnSource::handle_open, this, _1));
+                    return;
                 }
             }
 
             piece_ = PoolPiece::alloc();
+
             boost::asio::async_read(
                 http_.response_stream(), 
                 boost::asio::buffer(piece_->data(), piece_->size()), 
                 boost::asio::transfer_all(), 
-                boost::bind(&CdnSource::handle_read, this, _1, _2, piece_));
+                boost::bind(&CdnSource::handle_read, this, _1, _2));
         }
 
         void CdnSource::on_timer(

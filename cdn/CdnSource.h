@@ -66,8 +66,7 @@ namespace trip
 
             void handle_read(
                 boost::system::error_code ec, 
-                size_t bytes_read, 
-                Piece::pointer piece);
+                size_t bytes_read);
 
             // make http range from ranges_, to head.range
             void make_range(
