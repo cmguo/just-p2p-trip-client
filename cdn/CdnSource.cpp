@@ -144,6 +144,8 @@ namespace trip
         {
             if (m3u8_ && !m3u8_is_open_)
                 return 0;
+            if (piece_)
+                return 0;
             return window_size();
         }
 
