@@ -9,6 +9,7 @@
 #include "trip/client/cdn/Serialize.h"
 #include "trip/client/cache/Serialize.h"
 #include "trip/client/sink/Serialize.h"
+#include "trip/client/download/Serialize.h"
 
 #include <util/datagraph/WalkArchive.h>
 #include <util/archive/JsonOArchive.h>
@@ -80,6 +81,7 @@ namespace trip
                 , p2p(util::daemon::use_module<P2pManager>(daemon))
                 , cdn(util::daemon::use_module<CdnManager>(daemon))
                 , sink(util::daemon::use_module<SinkManager>(daemon))
+                , download(util::daemon::use_module<DownloadManager>(daemon))
             {
             }
 
@@ -97,6 +99,7 @@ namespace trip
                     & SERIALIZATION_NVP(p2p)
                     & SERIALIZATION_NVP(cdn)
                     & SERIALIZATION_NVP(sink)
+                    & SERIALIZATION_NVP(download)
                     ;
             }
 
@@ -109,6 +112,7 @@ namespace trip
             P2pManager const & p2p;
             CdnManager const & cdn;
             SinkManager const & sink;
+            DownloadManager const & download;
 
             static DataRoot & inst(
                 util::daemon::Daemon & daemon = *(util::daemon::Daemon *)NULL)

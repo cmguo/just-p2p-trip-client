@@ -81,7 +81,7 @@ namespace trip
         {
             Uuid const & lid(umgr_.local_endpoint().id);
             if (endpoint.id == lid) {
-                LOG_WARN("[get_source] self");
+                //LOG_WARN("[get_source] self");
                 return NULL;
             }
             if (endpoint.endpoints.empty()) {

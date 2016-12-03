@@ -74,8 +74,14 @@ namespace trip
 
         private:
             friend class DownloadManager;
+
             void on_event(
                 util::event::Event const & event);
+
+            template <typename Archive>
+            friend void serialize(
+                Archive & ar, 
+                Downloader & t);
 
         private:
             DownloadManager & mgr_;

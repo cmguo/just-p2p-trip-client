@@ -168,7 +168,7 @@ namespace trip
         void M3u8Media::handle_open(
             boost::system::error_code ec)
         {
-            LOG_DEBUG("[handle_open] ec: " << ec.message());
+            LOG_TRACE("[handle_open] ec: " << ec.message());
             boost::mutex::scoped_lock lc(mutex_);
 
             if (closed_) {
@@ -190,7 +190,7 @@ namespace trip
         void M3u8Media::handle_read(
             boost::system::error_code ec)
         {
-            LOG_DEBUG("[handle_read] ec: " << ec.message());
+            LOG_TRACE("[handle_read] ec: " << ec.message());
             
             boost::mutex::scoped_lock lc(mutex_);
 
@@ -267,8 +267,6 @@ namespace trip
             char const * const M3U8_EXTINF = "#EXTINF";
             char const * const M3U8_END  = "#EXT-X-ENDLIST";
 
-            LOG_DEBUG("[parse_m3u8]");
-
             if (buf_.size() < 10) {
                 ec = cdn_error::xml_format_error;
                 return;
@@ -327,7 +325,7 @@ namespace trip
                         segments_.push_back(info);
                         segment_urls_.push_back(line);
                         duration += info.duration;
-                        LOG_INFO("[parse_m3u8] new url: (" << sequence_url << ") " << line); 
+                        LOG_TRACE("[parse_m3u8] new url: (" << sequence_url << ") " << line); 
                     }
                     ++sequence_url;
                 }

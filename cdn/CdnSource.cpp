@@ -172,11 +172,15 @@ namespace trip
         void CdnSource::handle_open(
             boost::system::error_code ec)
         {
+            // recv 0 byte to update time
+            util::archive::ArchiveBuffer<boost::uint8_t> buf((boost::uint8_t *)NULL, 0, 0);
+            SspSession::on_recv(buf);
+
             //SspSession::on_send();
             //SspSession::on_recv();
 
             if (ranges_.empty()) {
-                LOG_TRACE("[handle_open] segno=???" 
+                LOG_DEBUG("[handle_open] segno=???" 
                     << ", range=" << http_.request().head().range.get().to_string() 
                     << ", ec=canceled");
                 http_.close(ec);
@@ -191,8 +195,8 @@ namespace trip
                     << ", ec=" << ec.message());
                 util::protocol::HttpRequestHead head(http_.request().head());
                 http_.close(ec);
-                piece_.reset();
-                return;
+                piece_ = PoolPiece::alloc();
+                //return;
                 http_.async_open(head, boost::bind(
                         &CdnSource::handle_open, this, _1));
                 return;
@@ -216,10 +220,8 @@ namespace trip
             boost::system::error_code ec, 
             size_t bytes_read)
         {
-            if (bytes_read) {
-                util::archive::ArchiveBuffer<boost::uint8_t> buf((boost::uint8_t *)NULL, bytes_read, bytes_read);
-                SspSession::on_recv(buf);
-            }
+            util::archive::ArchiveBuffer<boost::uint8_t> buf((boost::uint8_t *)NULL, bytes_read, bytes_read);
+            SspSession::on_recv(buf);
 
             Piece::pointer piece;
             piece.swap(piece_);
@@ -234,6 +236,7 @@ namespace trip
                     on_ready();
                 } else {
                     make_range(head);
+                    piece_ = PoolPiece::alloc();
                     http_.async_open(head, boost::bind(
                             &CdnSource::handle_open, this, _1));
                 }
@@ -253,16 +256,12 @@ namespace trip
                 LOG_WARN("[handle_read] segno=" << ranges_.front().b.segment 
                     << ", range=" << http_.request().head().range.get().to_string() 
                     << ", ec=" << ec.message());
-                if (ranges_.empty()) {
-                    on_ready();
-                } else {
-                    util::protocol::HttpRequestHead head(http_.request_head());
-                    http_.close(ec);
-                    make_range(head);
-                    piece_.swap(piece);
-                    http_.async_open(head, boost::bind(
-                            &CdnSource::handle_open, this, _1));
-                }
+                util::protocol::HttpRequestHead head(http_.request_head());
+                http_.close(ec);
+                make_range(head);
+                piece_ = PoolPiece::alloc();
+                http_.async_open(head, boost::bind(
+                    &CdnSource::handle_open, this, _1));
                 return;
             }
 
@@ -312,7 +311,8 @@ namespace trip
             Cell::on_timer(now);
             if (ranges_.empty())
                 return;
-            if (now >= stat_.recv_bytes().time + Duration::milliseconds(1500)) {
+            if (now >= stat_.recv_bytes().time + Duration::milliseconds(1500) && 
+                now >= stat_.send_bytes().time + Duration::milliseconds(1500)) {
                 if (piece_) {
                     PieceRange & r = ranges_.front();
                     LOG_WARN("[on_timer] segno=" << r.b.segment 
@@ -328,6 +328,10 @@ namespace trip
         void CdnSource::make_range(
             util::protocol::HttpHead & head)
         {
+            // send 0 byte to update time
+            util::archive::ArchiveBuffer<boost::uint8_t> buf((boost::uint8_t *)NULL, 0, 0);
+            SspSession::on_send(buf);
+
             head.range.reset(util::protocol::http_field::Range());
             util::protocol::http_field::Range & range = head.range.get();
             // TODO: support multi-range

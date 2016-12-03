@@ -52,6 +52,12 @@ namespace trip
                 Uuid const & rid, 
                 std::vector<Source *> const & sources);
 
+
+            template <typename Archive>
+            friend void serialize(
+                Archive & ar, 
+                DownloadManager & t);
+
         private:
             ResourceManager & rmgr_;
             TimerManager & tmgr_;
