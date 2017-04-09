@@ -5,6 +5,7 @@
 
 #include "trip/client/p2p/P2pFinder.h"
 #include "trip/client/udp/UdpSession.h"
+#include "trip/client/udp/UdpEndpoint.h"
 
 namespace trip
 {
@@ -41,6 +42,13 @@ namespace trip
             virtual void on_tunnel_disconnect();
 
         private:
+            template <typename Archive>
+            friend void serialize(
+                Archive & ar, 
+                P2pUdpFinder & t);
+
+            size_t index_;
+            std::vector<UdpEndpoint> endpoints_;
             std::vector<UdpTunnel *> tunnels_;
             std::vector<Message *> pending_msgs_;
         };

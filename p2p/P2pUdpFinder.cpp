@@ -6,7 +6,6 @@
 #include "trip/client/p2p/P2pManager.h"
 #include "trip/client/udp/UdpTunnel.h"
 #include "trip/client/udp/UdpManager.h"
-#include "trip/client/udp/UdpEndpoint.h"
 #include "trip/client/udp/UdpManager.h"
 #include "trip/client/udp/UdpSessionListener.h"
 #include "trip/client/proto/MessageTracker.h"
@@ -14,14 +13,20 @@
 #include "trip/client/main/Bootstrap.h"
 #include "trip/client/core/Resource.h"
 
+#include <framework/logger/Logger.h>
+#include <framework/logger/StreamRecord.h>
+
 namespace trip
 {
     namespace client
     {
 
+        FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("trip.client.P2pUdpFinder", framework::logger::Debug);
+
         P2pUdpFinder::P2pUdpFinder(
            P2pManager & manager)
             : P2pFinder(manager)
+            , index_(-1)
         {
             ::srand(::time(NULL));
         }
@@ -36,18 +41,18 @@ namespace trip
             Bootstrap::instance(pmgr_.io_svc()).get("tracker", urls);
             if (urls.empty())
                 urls.push_back(Url("http://tracker.trip.com/"));
-            UdpEndpoint ep;
-            ep.endpoints.resize(1);
-            framework::network::Endpoint & ep2 = ep.endpoints[0];
-            size_t index = ::rand() % urls.size();
-            ep.id.from_bytes(framework::string::md5(urls[index].host_svc()).to_bytes());
-            ep2.from_string(urls[index].host_svc());
-            attach(&umgr_.get_tunnel(ep));
+            endpoints_.resize(urls.size());
             for (size_t i = 0; i < urls.size(); ++i) {
-                Url const & url(urls[i]);
-                ep.id.from_bytes(framework::string::md5(url.host_svc()).to_bytes());
-                ep2.from_string(url.host_svc());
-                tunnels_.push_back(&umgr_.get_tunnel(ep, this));
+                UdpEndpoint & ep = endpoints_[i];
+                ep.endpoints.resize(1);
+                ep.id.from_bytes(framework::string::md5(urls[i].host_svc()).to_bytes());
+                framework::network::Endpoint & ep2 = ep.endpoints[0];
+                ep2.from_string(urls[i].host_svc());
+            }
+            index_ = ::rand() % urls.size();
+            attach(&umgr_.get_tunnel(endpoints_[index_]));
+            for (size_t i = 0; i < urls.size(); ++i) {
+                tunnels_.push_back(&umgr_.get_tunnel(endpoints_[i], this));
             }
         }
 
@@ -95,6 +100,18 @@ namespace trip
 
         void P2pUdpFinder::on_tunnel_connecting()
         {
+            Time now;
+            if (now > tunnel().stat().recv_bytes().time + Duration::seconds(10)) {
+                if (endpoints_.size() > 1) {
+                    size_t index = ::rand() % endpoints_.size();
+                    while (index == index_)
+                        index = ::rand() % endpoints_.size();
+                    index_ = index;
+                    detach();
+                    attach(&umgr_.get_tunnel(endpoints_[index]));
+                    return;
+                }
+            }
             UdpSession::on_tunnel_connecting();
             open();
             for (size_t i = 0; i < pending_msgs_.size(); ++i)
