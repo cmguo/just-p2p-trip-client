@@ -33,6 +33,11 @@ namespace trip
             pool.free(p);
         }
 
+        framework::memory::MemoryPool & message_pool()
+        {
+            return pool;
+        }
+
         static char const * const msg_type_str1[][16] = {
             {"REQ_Connect", "REQ_Ping", "REQ_Disconnect"}, 
             {"REQ_Bind", "REQ_Meta", "REQ_Map", "REQ_Data", "REQ_Unbind", NULL, NULL, NULL, NULL, "NTF_Map"}, 

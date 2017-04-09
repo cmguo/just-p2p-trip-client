@@ -8,6 +8,8 @@
 
 #include <util/protocol/Message.h>
 
+#include <framework/memory/MemoryPool.h>
+
 namespace trip
 {
     namespace client
@@ -18,6 +20,8 @@ namespace trip
         Message * alloc_message();
 
         void free_message(Message * msg);
+
+        framework::memory::MemoryPool & message_pool();
 
         char const * msg_type_str(
             boost::uint16_t type);

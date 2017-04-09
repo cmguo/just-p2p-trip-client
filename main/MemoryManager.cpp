@@ -2,6 +2,7 @@
 
 #include "trip/client/Common.h"
 #include "trip/client/main/MemoryManager.h"
+#include "trip/client/proto/Message.h"
 #include "trip/client/core/PoolPiece.h"
 #include "trip/client/core/BlockData.h"
 #include "trip/client/core/Block.h"
@@ -71,7 +72,8 @@ namespace trip
         MemoryManager::Pool const MemoryManager::pools_[] = {
             {"PoolPiece", &PoolPiece::mpool()}, 
             {"ResourceData", &ResourceData::mpool()}, 
-            {"BlockData", &BlockData::mpool()}
+            {"BlockData", &BlockData::mpool()},
+            {"Message", &message_pool()}
         };
 
         framework::container::Array<MemoryManager::Pool const> MemoryManager::pools()
@@ -93,7 +95,9 @@ namespace trip
             void const * ctx, 
             size_t level)
         {
+            LOG_INFO("[oom_handler] level: " << level);
             MemoryManager * mgr = (MemoryManager *)ctx;
+            mgr->dump();
             mgr->out_of_memory.level = level;
             mgr->raise(mgr->out_of_memory);
         }
