@@ -13,6 +13,8 @@
 
 #include <boost/type_traits/remove_const.hpp>
 
+#include <fstream>
+
 namespace trip
 {
     namespace client
@@ -41,6 +43,12 @@ namespace trip
         bool Bootstrap::startup(
             boost::system::error_code & ec)
         {
+            if (url_.protocol() == "file") {
+                std::ifstream ifs(url_.path().c_str());
+                parse(ifs);
+                io_svc().post(boost::bind(&Bootstrap::raise, this, boost::ref(ready)));
+                return true;
+            }
             http_.async_fetch(url_, 
                 boost::bind(&Bootstrap::handle_fetch, this, _1));
             return true;
@@ -88,8 +96,15 @@ namespace trip
                 LOG_WARN("[handle_fetch] ec=" << ec.message());
                 return;
             }
+            std::istream is(&http_.response_data());
+            parse(is);
+            raise(ready);
+        }
 
-            util::archive::XmlIArchive<> ia(http_.response_data());
+        void Bootstrap::parse(
+            std::istream & is)
+        {
+            util::archive::XmlIArchive<> ia(is);
             ia >> urls_;
 
             framework::configure::ConfigModule & cfg = module_config();
@@ -97,8 +112,6 @@ namespace trip
             for (; iter != urls_.end(); ++iter) {
                 cfg << CONFIG_PARAM_NAME_RDONLY(iter->first, const_cast<std::vector<Url> &>(iter->second));
             }
-
-            raise(ready);
         }
 
     } // namespace client

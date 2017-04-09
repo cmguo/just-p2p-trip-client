@@ -59,6 +59,9 @@ namespace trip
             void handle_fetch(
                 boost::system::error_code ec);
 
+            void parse(
+                std::istream & is);
+
             template <typename Archive>
             friend void serialize(
                 Archive & ar, 
