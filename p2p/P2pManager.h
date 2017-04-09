@@ -61,6 +61,11 @@ namespace trip
             friend class P2pSource;
             friend class P2pSink;
 
+            template <typename Archive>
+            friend void serialize(
+                Archive & ar, 
+                P2pManager & t);
+
             void get_sources(
                 Uuid const & rid, 
                 std::vector<UdpEndpoint> const & endpoints, 

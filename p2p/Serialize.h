@@ -6,6 +6,8 @@
 #include "trip/client/p2p/P2pManager.h"
 #include "trip/client/p2p/P2pSource.h"
 #include "trip/client/p2p/P2pSink.h"
+#include "trip/client/p2p/P2pFinder.h"
+#include "trip/client/p2p/P2pUdpFinder.h"
 #include "trip/client/udp/Serialize.h"
 #include "trip/client/utils/Serialize.h"
 #include "trip/client/net/Serialize.h"
@@ -63,9 +65,35 @@ namespace trip
         template <typename Archive>
         void serialize(
             Archive & ar, 
+            P2pFinder & t)
+        {
+            ar
+                & SERIALIZATION_NVP_3(t, inited)
+                & SERIALIZATION_NVP_3(t, opened)
+                ;
+        }
+
+        template <typename Archive>
+        void serialize(
+            Archive & ar, 
+            P2pUdpFinder & t)
+        {
+            serialize(ar, (P2pFinder &)t);
+            ar
+                & SERIALIZATION_NVP_3(t, index)
+                & SERIALIZATION_NVP_3(t, endpoints)
+                & SERIALIZATION_NVP_3(t, tunnels)
+                & SERIALIZATION_NVP_3(t, pending_msgs)
+                ;
+        }
+
+        template <typename Archive>
+        void serialize(
+            Archive & ar, 
             P2pManager & t)
         {
             ar
+                & SERIALIZATION_NVP_3(t, finder)
                 & SERIALIZATION_NVP_2(t, sources)
                 & SERIALIZATION_NVP_2(t, sinks)
                 ;

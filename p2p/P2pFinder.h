@@ -70,6 +70,11 @@ namespace trip
                 MessageResponseFind const & find);
 
         protected:
+            template <typename Archive>
+            friend void serialize(
+                Archive & ar, 
+                P2pFinder & t);
+
             P2pManager & pmgr_;
             UdpManager & umgr_;
             ResourceManager & rmgr_;
