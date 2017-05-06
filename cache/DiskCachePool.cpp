@@ -129,6 +129,10 @@ namespace trip
                 cache->segid = sid.id;
             } else {
                 used_ -= sid.block_piece;
+                if (cache->lock) {
+                    res.release_lock(cache->lock);
+                    cache->lock = NULL;
+                }
                 free_cache(cache);
             }
         }
