@@ -26,6 +26,8 @@ namespace trip
             Piece::pointer & piece, 
             bool read)
         {
+            if (!piece)
+                return false;
             if (read) {
                 if (in_position() != HEAD_SIZE)
                     return false;
