@@ -37,7 +37,8 @@ namespace trip
             Archive & ar, 
             MemoryManager::Pool & t)
         {
-            ar & SERIALIZATION_NVP_1(t, name);
+            std::string name(t.name);
+            ar & SERIALIZATION_NVP(name);
             framework::memory::MemoryPool const & p(*t.pool);
             ar & SERIALIZATION_NVP_2(p, capacity);
             ar & SERIALIZATION_NVP_2(p, consumption);

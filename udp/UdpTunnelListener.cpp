@@ -59,14 +59,13 @@ namespace trip
                     UdpEndpoint endp;
                     endp.id = req.uid;
                     pkt_->recent1 = &mgr_.get_tunnel(endp);
-                    free_message(msg);
                 }
                 break;
             default:
                 LOG_DEBUG("[on_recv] unknown msg recv on main tunnel, type=" << msg_type_str(msg->type));
-                free_message(msg);
                 break;
             }
+            free_message(msg);
         }
 
     } // namespace client

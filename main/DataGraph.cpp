@@ -10,6 +10,7 @@
 #include "trip/client/cache/Serialize.h"
 #include "trip/client/sink/Serialize.h"
 #include "trip/client/download/Serialize.h"
+#include "trip/client/http/Serialize.h"
 
 #include <util/datagraph/WalkArchive.h>
 #include <util/archive/JsonOArchive.h>
