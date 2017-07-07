@@ -85,7 +85,7 @@ namespace trip
         {
             for (size_t i = 0; i < sizeof(pools_) / sizeof(pools_[0]); ++i) {
                 framework::memory::MemoryPool const & pool(*pools_[i].pool);
-                LOG_INFO("[dump] [mpool] " << pools_[i].name << ": "
+                LOG_INFO("[dump] [mpool] " << std::string(pools_[i].name) << ": "
                     << pool.capacity() << "/" << pool.consumption() << "/" << pool.peek()
                     << " " << pool.num_block() << "/" << pool.num_object());
             }

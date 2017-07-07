@@ -46,6 +46,8 @@ namespace trip
         {
             // handle latest one
             sinks_.push_front(sink);
+            if (master_ != NULL)
+                master_->detach();
             master_ = sink;
             master_->attach(*this);
             play_point_ = download_point_ = master_->position();
