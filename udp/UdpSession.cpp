@@ -83,6 +83,7 @@ namespace trip
         void UdpSession::on_msg(
             Message * msg)
         {
+            free_message(msg);
         }
 
         void UdpSession::on_tunnel_connecting()

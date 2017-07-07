@@ -100,7 +100,7 @@ namespace trip
                         msg->as<MessageRequestBind>();
                     MessageResponseBind & resp = 
                         msg->get<MessageResponseBind>();
-		    p_id(req.sid);
+                    p_id(req.sid);
                     resp.sid = l_id();
                     send_msg(msg);
                 }
