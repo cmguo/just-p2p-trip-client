@@ -145,7 +145,7 @@ namespace trip
                 HttpSession * session = iter->second;
                 if (session->empty() 
                     && session->last_alive() + keep_alive_ < tmgr_.t_1_s.now
-                    && (!session->attached() || session != last_session_) {
+                    && (!session->attached() || session != last_session_)) {
                     SinkManager & smgr(util::daemon::use_module<SinkManager>(io_svc()));
                     smgr.del_sink(session);
                     if (session == last_session_)

@@ -5,6 +5,7 @@
 
 #include "trip/client/net/Cell.h"
 #include "trip/client/net/Bus.h"
+#include "trip/client/net/Queue.h"
 
 #include <util/serialization/stl/vector.h>
 #include <util/serialization/stl/deque.h>
@@ -50,18 +51,6 @@ namespace trip
             ar 
                 & SERIALIZATION_NVP_2(t, empty)
                 & SERIALIZATION_NVP_2(t, size)
-                & SERIALIZATION_NVP_2(t, first)
-                ;
-        }
-
-        template <typename Archive>
-        void serialize(
-            Archive & ar, 
-            Queue::Packet& t)
-        {
-            ar 
-                & SERIALIZATION_NVP_1(t, C)
-                & SERIALIZATION_NVP_1(t, p)
                 ;
         }
 
