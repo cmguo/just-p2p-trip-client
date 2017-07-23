@@ -27,6 +27,8 @@ namespace trip
 
             bool empty() const;
 
+            size_t size() const;
+
         protected:
             size_t limit_;
             std::deque<Packet> pkts_;

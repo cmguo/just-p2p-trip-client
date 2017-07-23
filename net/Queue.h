@@ -28,6 +28,8 @@ namespace trip
             
             virtual bool empty() const;
 
+            virtual size_t size() const = 0;
+        
         protected:
             struct Packet
             {

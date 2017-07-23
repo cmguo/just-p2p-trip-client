@@ -43,5 +43,10 @@ namespace trip
             return pkts_.empty();
         }
 
+        size_t Fifo::size() const
+        {
+            return pkts_.size();
+        }
+
     } // namespace client
 } // namespace trip

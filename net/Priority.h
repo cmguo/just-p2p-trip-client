@@ -30,6 +30,8 @@ namespace trip
 
             void on_timer();
 
+            size_t size() const;
+
         private:
             prio_func_t fprio_;
             size_t limit_;

@@ -76,6 +76,11 @@ namespace trip
 
             virtual bool empty() const;
 
+            Queue * queue() const
+            {
+                return queue_;
+            }
+
             bool push(
                 void * pkt);
 

@@ -63,6 +63,11 @@ namespace trip
             --count_;
         }
 
+        size_t Priority::size() const
+        {
+            return pkts_.size();
+        }
+
         void Priority::on_timer()
         {
         }
