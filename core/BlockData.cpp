@@ -2,6 +2,7 @@
 
 #include "trip/client/Common.h"
 #include "trip/client/core/BlockData.h"
+#include "trip/client/core/Memory.h"
 
 #include <framework/filesystem/File.h>
 #include <framework/memory/SmallFixedPool.h>
@@ -50,7 +51,7 @@ namespace trip
                 LOG_WARN("[alloc] map failed, ec:" << ec.message());
                 return NULL;
             }
-            void * ptr = blk_pool.alloc(sizeof(BlockData));
+            void * ptr = Memory::inst().oom_alloc(blk_pool, sizeof(BlockData));
             if (ptr) {
                 LOG_TRACE("[alloc] ptr:" << addr << ", size:" << size);
                 return new (ptr) BlockData(addr, offset, size);

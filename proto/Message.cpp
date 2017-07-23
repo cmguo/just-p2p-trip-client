@@ -2,6 +2,7 @@
 
 #include "trip/client/Common.h"
 #include "trip/client/proto/Message.h"
+#include "trip/client/core/Memory.h"
 
 #include <util/protocol/Message.hpp>
 
@@ -17,7 +18,7 @@ namespace trip
 
         Message * alloc_message()
         {
-            void * ptr = pool.alloc(sizeof(Message));
+            void * ptr = Memory::inst().oom_alloc(pool, sizeof(Message));
             if (ptr) {
                 return new (ptr) Message;
             } else {
