@@ -26,6 +26,7 @@ namespace trip
             , addr_("0.0.0.0:2015+")
             , keep_alive_(Duration::seconds(10))
             , tmgr_(util::daemon::use_module<TimerManager>(daemon))
+            , last_session_(NULL)
         {
             config().register_module("trip.client.HttpManager")
                 << CONFIG_PARAM_NAME_RDWR("addr", addr_)
@@ -113,7 +114,8 @@ namespace trip
                 session_map_.erase(session_id);
                 closed_sessions_.push_back(session);
             }
-
+            
+            last_session_ = session;
             return session;
         }
 
@@ -125,6 +127,8 @@ namespace trip
             if (iter != closed_sessions_.end() && session->empty()) {
                 SinkManager & smgr(util::daemon::use_module<SinkManager>(io_svc()));
                 smgr.del_sink(session);
+                if (session == last_session_)
+                    last_session_ = NULL;
                 delete session;
                 closed_sessions_.erase(iter);
             }
@@ -139,9 +143,13 @@ namespace trip
             session_map_t::iterator iter = session_map_.begin();
             for (; iter != session_map_.end();) {
                 HttpSession * session = iter->second;
-                if (session->empty() && !session->attached() && session->last_alive() + keep_alive_ < tmgr_.t_1_s.now) {
+                if (session->empty() 
+                    && session->last_alive() + keep_alive_ < tmgr_.t_1_s.now
+                    && (!session->attached() || session != last_session_) {
                     SinkManager & smgr(util::daemon::use_module<SinkManager>(io_svc()));
                     smgr.del_sink(session);
+                    if (session == last_session_)
+                        last_session_ = NULL;
                     delete session;
                     session_map_.erase(iter++);
                 } else {

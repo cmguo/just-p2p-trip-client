@@ -59,6 +59,7 @@ namespace trip
         private:
             TimerManager & tmgr_;
             typedef std::map<std::string, HttpSession *> session_map_t;
+            HttpSession * last_session_;
             session_map_t session_map_;
             std::vector<HttpSession *> closed_sessions_;
         };
