@@ -1,8 +1,10 @@
 // Bootstrap.cpp
 
 #include "trip/client/Common.h"
+#include "trip/client/Version.h"
 #include "trip/client/main/Bootstrap.h"
 #include "trip/client/main/DataGraph.h"
+#include "trip/client/udp/UdpManager.h"
 #include "trip/client/proto/MessageBootstrap.h"
 
 #include <util/archive/XmlIArchive.h>
@@ -109,13 +111,17 @@ namespace trip
             ia >> urls_;
 
             DataGraph const & dg = util::daemon::use_module<DataGraph>(get_daemon());
+            UdpManager & udp = util::daemon::use_module<UdpManager >(get_daemon());
             framework::configure::ConfigModule & cfg = module_config();
             boost::system::error_code ec;
             std::map<std::string, std::vector<Url> >::iterator iter = urls_.begin();
             for (; iter != urls_.end(); ++iter) {
                 std::vector<Url> & urls = iter->second;
-                for (size_t i = 0; i < urls.size(); ++i)
+                for (size_t i = 0; i < urls.size(); ++i) {
+                    urls[i].param("client_id", udp.local_endpoint().id.to_string());
+                    urls[i].param("client_version", trip::client::version_string());
                     dg.expandUrl(urls[i], ec);
+                }
                 cfg << CONFIG_PARAM_NAME_RDONLY(iter->first, urls);
             }
         }

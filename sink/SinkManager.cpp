@@ -69,9 +69,14 @@ namespace trip
             LOG_INFO("[add_sink] sink:" << sink << ", url:" << sink->url().to_string());
             Url const & url(sink->url());
             std::vector<Url> urls;
+            Url params("param:///");
+            params.param("session", url.param("session"));
+            urls.push_back(params);
             for (Url::param_const_iterator i = url.param_begin(); i != url.param_end(); ++i) {
                 if (i->key() == "url") {
                     urls.push_back(Url(i->value()));
+                } else if (i->key() == "rid") {
+                    urls.push_back(Url("rid:///" + i->value()));
                 }
             }
             sinks_.push_back(sink);

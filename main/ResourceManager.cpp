@@ -146,6 +146,13 @@ namespace trip
             Url url(url_);
             std::vector<Url> & urls = async_requests_.front().first;
             for (size_t i = 0; i < urls.size(); ++i) {
+                if (urls[i].protocol() == "param") {
+                    for (Url::param_const_iterator j = urls[i].param_begin(); 
+                            j != urls[i].param_end(); ++j) {
+                        url.param(j->key(), j->value());
+                    }
+                    continue;
+                }
                 url.param("url", urls[i].to_string());
             }
             http_.async_fetch(url, 
