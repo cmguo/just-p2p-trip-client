@@ -2,6 +2,7 @@
 
 #include "trip/client/Common.h"
 #include "trip/client/main/Bootstrap.h"
+#include "trip/client/main/DataGraph.h"
 #include "trip/client/proto/MessageBootstrap.h"
 
 #include <util/archive/XmlIArchive.h>
@@ -107,10 +108,15 @@ namespace trip
             util::archive::XmlIArchive<> ia(is);
             ia >> urls_;
 
+            DataGraph const & dg = util::daemon::use_module<DataGraph>(get_daemon());
             framework::configure::ConfigModule & cfg = module_config();
-            std::map<std::string, std::vector<Url> >::const_iterator iter = urls_.begin();
+            boost::system::error_code ec;
+            std::map<std::string, std::vector<Url> >::iterator iter = urls_.begin();
             for (; iter != urls_.end(); ++iter) {
-                cfg << CONFIG_PARAM_NAME_RDONLY(iter->first, const_cast<std::vector<Url> &>(iter->second));
+                std::vector<Url> & urls = iter->second;
+                for (size_t i = 0; i < urls.size(); ++i)
+                    dg.expandUrl(urls[i], ec);
+                cfg << CONFIG_PARAM_NAME_RDONLY(iter->first, urls);
             }
         }
 

@@ -23,7 +23,11 @@ namespace trip
             bool dump(
                 std::string const & path, 
                 std::ostream & os, 
-                int depth = 65536);
+                int depth = 65536) const;
+
+            bool expandUrl(
+                Url & url, 
+                boost::system::error_code & ec) const;
 
         private:
             virtual bool startup(

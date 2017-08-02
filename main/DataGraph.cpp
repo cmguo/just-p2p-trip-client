@@ -1,6 +1,7 @@
 // DataGraph.cpp
 
 #include "trip/client/Common.h"
+#include "trip/client/Version.h"
 #include "trip/client/main/DataGraph.h"
 #include "trip/client/main/Serialize.h"
 #include "trip/client/udp/Serialize.h"
@@ -73,7 +74,8 @@ namespace trip
         {
             DataRoot(
                 util::daemon::Daemon & daemon)
-                : bootstrap(util::daemon::use_module<Bootstrap>(daemon))
+                : version(trip::client::version_string())
+                , bootstrap(util::daemon::use_module<Bootstrap>(daemon))
                 , resource(util::daemon::use_module<ResourceManager>(daemon))
                 , memory(util::daemon::use_module<MemoryManager>(daemon))
                 , cache(util::daemon::use_module<CacheManager>(daemon))
@@ -104,6 +106,7 @@ namespace trip
                     ;
             }
 
+            std::string version;
             Bootstrap const & bootstrap;
             ResourceManager const & resource;
             MemoryManager const & memory;
@@ -190,12 +193,29 @@ namespace trip
         bool DataGraph::dump(
             std::string const & path, 
             std::ostream & os, 
-            int depth)
+            int depth) const
         {
             WalkPrint wp(os);
             wp.print(DataRoot::inst(), path, depth);
             return wp;
         }
 
+        bool DataGraph::expandUrl(
+            Url & url, 
+            boost::system::error_code & ec) const
+        {
+            for (Url::param_iterator iter = url.param_begin(); 
+                    iter != url.param_end(); ++iter) {
+                Url::Parameter & p = *iter;
+                std::string v = p.value();
+                if (v.size() > 2 && v[0] == '<' && v[v.size() - 1] == '>')
+                    v = v.substr(1, v.size() - 2);
+                    std::ostringstream oss;
+                    if (dump(v, oss)) 
+                        p = oss.str();
+            }
+            return true;
+        }
+        
     } // namespace client
 } // namespace trip
