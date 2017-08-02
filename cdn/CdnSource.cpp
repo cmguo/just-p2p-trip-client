@@ -79,6 +79,7 @@ namespace trip
                 return true;
             boost::uint64_t segno = pieces[0].segment;
             PieceRange r;
+            SegmentMeta const * meta = resource().get_segment_meta(pieces[0]);
             r.b = pieces[0];
             r.e = pieces[0];
             for (size_t i = 0; i < pieces.size(); ++i) {
@@ -95,6 +96,8 @@ namespace trip
                 }
             }
             assert(r.e > r.b);
+            if (meta != NULL && meta->bytesize < (boost::uint32_t)r.e.block_piece * PIECE_SIZE)
+                r.e = DataId();
             ranges_.push_back(r);
 
             Url url;
@@ -342,7 +345,10 @@ namespace trip
             //    range.put(r.b.block_piece * PIECE_SIZE, r.e.block_piece * PIECE_SIZE);
             //}
             PieceRange & r(ranges_.front());
-            range.put(r.b.block_piece * PIECE_SIZE, r.e.block_piece * PIECE_SIZE);
+            if (r.e == DataId())
+                range.put(r.b.block_piece * PIECE_SIZE);
+            else
+                range.put(r.b.block_piece * PIECE_SIZE, r.e.block_piece * PIECE_SIZE);
         }
 
     } // namespace client
