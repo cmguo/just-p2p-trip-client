@@ -26,7 +26,9 @@ namespace trip
         P2pUdpFinder::P2pUdpFinder(
            P2pManager & manager)
             : P2pFinder(manager)
+            , index_start_(-1)
             , index_(-1)
+            , next_try_intv_(Duration::seconds(5))
         {
             ::srand(::time(NULL));
         }
@@ -49,7 +51,7 @@ namespace trip
                 framework::network::Endpoint & ep2 = ep.endpoints[0];
                 ep2.from_string(urls[i].host_svc());
             }
-            index_ = ::rand() % urls.size();
+            index_start_ = index_ = ::rand() % urls.size();
             attach(&umgr_.get_tunnel(endpoints_[index_]));
             for (size_t i = 0; i < urls.size(); ++i) {
                 tunnels_.push_back(&umgr_.get_tunnel(endpoints_[i], this));
@@ -97,18 +99,32 @@ namespace trip
             }
             free_message(msg);
         }
+        
+        void P2pUdpFinder::on_timer(
+            Time const & now)
+        {
+            if (index_ == (size_t)-1 && now >= next_try_) {
+                index_ = index_start_;
+                attach(&umgr_.get_tunnel(endpoints_[index_]));
+            }
+        }
 
         void P2pUdpFinder::on_tunnel_connecting()
         {
             Time now;
             if (now > tunnel().stat().recv_bytes().time + Duration::seconds(10)) {
                 if (endpoints_.size() > 1) {
-                    size_t index = ::rand() % endpoints_.size();
-                    while (index == index_)
-                        index = ::rand() % endpoints_.size();
-                    index_ = index;
+                    if (++index_ == endpoints_.size())
+                         index_ = 0;
                     detach();
-                    attach(&umgr_.get_tunnel(endpoints_[index]));
+                    if (index_start_ == index_) {
+                        next_try_ += next_try_intv_;
+                        index_ = (size_t)-1;
+                        if (next_try_intv_ <= Duration::seconds(1800))
+                            next_try_intv_ *= 2;
+                    } else {
+                        attach(&umgr_.get_tunnel(endpoints_[index_]));
+                    }
                     return;
                 }
             }

@@ -80,7 +80,10 @@ namespace trip
         {
             serialize(ar, (P2pFinder &)t);
             ar
+                & SERIALIZATION_NVP_3(t, index_start)
                 & SERIALIZATION_NVP_3(t, index)
+                & SERIALIZATION_NVP_3(t, next_try_intv)
+                & SERIALIZATION_NVP_3(t, next_try)
                 & SERIALIZATION_NVP_3(t, endpoints)
                 & SERIALIZATION_NVP_3(t, tunnels)
                 & SERIALIZATION_NVP_3(t, pending_msgs)

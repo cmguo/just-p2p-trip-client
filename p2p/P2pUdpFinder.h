@@ -37,6 +37,9 @@ namespace trip
             virtual void on_msg(
                 Message * msg);
 
+            virtual void on_timer(
+                Time const & now);
+
             virtual void on_tunnel_connecting();
 
             virtual void on_tunnel_disconnect();
@@ -47,7 +50,10 @@ namespace trip
                 Archive & ar, 
                 P2pUdpFinder & t);
 
+            size_t index_start_;
             size_t index_;
+            Duration next_try_intv_;
+            Time next_try_;
             std::vector<UdpEndpoint> endpoints_;
             std::vector<UdpTunnel *> tunnels_;
             std::vector<Message *> pending_msgs_;
