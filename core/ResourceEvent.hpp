@@ -63,6 +63,17 @@ namespace trip
         template <typename Archive>
         void serialize(
             Archive & ar, 
+            SegmentErrorEvent & t)
+        {
+            ar & SERIALIZATION_NVP_1(t, id)
+                & SERIALIZATION_NVP_1(t, meta)
+                & SERIALIZATION_NVP_1(t, ec)
+                ;
+        }
+
+        template <typename Archive>
+        void serialize(
+            Archive & ar, 
             SourceChangedEvent & t)
         {
             ar & SERIALIZATION_NVP_1(t, type)

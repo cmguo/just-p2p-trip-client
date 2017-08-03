@@ -4,6 +4,7 @@
 #define _TRIP_CLIENT_CORE_SEGMENT_H_
 
 #include "trip/client/core/Block.h"
+#include "trip/client/core/Error.h"
 
 #include <framework/string/Md5.h>
 #include <framework/container/Array.h>
@@ -23,12 +24,44 @@ namespace trip
             boost::uint32_t duration;
             boost::uint32_t bytesize;
             Md5Sum md5sum;
-
+            
             SegmentMeta()
                 : duration(0)
                   , bytesize(0)
             {
             }
+
+            boost::system::error_code check(
+                SegmentMeta const & o) const
+            {
+                if (o.duration > 0 && duration > 0
+                    && o.duration != duration)
+                    return resource_error::segment_duration;
+                if (o.bytesize > 0 && bytesize > 0
+                    && o.duration != duration)
+                    return resource_error::segment_size;
+                if (o.md5sum != Md5Sum() && md5sum != Md5Sum()
+                    && o.md5sum != md5sum)
+                    return resource_error::segment_chksum;
+                return boost::system::error_code();
+            }
+
+            // check before merge
+            boost::system::error_code merge(
+                SegmentMeta const & o)
+            {
+                boost::system::error_code ec = check(o);
+                if (ec)
+                    return ec;
+                if (duration == 0)
+                    duration = o.duration;
+                if (bytesize == 0)
+                    bytesize = o.bytesize;
+                if (md5sum == Md5Sum())
+                    md5sum = o.md5sum;
+                return ec;
+            }
+            
         };
 
         class Segment

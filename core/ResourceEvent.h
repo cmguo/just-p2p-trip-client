@@ -60,6 +60,16 @@ namespace trip
                 : util::event::EventEx<SegmentMetaEvent>(name), meta(NULL) {}
         };
 
+        struct SegmentErrorEvent
+            : util::event::EventEx<SegmentErrorEvent>
+        {
+            DataId id;
+            SegmentMeta const * meta;
+            boost::system::error_code ec;
+            SegmentErrorEvent(char const * name) 
+                : util::event::EventEx<SegmentErrorEvent>(name), meta(NULL) {}
+        };
+
         struct Source;
 
         struct SourceChangedEvent

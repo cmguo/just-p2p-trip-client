@@ -38,6 +38,8 @@ namespace trip
 
             ResourceDataEvent segment_full;
 
+            SegmentErrorEvent segment_error;
+
             static framework::memory::MemoryPool & mpool();
 
         public:

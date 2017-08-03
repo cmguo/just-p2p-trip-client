@@ -25,6 +25,7 @@ namespace trip
             , data_miss("data_miss")
             //, data_seek("data_seek")
             , segment_full("segment_full")
+            , segment_error("segment_error")
             , end_(0)
             , meta_dirty_(false)
             , meta_ready_(0)
@@ -338,6 +339,14 @@ namespace trip
                 }
                 ++meta_ready_;
                 meta_dirty_ = true;
+            } else {
+                boost::system::error_code ec = segment.meta->merge(meta);
+                if (ec) {
+                    segment_error.id = id;
+                    segment_error.meta = &meta;
+                    segment_error.ec = ec;
+                    raise(segment_error);
+                }
             }
         }
 
