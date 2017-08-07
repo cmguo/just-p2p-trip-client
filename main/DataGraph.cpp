@@ -208,11 +208,12 @@ namespace trip
                     iter != url.param_end(); ++iter) {
                 Url::Parameter & p = *iter;
                 std::string v = p.value();
-                if (v.size() > 2 && v[0] == '<' && v[v.size() - 1] == '>')
+                if (v.size() > 2 && v[0] == '<' && v[v.size() - 1] == '>') {
                     v = v.substr(1, v.size() - 2);
                     std::ostringstream oss;
                     if (dump(v, oss)) 
                         p = oss.str();
+                }
             }
             return true;
         }

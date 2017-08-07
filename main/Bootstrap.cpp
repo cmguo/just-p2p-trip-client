@@ -115,10 +115,11 @@ namespace trip
             framework::configure::ConfigModule & cfg = module_config();
             boost::system::error_code ec;
             std::map<std::string, std::vector<Url> >::iterator iter = urls_.begin();
+            std::string uid = udp.local_endpoint().id.to_string();
             for (; iter != urls_.end(); ++iter) {
                 std::vector<Url> & urls = iter->second;
                 for (size_t i = 0; i < urls.size(); ++i) {
-                    urls[i].param("client_id", udp.local_endpoint().id.to_string());
+                    urls[i].param("client_id", uid);
                     urls[i].param("client_version", trip::client::version_string());
                     dg.expandUrl(urls[i], ec);
                 }
