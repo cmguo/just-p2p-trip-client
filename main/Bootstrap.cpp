@@ -48,12 +48,13 @@ namespace trip
         {
             if (url_.protocol() == "file") {
                 std::ifstream ifs(url_.path().c_str());
-                parse(ifs);
-                io_svc().post(boost::bind(&Bootstrap::raise, this, boost::ref(ready)));
-                return true;
+                std::ostream os(&http_.response_data());
+                os << ifs.rdbuf();
+                io_svc().post(boost::bind(&Bootstrap::handle_fetch, this, ec));
+            } else {
+                http_.async_fetch(url_, 
+                    boost::bind(&Bootstrap::handle_fetch, this, _1));
             }
-            http_.async_fetch(url_, 
-                boost::bind(&Bootstrap::handle_fetch, this, _1));
             return true;
         }
 
