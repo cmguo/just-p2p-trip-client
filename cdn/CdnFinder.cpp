@@ -67,6 +67,8 @@ namespace trip
             } else {
                 std::vector<Source *> sources;
                 for (size_t i = 0; i < urls.size(); ++i) {
+                    if (urls[i].protocol() != "http")
+                        continue;
                     sources.push_back(cmgr_.get_source(resource, urls[i]));
                 }
                 http_.get_io_service().post(
