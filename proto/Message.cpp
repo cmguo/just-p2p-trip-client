@@ -18,13 +18,13 @@ namespace trip
 
         Message * alloc_message()
         {
-            void * ptr = Memory::inst().oom_alloc(pool, sizeof(Message));
-            if (ptr) {
+            void * ptr = pool.alloc(sizeof(Message));
+            if (ptr)
                 return new (ptr) Message;
-            } else {
-                assert(false);
-                return NULL;
-            }
+            ptr = Memory::inst().oom_alloc(pool, sizeof(Message));
+            if (ptr)
+                return new (ptr) Message;
+            return NULL;
         }
 
         void free_message(
