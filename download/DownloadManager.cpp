@@ -64,10 +64,10 @@ namespace trip
             Uuid const & rid)
         {
             Resource & res = rmgr_.get(rid);
-            std::map<Uuid, Downloader *>::iterator iter = 
+            std::map<Uuid, CdnDownloader *>::iterator iter = 
                 downloaders_.find(rid);
             if (iter == downloaders_.end()) {
-                Downloader * downloader = NULL;//new Downloader(*this, r);
+                CdnDownloader * downloader = NULL;//new Downloader(*this, r);
                 downloader = new CdnDownloader(*this, res);
                 iter = downloaders_.insert(std::make_pair(rid, downloader)).first;
             }
@@ -94,7 +94,7 @@ namespace trip
                 if (event == rmgr_.resource_deleting) {
                     Resource & r = *rmgr_.resource_deleting.resource;
                     LOG_DEBUG("[on_event] resource_deleting, id=" << r.id());
-                    std::map<Uuid, Downloader *>::iterator iter = 
+                    std::map<Uuid, CdnDownloader *>::iterator iter = 
                         downloaders_.find(r.id());
                     if (iter != downloaders_.end()) {
                         delete iter->second;
@@ -103,7 +103,7 @@ namespace trip
                 }
             } else if (observable == tmgr_) {
                 //LOG_INFO("[on_event] t_100_ms");
-                std::map<Uuid, Downloader *>::iterator iter = 
+                std::map<Uuid, CdnDownloader *>::iterator iter = 
                     downloaders_.begin();
                 for (; iter != downloaders_.end(); ++iter) {
                     iter->second->on_timer(tmgr_.t_100_ms.now);
@@ -115,7 +115,7 @@ namespace trip
             Uuid const & rid, 
             std::vector<Source *> const & sources)
         {
-            std::map<Uuid, Downloader *>::iterator iter = downloaders_.find(rid);
+            std::map<Uuid, CdnDownloader *>::iterator iter = downloaders_.find(rid);
             if (iter == downloaders_.end())
                 return;
             iter->second->on_sources(sources);

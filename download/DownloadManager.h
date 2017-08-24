@@ -12,6 +12,7 @@ namespace trip
     {
 
         class Downloader;
+        class CdnDownloader;
         class ResourceManager;
         class TimerManager;
         class Finder;
@@ -61,7 +62,7 @@ namespace trip
         private:
             ResourceManager & rmgr_;
             TimerManager & tmgr_;
-            std::map<Uuid, Downloader *> downloaders_;
+            std::map<Uuid, CdnDownloader *> downloaders_;
             std::map<std::string, Finder *> finders_;
         };
 

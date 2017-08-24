@@ -56,7 +56,7 @@ namespace trip
                 bool meta_ready;
 				DataId pos;
 				DataId end;
-  				std::set<DataId> timeout_pieces_;
+  				std::set<DataId> timeout_pieces;
                 size_t np2p;
                 size_t nsource;
 				SegmentInfo() 
@@ -66,9 +66,14 @@ namespace trip
                     , np2p(0)
                     , nsource(0)
                 {}
-                bool empty() { return meta_ready && timeout_pieces_.empty() && pos >= end; }
+                bool empty() { return meta_ready && timeout_pieces.empty() && pos >= end; }
 			};
 			
+            template <typename Archive>
+            friend void serialize(
+                Archive & ar, 
+                CdnDownloader & t);
+
         private:
             size_t window_size_;
             size_t p2p_max_count_;

@@ -104,7 +104,7 @@ namespace trip
                 timeout_seg_ = NULL;
                 for (size_t i = 0; i < segments_.size(); ++i) {
                     SegmentInfo * seg2 = segments_[i];
-                    if (seg2->nsource == 0 && !seg2->timeout_pieces_.empty()) {
+                    if (seg2->nsource == 0 && !seg2->timeout_pieces.empty()) {
                         timeout_seg_ = seg2;
                         break;
                     }
@@ -140,17 +140,17 @@ namespace trip
                 ++sinfo->nsource;
             }
 
-            std::set<DataId>::iterator beg = sinfo->timeout_pieces_.begin();
-            std::set<DataId>::iterator end = sinfo->timeout_pieces_.end();
-            if (sinfo->timeout_pieces_.size() > need_count) {
+            std::set<DataId>::iterator beg = sinfo->timeout_pieces.begin();
+            std::set<DataId>::iterator end = sinfo->timeout_pieces.end();
+            if (sinfo->timeout_pieces.size() > need_count) {
                 end = beg;
                 std::advance(end, need_count);
                 need_count = 0;
             } else {
-                need_count -= sinfo->timeout_pieces_.size();
+                need_count -= sinfo->timeout_pieces.size();
             }
             pieces.insert(pieces.end(), beg, end);
-            sinfo->timeout_pieces_.erase(beg, end);
+            sinfo->timeout_pieces.erase(beg, end);
 
             while (need_count > 0 && sinfo->pos < sinfo->end) {
                 pieces.push_back(sinfo->pos);
@@ -279,7 +279,7 @@ namespace trip
                 return;
             }
             SegmentInfo * seg = segments_[piece.segment - win_beg_.segment];
-            seg->timeout_pieces_.insert(piece);
+            seg->timeout_pieces.insert(piece);
             if (seg->nsource == 0 && timeout_seg_ == NULL) {
                 timeout_seg_ = seg;
             }

@@ -3,6 +3,7 @@
 #include "trip/client/Common.h"
 #include "trip/client/Version.h"
 #include "trip/client/main/DataGraph.h"
+#include "trip/client/core/Serialize.h"
 #include "trip/client/main/Serialize.h"
 #include "trip/client/udp/Serialize.h"
 #include "trip/client/ssp/Serialize.h"
