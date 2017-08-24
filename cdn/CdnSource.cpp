@@ -97,7 +97,7 @@ namespace trip
             }
             assert(r.e > r.b);
             if (meta != NULL && meta->bytesize < (boost::uint32_t)r.e.block_piece * PIECE_SIZE)
-                r.e = DataId();
+                r.e.inc_segment(); // mark range to segment end
             ranges_.push_back(r);
 
             Url url;
@@ -277,7 +277,7 @@ namespace trip
             piece.reset();
 
             r.b.inc_piece();
-            if (r.b == r.e) {
+            if (r.b.block_piece == r.e.block_piece) {
                 DataId i(r.b);
                 ranges_.pop_front();
                 if (ranges_.empty()) {
@@ -345,7 +345,7 @@ namespace trip
             //    range.put(r.b.block_piece * PIECE_SIZE, r.e.block_piece * PIECE_SIZE);
             //}
             PieceRange & r(ranges_.front());
-            if (r.e == DataId())
+            if (r.e.segment != r.b.segment)
                 range.put(r.b.block_piece * PIECE_SIZE);
             else
                 range.put(r.b.block_piece * PIECE_SIZE, r.e.block_piece * PIECE_SIZE);
