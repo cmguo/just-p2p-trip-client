@@ -97,7 +97,7 @@ namespace trip
             }
             assert(r.e > r.b);
             if (meta != NULL && meta->bytesize < (boost::uint32_t)r.e.block_piece * PIECE_SIZE)
-                r.e.inc_segment(); // mark range to segment end
+                ++r.e.segment; // mark range to segment end
             ranges_.push_back(r);
 
             Url url;
