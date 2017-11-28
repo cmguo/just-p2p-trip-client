@@ -64,7 +64,7 @@ namespace trip
                 & SERIALIZATION_NVP_2(t, l_id)
                 & SERIALIZATION_NVP_2(t, p_id)
                 & SERIALIZATION_NVP_2(t, empty)
-                & SERIALIZATION_NVP_2(t, queue)
+                & SERIALIZATION_NVP_2(t, stat)
                 & SERIALIZATION_NVP_2(t, queue)
                 ;
         }
