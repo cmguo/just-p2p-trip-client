@@ -114,7 +114,7 @@ namespace trip
             {
                 static std::string value;
                 value.clear();
-                daemon_.config().get(section, key, value);
+                daemon_.config().get_force(section, key, value);
                 return value.c_str();
             }
 
